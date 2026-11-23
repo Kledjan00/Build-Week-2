@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="it" data-bs-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EpiTunes — Home</title>
+    <!-- Bootstrap 5 (solo CSS) -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    />
+    <!-- Stile EpiTunes: sempre DOPO Bootstrap -->
+    <link rel="stylesheet" href="assets/css/app.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Riempita via JS in common.js. Nascosta sotto i 576px (d-none d-sm-block) -->
+      <aside class="sidebar d-none d-sm-block"></aside>
+
+      <main class="main">
+        <header class="topbar sticky-top d-flex align-items-center justify-content-between px-4 py-3">
+          <div class="d-flex gap-2">
+            <button type="button" class="btn nav-btn rounded-circle p-0" aria-label="Indietro">‹</button>
+            <button type="button" class="btn nav-btn rounded-circle p-0" aria-label="Avanti">›</button>
+          </div>
+          <div class="user-pill rounded-pill fw-semibold">Studente Epicode</div>
+        </header>
+
+        <section class="home page">
+          <!--
+            SEZIONI DA COSTRUIRE (vedi js/home.js):
+            - "Riprodotti di recente" (da localStorage)
+            - "I tuoi preferiti" (da localStorage favourites)
+            - "Suggerimenti pop"
+            - "Suggerimenti rock"
+            - "Suggerimenti italian pop"
+            Ogni sezione è un <section class="music-row"> con titolo h2 e una
+            <div class="grid"> di .card.
+            ATTENZIONE: usare "music-row", NON "row" (in Bootstrap .row è la
+            riga della griglia e romperebbe il layout).
+          -->
+        </section>
+
+      </main>
+
+      <!-- Riempito via JS in common.js -->
+      <footer class="player"></footer>
+    </div>
+
+    <audio id="audio-element"></audio>
+
+    <script src="assets/js/common.js"></script>
+    <script src="assets/js/home.js"></script>
+  </body>
+</html>
