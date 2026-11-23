@@ -165,6 +165,7 @@ L'applicazione riprende l'aspetto di Spotify, con un tema scuro e un layout a 3 
 - **const** di default, let solo se la variabile viene riassegnata, mai var e niente innerHtml.
 - **Talking Names lol** in lingua inglese
 - **Doppi apici**
+- **commenti ove possibile**
 
 ---
 
