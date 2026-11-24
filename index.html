@@ -101,60 +101,7 @@
       </header>
 
       <section class="home page">
-        <article class="row">
-          <h2>Riprodotti di recente</h2>
-          <div class="grid">
-            <div class="card">
-              <div class="card-image-wrap"><!--img 200*200--></div>
-              <h3 class="card-title">Titolo brano</h3>
-              <p class="card-sub">Artista</p>
-            </div>
-          </div>
-        </article>
 
-        <article class="row">
-          <h2>I tuoi brani preferiti</h2>
-          <div class="grid">
-            <div class="card">
-              <div class="card-image-wrap"><!--img 200*200--></div>
-              <h3 class="card-title">Titolo brano</h3>
-              <p class="card-sub">Artista</p>
-            </div>
-          </div>
-        </article>
-
-        <article class="row">
-          <h2>Suggerimenti pop</h2>
-          <div class="grid">
-            <div class="card">
-              <div class="card-image-wrap"><!--img 200*200--></div>
-              <h3 class="card-title">Titolo brano</h3>
-              <p class="card-sub">Artista</p>
-            </div>
-          </div>
-        </article>
-
-        <article class="row">
-          <h2>Suggerimenti rock</h2>
-          <div class="grid">
-            <div class="card">
-              <div class="card-image-wrap"><!--img 200*200--></div>
-              <h3 class="card-title">Titolo brano</h3>
-              <p class="card-sub">Artista</p>
-            </div>
-          </div>
-        </article>
-
-        <article class="row">
-          <h2>Suggerimenti italiani pop</h2>
-          <div class="grid">
-            <div class="card">
-              <div class="card-image-wrap"><!--img 200*200--></div>
-              <h3 class="card-title">Titolo brano</h3>
-              <p class="card-sub">Artista</p>
-            </div>
-          </div>
-        </article>
       </section>
 
     </main>
@@ -170,68 +117,89 @@
 
     <!--Modale "New user"-->
     <div class="welcome-overlay" id="register-modal">
-      <div class="welcome-box register-box" role="dialog" aria-modal="true" aria-labelledby="register-title"></div>
-      <button type="button" class="welcome-close" id="register-close" aria-label="Chiudi">×</button>
+      <div class="welcome-box register-box" role="dialog" aria-modal="true" aria-labelledby="register-title">
+        <button type="button" class="welcome-close" id="register-close" aria-label="Chiudi">×</button>
 
-      <p class="welcome-kicker">Nuovo utente</p>
-      <h2 class="welcome-title" id="register-title">Crea il tuo account</h2>
-      <p class="welcome-text">Compila i campi per registrarti a EpiTunes</p>
+        <p class="welcome-kicker">Nuovo utente</p>
+        <h2 class="welcome-title" id="register-title">Crea il tuo account</h2>
+        <p class="welcome-text">Compila i campi per registrarti a EpiTunes</p>
 
-      <form id="register-form" novalidate>
-        <div class="register-row">
-          <div class="register-field">
-            <label class="welcome-label" for="register-username">Nome utente</label>
-            <input class="register-input" type="textt" id="register-username" autocomplete="username">
-             <p class="register-error" id="register-username-error"></p>
+        <form id="register-form" novalidate>
+          <div class="register-row">
+            <div class="register-field">
+              <label class="welcome-label" for="register-username">Nome utente</label>
+              <input class="register-input" type="text" id="register-username" autocomplete="username">
+              <p class="register-error" id="register-username-error"></p>
+            </div>
+            <div class="register-field">
+              <label class="welcome-label" for="register-email">Email</label>
+              <input class="register-input" type="email" id="register-email" autocomplete="email">
+              <p class="register-error" id="register-email-error"></p>
+            </div>
           </div>
-          <div class="register-field">
-            <label class="welcome-label" for="register-email">Email</label>
-            <input class="register-input" type="email" id="register-email" autocomplete="email">
-            <p class="register-error" id="register-email-error"></p>
-          </div>
-        </div>
 
-        <div class="register-row">
-          <div class="register-field">
-            <label class="welcome-label" for="register-password">Password</label>
-            <input class="register-input" type="password" id="register-password" autocomplete="new-password">
-            <p class="register-error" id="register-password-error"></p>
+          <div class="register-row">
+            <div class="register-field">
+              <label class="welcome-label" for="register-password">Password</label>
+              <input class="register-input" type="password" id="register-password" autocomplete="new-password">
+              <p class="register-error" id="register-password-error"></p>
+            </div>
+            <div class="register-field">
+              <label class="welcome-label" for="register-repeat">Ripeti password</label>
+              <input class="register-input" type="password" id="register-repeat" autocomplete="new-password">
+              <p class="register-error" id="register-repeat-error"></p>
+            </div>
           </div>
-          <div class="register-field">
-            <label class="welcome-label" for="register-repeat">Ripeti password</label>
-            <input class="register-input" type="password" id="register-repeat" autocomplete="new-password">
-            <p class="register-error" id="register-repeat-error"></p>
+
+          <div class="register-field register-half">
+            <label class="welcome-label" for="register-birth">Data di nascita</label>
+            <input class="register-input" type="date" id="register-birth">
+            <p class="register-error" id="register-birth-error"></p>
           </div>
-        </div>
 
-        <div class="register-field register-half">
-          <label class="welcome-label" for="register-birth">Data di nascita</label>
-          <input class="register-input" type="date" id="register-birth">
-          <p class="register-error" id="register-bith-error"></p>
-        </div>
+          <div class="register-check">
+            <input type="checkbox" id="register-consent">
+            <label for="register-consent">Acconsento al trattamento dei miei dati personali</label>
+          </div>
+          <p class="register-error" id="register-consent-error"></p>
 
-        <div class="register-check">
-          <input type="checkbox" id="register-consent">
-          <label for="register-consent">Acconsento al trattamento dei miei dati personali</label>
-        </div>
-        <p class="register-error" id="register-consent-error"></p>
+          <div class="welcome-footer">
+            <p class="register-note">Tutti i campi sono obbligatori</p>
+            <div class="welcome-actions">
+              <button type="button" class="btn-skip" id="register-cancel">Annulla</button>
+              <button type="submit" class="btn-continue">Registrati</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!--Modale "Cosa ascolti di solito"-->
+    <div class="welcome-overlay" id="welcome-modal">
+      <div class="welcome-box" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+        <button type="button" class="welcome-close" id="welcome-close" aria-label="Chiudi">×</button>
+        <p class="welcome-kicker">Benvenuto su EpiTunes</p>
+        <h2 class="welcome-title" id="welcome-title">Cosa ascolti di solito?</h2>
+        <p class="welcome-text">Scegli almeno tre generi o artisti: li useremo per i tuoi suggerimenti in home.</p>
+
+        <h3 class="welcome-label">Generi</h3>
+        <div class="genre-list" id="genre-list"></div>
+
+        <h3 class="welcome-label artist-title">Artisti</h3>
+        <div class="artist-list" id="artist-list"></div>
 
         <div class="welcome-footer">
-          <p class="register-note">Tutti i campi sono obbligatori</p>
+          <p class="welcome-count" id="welcome-count">0 selezionati</p>
           <div class="welcome-actions">
-            <button type="button" class="btn-skip" id="register-cancel">Annulla</button>
-            <button type="submit" class="btn-continue">Registrati</button>
+            <button type="button" class="btn-skip" id="btn-skip">Salta</button>
+            <button type="button" class="btn-continue" id="btn-continue" disabled>Continua</button>
           </div>
         </div>
-      </form>
+      </div>
     </div>
-    </div>
-
-    <audio id="audio-element"></audio>
-    <script type="module" src="assets/js/new-user.js"></script>
-    <script type="module" src="assets/js/album.js"></script>
-    <script type="module" src="assets/js/common.js"></script>
-    <script type="module" src="assets/js/home.js"></script>
+  </div>
+  <script type="module" src="assets/js/new-user.js"></script>
+  <script type="module" src="assets/js/common.js"></script>
+  <script type="module" src="assets/js/home.js"></script>
 </body>
 
 </html>

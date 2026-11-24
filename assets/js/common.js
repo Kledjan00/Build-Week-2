@@ -61,7 +61,7 @@
 
 
 /* ============================ 2. Helpers ============================ */
-import { $, el, historyClear, historyDump, historyLog } from "./helper.js";
+import { $, el, historyClear, historyDump, historyLog, getFavourites } from "./helper.js"
 const historyArray = [];
 
 /*
@@ -70,7 +70,7 @@ const historyArray = [];
   - L'API iTunes ritorna artwork 100x100 (artworkUrl100)
   - Sostituisce "100x100bb" con "600x600bb" per avere una cover più grande
 */
-const bigArt = (url) => {
+export const bigArt = (url) => {
   if (!url) return "";
   return url.replace("100x100", "600x600");
 };
@@ -80,7 +80,7 @@ const bigArt = (url) => {
   - Converte millisecondi in stringa "m:ss"
   - Esempio: 65000 -> "1:05"
 */
-const formatTime = (ms) => {
+export const formatTime = (ms) => {
   if (!ms) return "0:00";
   const totalSec = Math.floor(ms / 1000);
   const min = Math.floor(totalSec / 60);
@@ -309,7 +309,7 @@ class Player {
   }
 
   play(track) {
-    historyLog(historyArray, track);
+    historyLog(historyDump(), track);
     this.currentTrack = track;
     this.audio.src = track.previewUrl;
     this.audio.play().catch((err) => {
@@ -384,7 +384,20 @@ class Player {
 /* ============================ 6. Render sidebar ============================ */
 
 
-// TODO: popola #sidebar-favs con i titoli dei preferiti
+// TODO: popola #sidebar-favourites con i titoli dei preferiti
+export const renderSidebarFavs = () => {
+  const list = $("#sidebar-favourites");
+  if (!list) return;
+
+  const favs = getFavourites();
+
+  if (!favs.length) {
+    list.replaceChildren(el("li", { className: "fst-italic", text: "Nessuno ancora" }));
+    return;
+  }
+
+  list.replaceChildren(...favs.map((track) => el("li", { text: `${track.trackName} - ${track.artistName}` })));
+};
 
 
 /* ============================ 7. Inizializzazione ============================ */
@@ -397,6 +410,7 @@ class Player {
 export const initPage = (activePage) => {
   const player = new Player();
   player.mount();
+  renderSidebarFavs();
   window.player = player;
   return player;
 };

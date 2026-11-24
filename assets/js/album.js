@@ -23,7 +23,7 @@
       - click sul cuore -> toggleFavourite(track)
 */
 
-import { initPage, bigArt, formatTime } from "./common.js";
+import { initPage, bigArt, formatTime, renderSidebarFavs } from "./common.js";
 import { API_BASE, el, isFavourite, toggleFavourite } from "./helper.js";
 
 const player = initPage("home");
@@ -50,14 +50,16 @@ const loadAlbum = async () => {
       const year = new Date(album.releaseDate).getFullYear();
       const totalMs = tracks.reduce((sum, t) => sum + (t.trackTimeMillis || 0), 0);
 
+      // Cuore grande: .is-fav lo colora di rosso mattone
       const heartBtn = el("button", {
-         className: "btn btn-sm btn-dark rounded-circle",
+         className: isFavourite(firstTrack) ? "btn-fav-big is-fav" : "btn-fav-big",
          text: isFavourite(firstTrack) ? "♥" : "♡",
          attrs: { "aria-label": "Preferito", type: "button" },
       });
 
+      // Play grande in ottone
       const playBtn = el("button", {
-         className: "btn btn-success btn-sm rounded-circle",
+         className: "btn-play-big",
          text: "▶",
          attrs: { "aria-label": "Riproduci", type: "button" },
       });
@@ -66,44 +68,44 @@ const loadAlbum = async () => {
 
       heartBtn.addEventListener("click", () => {
          toggleFavourite(firstTrack);
+         renderSidebarFavs();
          heartBtn.textContent = isFavourite(firstTrack) ? "♥" : "♡";
+         heartBtn.classList.toggle("is-fav", isFavourite(firstTrack));
       });
 
+      // #album-hero ha già la classe album-hero nell'HTML: copertina a sinistra, testi a destra
       albumHero.replaceChildren(
-         el("div", { className: "d-flex flex-column flex-md-row align-items-md-end gap-4" },
-            el("img", {
-               className: "rounded shadow",
-               style: { width: "232px", height: "232px" },
-               attrs: { src: bigArt(album.artworkUrl100), alt: album.collectionName },
+         el("div", { className: "album-cover" },
+            el("img", { attrs: { src: bigArt(album.artworkUrl100), alt: album.collectionName } })
+         ),
+         el("div", { className: "hero-meta" },
+            el("p", { className: "hero-kicker", text: "Album" }),
+            el("h1", { className: "hero-title", text: album.collectionName }),
+            el("p", {
+               className: "hero-sub",
+               text: `${album.artistName} · ${year} · ${tracks.length} brani · ${formatTime(totalMs)}`,
             }),
-            el("div", {},
-               el("p", { className: "small text-secondary fw-bold mb-1", text: "ALBUM" }),
-               el("h1", { className: "display-5 fw-bold", text: album.collectionName }),
-               el("p", {
-                  className: "text-secondary",
-                  text: `${album.artistName} · ${year} · ${tracks.length} brani · ${formatTime(totalMs)}`,
-               }),
-               el("div", { className: "d-flex align-items-center gap-2" }, playBtn, heartBtn)
-            )
+            el("div", { className: "hero-actions" }, playBtn, heartBtn)
          )
       );
 
       tracklist.replaceChildren(
          ...tracks.map((track, i) => {
+            // Cuore della riga: senza sfondo, rosso mattone se è tra i preferiti
             const rowHeart = el("button", {
-               className: "btn btn-sm btn-dark rounded-circle",
+               className: isFavourite(track) ? "track-fav is-fav" : "track-fav",
                text: isFavourite(track) ? "♥" : "♡",
                attrs: { "aria-label": "Preferito", type: "button" },
             });
 
+            // Riga a 4 colonne: numero | titolo | durata | cuore
             const row = el("div", {
-               className: "track-row d-flex align-items-center gap-3 p-2 rounded",
-               style: { cursor: "pointer" },
+               className: "track-row",
                attrs: { "data-track-id": track.trackId },
             },
-               el("span", { className: "text-secondary", style: { width: "2rem" }, text: i + 1 }),
-               el("span", { className: "flex-grow-1 text-truncate", text: track.trackName ?? "Sconosciuto" }),
-               el("span", { className: "text-secondary", text: formatTime(track.trackTimeMillis) }),
+               el("span", { className: "track-num", text: i + 1 }),
+               el("span", { className: "track-title", text: track.trackName ?? "Sconosciuto" }),
+               el("span", { className: "track-time", text: formatTime(track.trackTimeMillis) }),
                rowHeart
             );
 
@@ -112,7 +114,9 @@ const loadAlbum = async () => {
             rowHeart.addEventListener("click", (e) => {
                e.stopPropagation();
                toggleFavourite(track);
+               renderSidebarFavs();
                rowHeart.textContent = isFavourite(track) ? "♥" : "♡";
+               rowHeart.classList.toggle("is-fav", isFavourite(track));
             });
 
             return row;

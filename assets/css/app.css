@@ -1,20 +1,37 @@
+/* Font da Google Fonts:
+   - Italiana: font art déco per il logo e i titoli (ha un solo peso, 400)
+   - Libre Baskerville: font con grazie per tutto il testo (normale, grassetto e corsivo)
+   L'@import deve stare per forza in cima al file, prima di qualsiasi altra regola. */
 @import url("https://fonts.googleapis.com/css2?family=Italiana&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap");
 
 /* ============================================================
-   EpiTunes — stile personalizzato, tema VINTAGE (giradischi)
-   Da caricare DOPO bootstrap.min.css.
+   EpiTunes — foglio di stile principale (tema VINTAGE, stile giradischi)
 
-   Bootstrap fornisce: tema scuro, reboot, utility, form e bottoni.
-   Questo file aggiunge ciò che Bootstrap non ha, in CSS moderno:
-   custom properties, nesting nativo, grid-template-areas,
-   container queries, color-mix(), media query con range syntax.
+   Questo file va caricato DOPO bootstrap.min.css, così le nostre regole
+   hanno la precedenza su quelle di Bootstrap a parità di selettore.
 
-   I nomi delle classi sono gli stessi usati dal JS
-   (sidebar, player, card, hero, tracklist).
+   Divisione dei compiti:
+   - Bootstrap ci dà il tema scuro, il reset dei browser (reboot),
+     le classi di utilità (d-flex, px-4, rounded-pill...) e lo stile base di form e bottoni.
+   - In questo file c'è tutto il resto: layout, colori del tema, card, player, animazioni.
+
+   Usiamo CSS moderno:
+   - variabili (custom properties) per colori e misure
+   - nesting nativo (le regole annidate con &)
+   - CSS Grid con grid-template-areas per il layout
+   - container queries per adattare le parti alla larghezza del loro contenitore
+   - color-mix() e media query scritte con la sintassi (width < 768px)
+
+   I nomi delle classi sono gli stessi usati nel JavaScript
+   (sidebar, player, card, hero, tracklist): se si cambia un nome qui,
+   va cambiato anche nel JS.
    ============================================================ */
 
 /* ============================ Variabili ============================ */
 
+/* Le variabili sono definite sull'elemento <html>, che ha l'attributo data-bs-theme="dark".
+   Il selettore :root[data-bs-theme="dark"] è più specifico di quello che usa Bootstrap,
+   quindi i nostri valori vincono sui suoi. */
 :root[data-bs-theme="dark"] {
   /* Palette EpiTunes — legno, ottone e avorio */
   --bg-base: #1e1410; /* marrone quasi nero: sfondo generale della pagina */
@@ -28,116 +45,149 @@
   --text-input: #2a1a10; /* marrone scuro: testo scritto nel campo di ricerca */
   --accent: #c9a227; /* ottone: dettagli, link attivi, bordi e brano in riproduzione */
   --success: #c9a227; /* ottone: pulsanti play */
-  --danger: #b5432f; /* rosso mattone: cuore dei preferiti */
+  --danger: #b5432f; /* rosso mattone: cuore dei preferiti ed errori */
   --border: #5a3d28; /* marrone legno: bordi di card e separatori */
+
+  /* Raggi degli angoli arrotondati: piccolo, medio e grande */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
+
   --shadow: 0 6px 24px rgb(0 0 0 / 0.5); /* ombra nera al 50%: copertine e pulsanti in rilievo */
 
   /* Ottone lucido per i pulsanti play: riflesso chiaro (#f3dd8a) in alto a sinistra,
-     ottone (#c9a227) al centro, bronzo scuro (#7a5c12) sul bordo */
+     ottone (#c9a227) al centro, bronzo scuro (#7a5c12) sul bordo.
+     È un gradiente, quindi va usato con background e non con background-color. */
   --brass: radial-gradient(circle at 35% 30%, #f3dd8a, #c9a227 45%, #7a5c12);
 
-  /* Font: Italiana (art déco) per logo e titoli, Libre Baskerville per il testo */
+  /* Font dei titoli: Italiana; se non si carica, si usa Georgia o un altro font con grazie */
   --font-display: "Italiana", Georgia, serif;
 
-  /* Venature del legno del player: righe scure (nero al 12%) e chiare (bianco al 4%)
-     sovrapposte a una sfumatura di noce (#6b4026, #4a2c1a, #5e3720) */
+  /* Venature del legno del player, fatte con tre sfumature sovrapposte
+     (la prima scritta è quella che sta sopra):
+     1. righe scure sottili (nero al 12%) ogni 7px
+     2. righe chiare più rade (bianco al 4%) ogni 17px
+     3. sotto, una sfumatura di noce (#6b4026, #4a2c1a, #5e3720) dall'alto al basso
+     180deg = le righe sono orizzontali */
   --wood-h:
     repeating-linear-gradient(180deg, rgb(0 0 0 / 0.12) 0 2px, transparent 2px 7px),
     repeating-linear-gradient(180deg, rgb(255 255 255 / 0.04) 0 1px, transparent 1px 17px),
     linear-gradient(180deg, #6b4026, #4a2c1a 40%, #5e3720);
 
-  /* Bootstrap legge queste: così tutto il framework usa la nostra palette */
-  --bs-body-bg: var(--bg-base);
-  --bs-body-color: var(--text-primary);
-  --bs-emphasis-color: var(--text-primary);
-  --bs-secondary-color: var(--text-secondary);
-  --bs-border-color: var(--border);
-  --bs-body-font-size: 0.8125rem; /* 13px: Libre Baskerville è un font largo */
+  /* Variabili di Bootstrap: le sovrascriviamo con la nostra palette,
+     così anche i componenti di Bootstrap usano i nostri colori e il nostro font */
+  --bs-body-bg: var(--bg-base); /* sfondo del body */
+  --bs-body-color: var(--text-primary); /* colore del testo */
+  --bs-emphasis-color: var(--text-primary); /* testo "in evidenza" di Bootstrap */
+  --bs-secondary-color: var(--text-secondary); /* testo secondario (es. placeholder) */
+  --bs-border-color: var(--border); /* bordi dei componenti */
+  --bs-body-font-size: 0.8125rem; /* 13px: Libre Baskerville è un font largo, a 14px risultava ingombrante */
   --bs-body-font-family: "Libre Baskerville", Georgia, serif;
 }
 
 /* ============================ Base ============================ */
 
+/* html e body alti quanto la finestra: serve al layout a griglia qui sotto */
 html,
 body {
   height: 100%;
 }
 
+/* La pagina intera non scorre: scorrono solo sidebar e main al loro interno,
+   così il player resta sempre fermo in basso */
 body {
   overflow: hidden;
 }
 
+/* I link prendono il colore del testo intorno e non sono sottolineati
+   (Bootstrap di default li fa blu e sottolineati) */
 a {
   color: inherit;
   text-decoration: none;
 }
 
+/* Tutti i bottoni mostrano la manina al passaggio del mouse */
 button {
   cursor: pointer;
 }
 
 /* ============================ Layout 3 zone ============================ */
 
+/* Contenitore principale della pagina, diviso in 3 zone con CSS Grid:
+
+     +-----------+---------------------+
+     |  sidebar  |        main         |
+     +-----------+---------------------+
+     |             player              |
+     +---------------------------------+
+
+   grid-template-areas disegna questa mappa: ogni zona poi si "aggancia"
+   al suo nome con grid-area. */
 .app {
   display: grid;
-  grid-template-columns: 240px 1fr;
-  grid-template-rows: 1fr 90px;
+  grid-template-columns: 240px 1fr; /* sidebar larga 240px, il main prende il resto */
+  grid-template-rows: 1fr 90px; /* il contenuto prende tutta l'altezza, il player è alto 90px */
   grid-template-areas:
     "sidebar main"
     "player  player";
-  height: 100vh;
-  height: 100dvh; /* tiene conto delle barre del browser su mobile */
+  height: 100vh; /* alta quanto la finestra (per i browser che non conoscono dvh) */
+  height: 100dvh; /* come sopra, ma tiene conto delle barre del browser su mobile */
 }
 
+/* Sidebar a sinistra */
 .sidebar {
   grid-area: sidebar;
   background: var(--bg-sidebar);
   padding: 24px 16px;
-  overflow-y: auto;
+  overflow-y: auto; /* se il contenuto è più alto dello schermo, scorre solo la sidebar */
 }
 
+/* Zona centrale con la topbar e il contenuto della pagina */
 .main {
   grid-area: main;
   background: linear-gradient(180deg, #1f1f1f 0%, var(--bg-base) 280px);
-  overflow-y: auto;
+  overflow-y: auto; /* scorre solo il main, non tutta la pagina */
   position: relative;
-  /* Container query: card e hero si adattano alla larghezza del main,
-     non a quella della finestra (che include la sidebar) */
+  /* Il main è un "container" chiamato main: con @container main (...)
+     card e hero si adattano alla larghezza del main e non a quella della finestra
+     (che comprende anche la sidebar). Le regole sono in fondo, nella sezione Responsive. */
   container: main / inline-size;
 }
 
-/* ============================ Sidebar (generata da common.js) ============================ */
+/* ============================ Sidebar ============================ */
 
+/* Logo: disco + nome "EpiTunes" affiancati */
 .brand {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: center; /* disco e testo allineati al centro in verticale */
+  gap: 10px; /* spazio tra disco e testo */
   padding: 0 8px 24px 8px;
   font-weight: 700;
   font-size: 18px;
   letter-spacing: 0.5px;
 }
 
+/* Riquadro del logo (stile base). Nel tema vintage, più in basso,
+   diventa un disco in vinile e queste regole vengono in parte sovrascritte. */
 .brand-mark {
   width: 28px;
-  aspect-ratio: 1;
+  aspect-ratio: 1; /* altezza uguale alla larghezza: è sempre quadrato */
   border-radius: 6px;
   background: var(--accent);
   color: #000;
   display: grid;
-  place-items: center;
+  place-items: center; /* centra il contenuto in orizzontale e in verticale */
   font-weight: 900;
 }
 
+/* Menu di navigazione (Home, Cerca): link uno sotto l'altro */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 4px;
   margin-bottom: 24px;
 
+  /* Ogni link: icona + testo affiancati */
   & a {
     display: flex;
     align-items: center;
@@ -147,17 +197,20 @@ button {
     color: var(--text-secondary);
     font-weight: 600;
 
+    /* Al passaggio del mouse il link si schiarisce */
     &:hover {
       color: var(--text-primary);
       background: var(--bg-elev-hover);
     }
 
+    /* Link della pagina in cui ci troviamo (classe active nell'HTML) */
     &.active {
       color: var(--text-primary);
       background: var(--bg-elev);
     }
   }
 
+  /* Contenitore dell'icona: larghezza fissa, così i testi restano allineati */
   & .ico {
     font-size: 18px;
     width: 22px;
@@ -165,6 +218,7 @@ button {
   }
 }
 
+/* Titolo della sezione "I tuoi preferiti": piccolo, maiuscolo e spaziato */
 .sidebar-section-title {
   text-transform: uppercase;
   font-size: 11px;
@@ -174,12 +228,13 @@ button {
   margin: 0;
 }
 
+/* Lista dei preferiti (#sidebar-favourites), riempita dal JS */
 .sidebar-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 0 4px;
-  list-style: none;
+  list-style: none; /* niente pallini */
   margin: 0;
 
   & li {
@@ -187,6 +242,7 @@ button {
     font-size: 13px;
     color: var(--text-secondary);
     border-radius: 4px;
+    /* Titoli lunghi: una sola riga, tagliata con i puntini di sospensione (...) */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -200,29 +256,34 @@ button {
 
 /* ============================ Topbar ============================ */
 
+/* Barra in alto nel main. Posizione sticky, flex e padding arrivano
+   dalle classi di Bootstrap nell'HTML (sticky-top, d-flex, px-4, py-3). */
 .topbar {
-  /* posizione sticky, flex e padding arrivano dalle utility Bootstrap */
+  /* Sfondo semitrasparente (70% del colore di base) e sfocato:
+     quando si scorre, il contenuto passa sotto la barra e si intravede sfocato */
   background: color-mix(in srgb, var(--bg-base) 70%, transparent);
   backdrop-filter: blur(20px);
 }
 
-/* Bottoni Indietro/Avanti: .btn di Bootstrap personalizzato con le sue variabili */
+/* Bottoni Indietro/Avanti. Sono dei .btn di Bootstrap: invece di riscrivere tutto,
+   cambiamo le variabili che Bootstrap usa per colorare i suoi bottoni. */
 .nav-btn {
-  --bs-btn-bg: rgb(0 0 0 / 0.6);
+  --bs-btn-bg: rgb(0 0 0 / 0.6); /* sfondo nero al 60% */
   --bs-btn-color: #fff;
   --bs-btn-border-width: 0;
-  --bs-btn-hover-bg: rgb(0 0 0 / 0.8);
+  --bs-btn-hover-bg: rgb(0 0 0 / 0.8); /* più scuro al passaggio del mouse */
   --bs-btn-hover-color: #fff;
-  --bs-btn-active-bg: rgb(0 0 0 / 0.9);
+  --bs-btn-active-bg: rgb(0 0 0 / 0.9); /* ancora più scuro quando si clicca */
   --bs-btn-active-color: #fff;
   --bs-btn-font-size: 18px;
   --bs-btn-line-height: 1;
   display: inline-grid;
-  place-items: center;
+  place-items: center; /* icona al centro del cerchio */
   width: 32px;
   aspect-ratio: 1;
 }
 
+/* Etichetta "Studente Epicode" in alto a destra */
 .user-pill {
   background: rgb(0 0 0 / 0.6);
   padding: 6px 12px;
@@ -231,23 +292,27 @@ button {
 
 /* ============================ Pagine ============================ */
 
+/* Margini interni del contenuto di ogni pagina (home, ricerca, album, artista) */
 .page {
   padding: 16px 24px 32px 24px;
 }
 
-/* Sezioni con titolo + griglia di card.
-   Nell'HTML e nel JS sono <section class="row"> o <article class="row">, ma in Bootstrap .row è la riga
-   della griglia (flex, margini negativi, padding sui figli): qui la
-   neutralizziamo azzerando i gutter. Vale anche il nome alternativo .music-row */
+/* Sezioni con titolo + griglia di card (es. "Suggerimenti pop").
+   Nell'HTML e nel JS sono <section class="row"> o <article class="row">.
+   Attenzione: in Bootstrap .row è la riga della sua griglia (flex, margini negativi,
+   padding sui figli) e romperebbe il layout. Qui la "spegniamo":
+   azzeriamo i gutter (gli spazi della griglia di Bootstrap) e la rimettiamo a display: block.
+   Vale anche per il nome alternativo .music-row. */
 section.row,
 article.row,
 .music-row {
   --bs-gutter-x: 0;
   --bs-gutter-y: 0;
   display: block;
-  margin-inline: 0;
-  margin-top: 24px;
+  margin-inline: 0; /* toglie i margini negativi a destra e a sinistra */
+  margin-top: 24px; /* spazio tra una sezione e l'altra */
 
+  /* Titolo della sezione */
   & h2 {
     margin: 0 0 12px 0;
     font-size: 22px;
@@ -255,6 +320,9 @@ article.row,
   }
 }
 
+/* Griglia delle card: le colonne si creano da sole in base allo spazio.
+   auto-fill = mette quante più colonne possibile,
+   minmax(180px, 1fr) = ogni colonna è larga almeno 180px e si allarga per riempire la riga. */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -263,105 +331,148 @@ article.row,
 
 /* ============================ Card ============================ */
 
-/* .card esiste già in Bootstrap: la ridefiniamo tramite le sue variabili */
+/* .card esiste già in Bootstrap: invece di combatterla,
+   cambiamo le variabili che Bootstrap usa per disegnarla. */
 .card {
-  --bs-card-bg: var(--bg-elev);
+  --bs-card-bg: var(--bg-elev); /* sfondo marrone scuro */
   --bs-card-color: var(--text-primary);
   --bs-card-border-width: 0;
   --bs-card-border-radius: var(--radius-md);
   padding: 14px;
   cursor: pointer;
   transition: background-color 0.18s ease;
+  /* La card è un "container": dentro la card, 100cqi = larghezza del suo contenuto,
+     cioè il lato della copertina. Serve per centrare il pulsante play sulla copertina
+     qualunque sia la larghezza della card. */
+  container-type: inline-size;
 
+  /* Al passaggio del mouse lo sfondo si schiarisce */
   &:hover {
     --bs-card-bg: var(--bg-elev-hover);
   }
 
-  &:hover .card-play {
+  /* Al passaggio del mouse: la copertina si scurisce... */
+  &:hover .card-image-wrap::after {
     opacity: 1;
-    transform: translateY(0);
   }
 
+  /* ...compare il play al centro (con un piccolo ingrandimento)... */
+  &:hover .card-play {
+    opacity: 1;
+    scale: 1;
+  }
+
+  /* ...e compare il cuore */
   &:hover .card-fav {
     opacity: 1;
   }
 }
 
+/* Contenitore della copertina: sempre quadrato */
 .card-image-wrap {
-  position: relative;
+  position: relative; /* serve al velo scuro (::after) posizionato qui dentro */
   width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: var(--radius-sm);
-  overflow: hidden;
+  overflow: hidden; /* taglia l'immagine agli angoli arrotondati */
   margin-bottom: 12px;
-  background: #000;
+  background: #000; /* nero finché l'immagine non è caricata */
 
+  /* Variante rotonda (per gli artisti) */
   &.round {
     border-radius: 50%;
   }
 
+  /* L'immagine riempie il quadrato; object-fit: cover la ritaglia senza deformarla */
   & img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
+    display: block; /* toglie lo spazietto che le immagini hanno sotto di default */
+  }
+
+  /* Velo scuro sopra la copertina: invisibile, compare con l'hover sulla card
+     per far risaltare il pulsante play */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0; /* copre tutta la copertina */
+    background: rgb(20 12 8 / 0.45); /* marrone quasi nero al 45% */
+    opacity: 0;
+    transition: opacity 0.2s;
   }
 }
 
+/* Titolo e artista: una sola riga, tagliata con i puntini se è troppo lunga */
 .card-title,
 .card-sub {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-right: 30px; /* lascia spazio al cuore a destra, così il testo non ci finisce sotto */
 }
 
+/* Titolo del brano */
 .card-title {
   font-weight: 700;
   font-size: 14px;
   margin: 0 0 4px 0;
 }
 
+/* Nome dell'artista */
 .card-sub {
   color: var(--text-secondary);
   font-size: 12px;
   margin: 0;
 }
 
+/* Pulsante play: cerchio avorio semitrasparente al centro della copertina.
+   È invisibile e compare con l'hover sulla card (vedi .card qui sopra). */
 .card-play {
   position: absolute;
-  right: 22px;
-  bottom: 82px;
-  width: 48px;
+  z-index: 1; /* sta sopra il velo scuro della copertina */
+  left: 50%;
+  top: calc(14px + 50cqi); /* padding della card + metà del lato della copertina = centro della copertina */
+  translate: -50% -50%; /* sposta indietro di metà della sua misura, così è centrato esattamente */
+  scale: 0.85; /* parte un po' più piccolo e si ingrandisce con l'hover */
+  width: 64px;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: var(--success);
-  color: #000;
-  border: none;
-  font-size: 20px;
   display: grid;
   place-items: center;
-  box-shadow: var(--shadow);
+  padding: 0 0 0 4px; /* il triangolo ▶ sembra centrato solo se spostato un po' a destra */
+  background: rgb(243 230 200 / 0.18); /* avorio al 18%: si vede la copertina sotto */
+  border: 1.5px solid rgb(243 230 200 / 0.55); /* bordo avorio al 55% */
+  backdrop-filter: blur(3px); /* sfoca leggermente la copertina dietro al cerchio (effetto vetro) */
+  color: var(--text-primary);
+  font-size: 26px;
   opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity 0.2s, scale 0.2s;
 }
 
+/* Cuore dei preferiti: sotto la copertina, a destra di titolo e artista */
 .card-fav {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
+  z-index: 1;
+  right: 12px;
+  bottom: 24px; /* all'altezza di titolo e artista */
+  width: 28px;
   aspect-ratio: 1;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 0.5);
-  color: #fff;
-  border: none;
-  font-size: 16px;
   display: grid;
   place-items: center;
-  opacity: 0;
-  transition: opacity 0.2s;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  opacity: 0; /* invisibile finché il mouse non passa sulla card */
+  transition: opacity 0.2s, color 0.2s;
 
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  /* Brano tra i preferiti (classe is-fav aggiunta dal JS): rosso mattone e sempre visibile */
   &.is-fav {
     opacity: 1;
     color: var(--danger);
@@ -370,14 +481,17 @@ article.row,
 
 /* ============================ Hero album / artista ============================ */
 
+/* Parte alta delle pagine album e artista: copertina a sinistra, testi a destra,
+   centrati in verticale rispetto alla copertina */
 .album-hero,
 .artist-hero {
   display: flex;
   gap: 24px;
-  align-items: flex-end;
+  align-items: center;
   padding: 24px 0 16px 0;
 }
 
+/* Copertina grande dell'album (o foto dell'artista) */
 .album-cover {
   width: 220px;
   aspect-ratio: 1;
@@ -385,7 +499,7 @@ article.row,
   overflow: hidden;
   background: #000;
   box-shadow: var(--shadow);
-  flex-shrink: 0;
+  flex-shrink: 0; /* non si rimpicciolisce se il titolo è lungo */
 
   & img {
     width: 100%;
@@ -400,13 +514,15 @@ article.row,
   border-radius: 50%;
 }
 
+/* Colonna con i testi dell'hero */
 .hero-meta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 0;
+  gap: 6px;
+  min-width: 0; /* permette ai testi lunghi di andare a capo invece di allargare la riga */
 }
 
+/* Scritta piccola sopra il titolo ("ALBUM" / "ARTISTA") */
 .hero-kicker {
   font-size: 12px;
   text-transform: uppercase;
@@ -414,20 +530,30 @@ article.row,
   font-weight: 700;
 }
 
+/* Titolo grande dell'album o nome dell'artista */
 .hero-title {
-  /* cqi = 1% della larghezza del main (container query unit) */
-  font-size: clamp(32px, 6cqi, 72px);
+  /* clamp(minimo, ideale, massimo): la dimensione segue la larghezza del main
+     (5cqi = 5% della larghezza del main), ma non scende sotto 28px né supera 56px */
+  font-size: clamp(28px, 5cqi, 56px);
   font-weight: 900;
   margin: 0;
-  line-height: 1.05;
+  line-height: 1.2; /* abbastanza spazio per le lettere che scendono sotto la riga (g, p, q) */
+  /* Al massimo due righe, poi i puntini (...): così il blocco dei testi
+     non diventa più alto della copertina che ha accanto */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
+/* Riga sotto il titolo (artista · anno · numero brani) */
 .hero-sub {
   color: var(--text-secondary);
   font-size: 14px;
   margin: 0;
 }
 
+/* Riga con il play grande e il cuore sotto i testi dell'hero */
 .hero-actions {
   display: flex;
   align-items: center;
@@ -435,6 +561,13 @@ article.row,
   padding: 16px 0 24px 0;
 }
 
+/* Quando i pulsanti stanno dentro la colonna dei testi (accanto alla copertina),
+   togliamo lo spazio sotto, così testi e pulsanti restano nell'altezza della copertina */
+.hero-meta .hero-actions {
+  padding: 8px 0 0 0;
+}
+
+/* Play grande (nel tema vintage diventa un cerchio con il bordo in ottone, uguale al cuore: più in basso) */
 .btn-play-big {
   width: 56px;
   aspect-ratio: 1;
@@ -445,6 +578,7 @@ article.row,
   font-size: 24px;
 }
 
+/* Cuore grande con bordo tondo */
 .btn-fav-big {
   width: 36px;
   aspect-ratio: 1;
@@ -454,6 +588,7 @@ article.row,
   color: var(--text-secondary);
   font-size: 18px;
 
+  /* Album/brano tra i preferiti: cuore e bordo rosso mattone */
   &.is-fav {
     color: var(--danger);
     border-color: var(--danger);
@@ -462,10 +597,13 @@ article.row,
 
 /* ============================ Tracklist ============================ */
 
+/* Lista dei brani di album e artista */
 .tracklist {
   margin-top: 8px;
 }
 
+/* Ogni riga è una griglia a 4 colonne:
+   numero (32px) | titolo (tutto lo spazio rimasto) | durata (80px) | cuore (48px) */
 .track-row {
   display: grid;
   grid-template-columns: 32px 1fr 80px 48px;
@@ -480,16 +618,19 @@ article.row,
     background: var(--bg-elev);
   }
 
+  /* Brano in riproduzione (classe is-playing aggiunta dal player nel JS) */
   &.is-playing {
     color: var(--success);
   }
 }
 
+/* Numero del brano */
 .track-num {
   color: var(--text-secondary);
   text-align: center;
 }
 
+/* Titolo del brano: una sola riga con i puntini se è lungo */
 .track-title {
   font-weight: 600;
   overflow: hidden;
@@ -497,11 +638,13 @@ article.row,
   white-space: nowrap;
 }
 
+/* Durata, allineata a destra */
 .track-time {
   color: var(--text-secondary);
   text-align: right;
 }
 
+/* Cuore della riga */
 .track-fav {
   background: transparent;
   border: none;
@@ -515,7 +658,8 @@ article.row,
 
 /* ============================ Search ============================ */
 
-/* .form-control di Bootstrap, ma bianco con testo nero come Spotify */
+/* Campo di ricerca: è un .form-control di Bootstrap, ma chiaro (avorio)
+   con il testo scuro, come la barra di ricerca di Spotify */
 .search-input {
   max-width: 480px;
   padding: 12px 16px;
@@ -527,6 +671,8 @@ article.row,
     color: #757575;
   }
 
+  /* Quando si clicca nel campo, Bootstrap cambierebbe sfondo e aggiungerebbe un alone blu:
+     teniamo gli stessi colori e togliamo l'alone */
   &:focus {
     background-color: var(--bg-input);
     color: var(--text-input);
@@ -536,6 +682,8 @@ article.row,
 
 /* ============================ Player (generato da common.js) ============================ */
 
+/* Player in basso, diviso in 3 colonne:
+   brano corrente (1 parte) | comandi e barra (2 parti) | volume (1 parte) */
 .player {
   grid-area: player;
   background: var(--bg-player);
@@ -547,13 +695,15 @@ article.row,
   gap: 16px;
 }
 
+/* Colonna sinistra: copertina + titolo e artista */
 .player-track {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 0;
+  min-width: 0; /* permette di tagliare i testi lunghi con i puntini */
 }
 
+/* Copertina piccola del brano in riproduzione */
 .player-cover {
   width: 56px;
   aspect-ratio: 1;
@@ -574,6 +724,7 @@ article.row,
   min-width: 0;
 }
 
+/* Titolo e artista nel player: una riga sola, con i puntini se sono lunghi */
 .player-title,
 .player-artist {
   white-space: nowrap;
@@ -592,6 +743,7 @@ article.row,
   color: var(--text-secondary);
 }
 
+/* Colonna centrale: comandi sopra, barra di avanzamento sotto */
 .player-center {
   display: flex;
   flex-direction: column;
@@ -599,12 +751,14 @@ article.row,
   gap: 6px;
 }
 
+/* Riga dei comandi (casuale, precedente, play, successivo, ripeti) */
 .player-controls {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
+/* Comandi secondari: solo l'icona, senza sfondo */
 .btn-ctrl {
   background: transparent;
   border: none;
@@ -616,6 +770,7 @@ article.row,
   }
 }
 
+/* Pulsante play/pausa del player (nel tema vintage diventa in ottone, più in basso) */
 .btn-play {
   width: 36px;
   aspect-ratio: 1;
@@ -626,6 +781,7 @@ article.row,
   font-size: 14px;
 }
 
+/* Riga con tempo trascorso | barra | durata totale */
 .player-progress {
   display: flex;
   align-items: center;
@@ -636,17 +792,35 @@ article.row,
   color: var(--text-secondary);
 }
 
+/* Barra di avanzamento e barra del volume */
 .progress-bar,
 .volume-bar {
-  flex: 1;
+  flex: 1; /* la barra di avanzamento prende tutto lo spazio tra i due tempi */
   height: 4px;
   background: #4d4d4d;
   border-radius: 2px;
-  overflow: hidden;
   cursor: pointer;
-  position: relative;
+  position: relative; /* serve all'area cliccabile (::before) posizionata qui dentro */
+  transition: height 0.15s;
+
+  /* Area cliccabile invisibile: 8px in più sopra e sotto la barra.
+     inset: -8px 0 vuol dire top e bottom a -8px (escono dalla barra), left e right a 0.
+     La barra resta sottile, ma è molto più facile da cliccare.
+     Il clic sul ::before conta come clic sulla barra, quindi il JS funziona senza modifiche
+     (calcola la posizione solo in orizzontale, e la larghezza non cambia). */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -8px 0;
+  }
+
+  /* Con il mouse sopra la barra si ispessisce un po', per far capire che è cliccabile */
+  &:hover {
+    height: 6px;
+  }
 }
 
+/* Parte riempita della barra: la larghezza (da 0% a 100%) la imposta il JS */
 .progress-fill,
 .volume-fill {
   height: 100%;
@@ -655,11 +829,13 @@ article.row,
   border-radius: 2px;
 }
 
+/* Con il mouse sopra, il riempimento cambia colore */
 .progress-bar:hover .progress-fill,
 .volume-bar:hover .volume-fill {
   background: var(--success);
 }
 
+/* Colonna destra: icona e barra del volume, allineate a destra */
 .player-right {
   display: flex;
   align-items: center;
@@ -667,21 +843,26 @@ article.row,
   gap: 10px;
 }
 
+/* La barra del volume ha una larghezza fissa di 120px */
 .volume-bar {
   flex: 0 0 120px;
 }
 
-/* NB: .progress-bar esiste anche in Bootstrap (barre di avanzamento).
-   Qui viene sovrascritta: non usate il componente .progress di Bootstrap. */
+/* ATTENZIONE: .progress-bar è anche una classe di Bootstrap (le sue barre di avanzamento).
+   Qui annulliamo gli stili di Bootstrap sulla nostra barra del player.
+   Il selettore .player .progress-bar ha due classi, quindi vince su quello di Bootstrap.
+   Non usate il componente .progress di Bootstrap in questo progetto. */
 .player .progress-bar {
-  display: block;
+  display: block; /* Bootstrap la mette in flex */
   color: inherit;
   text-align: initial;
-  transition: none;
+  overflow: visible; /* Bootstrap mette hidden, che taglierebbe l'area cliccabile del ::before */
+  transition: height 0.15s; /* si anima solo lo spessore, non la larghezza come in Bootstrap */
 }
 
-/* ============================ Loading / empty ============================ */
+/* ============================ Caricamento / nessun risultato ============================ */
 
+/* Messaggi "Caricamento..." e "Nessun risultato", centrati */
 .loader,
 .empty {
   padding: 32px;
@@ -690,56 +871,69 @@ article.row,
 }
 
 /* ============================ Tema vintage ============================
-   Rifiniture del tema giradischi: legno, ottone, titoli con grazie.
-   Stanno dopo le regole base e prima del responsive, quindi le sovrascrivono. */
+   Rifiniture del tema giradischi: legno, ottone, titoli in Italiana.
+   Queste regole stanno dopo quelle base, quindi a parità di selettore
+   le sovrascrivono. Stanno prima della sezione Responsive, così le regole
+   per schermi piccoli possono a loro volta modificarle. */
 
-/* Sidebar in noce scuro liscio: il legno con le venature resta solo nel player */
+/* Sidebar in noce scuro liscio (sfumatura da sinistra a destra) con un'ombra interna
+   sul bordo destro, come un pannello di legno. Le venature restano solo nel player. */
 .sidebar {
   background: linear-gradient(90deg, #2e1c11, #3b2416 60%, #33200f);
   box-shadow: inset -8px 0 16px rgb(0 0 0 / 0.45);
 }
 
-/* Player come la base di un giradischi, con profilo in ottone */
+/* Player come la base di un giradischi: legno con venature e profilo in ottone sopra */
 .player {
   background: var(--wood-h);
   border-top: 3px solid var(--accent);
 }
 
-/* Sfondo con i solchi di un vinile appena accennati */
+/* Sfondo del main: una luce calda in alto e i solchi di un vinile appena accennati
+   (cerchi chiarissimi che partono dall'angolo in alto a destra) */
 .main {
   background:
     repeating-radial-gradient(circle at 100% 0, rgb(255 255 255 / 0.018) 0 1px, transparent 1px 5px),
     radial-gradient(circle at 50% -20%, #3a281c, var(--bg-base) 60%);
 }
 
-/* Logo: piccolo vinile con etichetta in ottone, nome in Italiana */
+/* Nome "EpiTunes" in Italiana */
 .brand {
   font-family: var(--font-display);
   font-size: 22px;
-  font-weight: 400; /* Italiana ha un solo peso: niente grassetto finto */
+  font-weight: 400; /* Italiana ha un solo peso: con il grassetto il browser ne inventerebbe uno finto */
   letter-spacing: 1px;
 }
 
-/* Il disco del logo è disegnato nel ::before, così può muoversi separatamente dal contenitore */
+/* --- Logo: disco in vinile animato ---
+   Il logo è fatto di due livelli:
+   - il contenitore .brand-mark (lo <span> nell'HTML), invisibile, che gira durante l'hover
+   - il disco vero e proprio, disegnato nel suo ::before, che fa l'ultimo giro "per inerzia"
+     quando il mouse esce
+   Le due rotazioni si sommano: così il disco rallenta piano invece di fermarsi di colpo. */
 .brand-mark {
-  position: relative;
-  background: none; /* toglie il quadrato giallo della regola base: il disco è tutto nel ::before */
-  border-radius: 50%; /* l'ombra del sollevamento resta rotonda */
-  /* Il contenitore gira come su un giradischi (circa 33 giri al minuto).
-     L'animazione è sempre applicata ma in pausa: con l'hover riparte,
-     quando il mouse esce si ferma dove si trova */
+  position: relative; /* il ::before si posiziona rispetto a questo */
+  background: none; /* toglie il quadrato giallo dello stile base: il disco è tutto nel ::before */
+  border-radius: 50%; /* così anche l'ombra dell'hover è rotonda */
+  /* Rotazione continua: un giro ogni 1,8 secondi (circa 33 giri al minuto, come un vinile),
+     a velocità costante (linear), all'infinito. Parte in pausa (paused):
+     con l'hover riparte, quando il mouse esce si ferma dove si trova invece di tornare all'inizio. */
   animation: spin-record 1.8s linear infinite paused;
+  /* Sollevamento e ombra dell'hover appaiono e spariscono gradualmente in 1,2 secondi */
   transition: scale 1.2s ease-out, box-shadow 1.2s ease-out;
 
+  /* Il disco disegnato: tre sfumature sovrapposte (la prima scritta sta sopra) */
   &::before {
-    content: "";
+    content: ""; /* obbligatorio, altrimenti il ::before non esiste */
     position: absolute;
-    inset: 0;
+    inset: 0; /* riempie tutto il contenitore */
     border-radius: 50%;
     background:
-      /* etichetta in ottone al centro */
+      /* 1. etichetta in ottone al centro: piena fino al 20% del raggio, poi trasparente */
       radial-gradient(circle, var(--accent) 0 20%, transparent 21%),
-      /* riflessi di luce sul vinile: rendono visibile la rotazione */
+      /* 2. due riflessi di luce, come su un vero vinile.
+            Servono a far vedere la rotazione: i solchi sono cerchi perfetti
+            e da soli sembrerebbero fermi anche mentre il disco gira */
       conic-gradient(
         transparent 0 10%,
         rgb(255 255 255 / 0.22) 14%,
@@ -747,41 +941,50 @@ article.row,
         rgb(255 255 255 / 0.14) 64%,
         transparent 70%
       ),
-      /* solchi del vinile */
+      /* 3. solchi del vinile: anelli nero e grigio scuro alternati */
       repeating-radial-gradient(circle, #111 0 2px, #262626 2px 3px);
-    /* Quando il mouse esce, il disco fa un ultimo giro rallentando fino a fermarsi (inerzia).
-       La curva parte alla stessa velocità della rotazione e decelera dolcemente */
+    /* Inerzia: quando il mouse esce, il disco fa un ultimo giro in 3,6 secondi rallentando.
+       La curva cubic-bezier parte veloce (circa alla stessa velocità della rotazione)
+       e frena dolcemente fino a fermarsi.
+       Nota: questa animazione parte anche al caricamento della pagina (il mouse non è sul logo),
+       quindi all'apertura il disco fa un giro e si ferma. */
     animation: spin-down 3.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 }
 
-/* Con l'hover: il contenitore gira, il disco interno non fa l'inerzia e tutto si solleva leggermente */
+/* Con il mouse sul logo: il contenitore gira, il disco interno non fa l'inerzia
+   e tutto si solleva leggermente con un'ombra */
 .brand:hover .brand-mark {
-  animation-play-state: running;
-  scale: 1.12;
-  /* ombra leggera sotto il disco sollevato + un alone tenue in ottone per staccarlo dal legno scuro */
+  animation-play-state: running; /* la rotazione riparte da dove si era fermata */
+  scale: 1.12; /* si ingrandisce del 12%, come se il disco si sollevasse dal piatto.
+                  Usiamo scale e non transform, perché transform lo usa già la rotazione */
+  /* Ombra in due strati: nera sotto il disco + un alone tenue in ottone
+     che lo stacca dal legno scuro della sidebar */
   box-shadow:
     0 6px 14px rgb(0 0 0 / 0.9),
     0 0 18px 2px rgb(201 162 39 / 0.45);
 
   &::before {
-    animation: none;
+    animation: none; /* durante l'hover l'inerzia è spenta */
   }
 }
 
+/* Un giro completo: usato per la rotazione continua */
 @keyframes spin-record {
   to {
     transform: rotate(360deg);
   }
 }
 
+/* Un giro completo: usato per l'inerzia (la frenata la fa la curva cubic-bezier) */
 @keyframes spin-down {
   to {
     transform: rotate(360deg);
   }
 }
 
-/* Niente rotazione né sollevamento per chi ha ridotto le animazioni nelle impostazioni del sistema */
+/* Accessibilità: chi ha attivato "riduci movimento" nelle impostazioni del sistema
+   non vede né la rotazione né il sollevamento del logo */
 @media (prefers-reduced-motion: reduce) {
   .brand-mark,
   .brand-mark::before,
@@ -791,16 +994,18 @@ article.row,
   }
 }
 
+/* Link attivo della sidebar: testo in ottone su sfondo scurito */
 .sidebar-nav a.active {
   background: rgb(0 0 0 / 0.3);
   color: var(--accent);
 }
 
+/* Titolo "I tuoi preferiti" in ottone */
 .sidebar-section-title {
   color: var(--accent);
 }
 
-/* Titoli in Italiana (art déco) */
+/* Titoli delle sezioni e titolo grande di album/artista in Italiana (art déco) */
 section.row h2,
 article.row h2,
 .music-row h2,
@@ -810,11 +1015,13 @@ article.row h2,
   letter-spacing: 1px;
 }
 
+/* "ALBUM" / "ARTISTA" in ottone, più spaziato */
 .hero-kicker {
   color: var(--accent);
   letter-spacing: 3px;
 }
 
+/* Bottoni Indietro/Avanti: marrone scuro con bordo e icona in ottone */
 .nav-btn {
   --bs-btn-bg: #2a1a10;
   --bs-btn-hover-bg: #3a281c;
@@ -822,19 +1029,21 @@ article.row h2,
   color: var(--accent);
 }
 
+/* "Studente Epicode": stesso stile dei bottoni Indietro/Avanti */
 .user-pill {
   background: #2a1a10;
   border: 1px solid var(--accent);
   color: var(--accent);
 }
 
-/* Pulsante "+ New user" accanto alla pill utente, con bordo tratteggiato in ottone */
+/* Contenitore del pulsante "New user" e della pill utente, affiancati */
 .user-action {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
+/* Pulsante "New user": trasparente con bordo tratteggiato in ottone */
 .btn-new-user {
   background: transparent;
   border: 1px dashed var(--accent);
@@ -849,7 +1058,8 @@ article.row h2,
   }
 }
 
-/* Card come buste di dischi, copertine leggermente seppia */
+/* Card come buste di dischi: bordo color legno e, con l'hover,
+   la card si alza di 3px con un'ombra sotto */
 .card {
   border: 1px solid var(--border);
   transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
@@ -860,80 +1070,128 @@ article.row h2,
   }
 }
 
+/* Tutte le copertine leggermente seppia (25%) e un po' più contrastate, come foto d'epoca */
 .card-image-wrap img,
 .album-cover img,
 .player-cover img {
   filter: sepia(0.25) contrast(1.05);
 }
 
-.album-cover {
-  border: 4px solid #f3e6c8;
-}
-
-/* Nella pagina artista la foto diventa un vinile */
+/* Nella pagina artista la foto diventa un vinile: niente cornice,
+   e intorno tre anelli fatti con box-shadow (nero, grigio, nero) + l'ombra normale */
 .artist-hero .album-cover {
   border: none;
   box-shadow: 0 0 0 10px #111, 0 0 0 12px #3a3a3a, 0 0 0 20px #111, var(--shadow);
 }
 
-/* Pulsanti play come manopole in ottone */
-.card-play,
-.btn-play-big,
+/* Play del player come una manopola in ottone lucido.
+   Il play delle card resta trasparente (vedi .card-play) e quello grande
+   di album/artista è uguale al cuore accanto (vedi sotto). */
 .btn-play {
   background: var(--brass);
   color: #2a1a10;
 }
 
-.btn-fav-big.is-fav {
-  border-color: var(--danger);
+/* Play e cuore grandi di album/artista: due cerchi uguali in ottone,
+   con il bordo sottile e senza riempimento. */
+.btn-play-big,
+.btn-fav-big {
+  width: 44px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 18px;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 
-/* Barre in "solco" scavato nel legno, riempimento in ottone */
+.btn-play-big {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding-left: 3px; /* il triangolo ▶ sembra centrato solo se spostato un po' a destra */
+
+  &:hover {
+    background: rgb(201 162 39 / 0.15); /* ottone al 15% */
+  }
+}
+
+.btn-fav-big {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 24px; /* il simbolo del cuore è più piccolo del triangolo del play: lo ingrandiamo per pareggiarli */
+  line-height: 1;
+
+  &:hover {
+    background: rgb(201 162 39 / 0.15); /* ottone al 15%, come il play */
+  }
+
+  /* Tra i preferiti: cuore e bordo rosso mattone.
+     Il cuore pieno (♥) nel font è più piccolo di quello vuoto (♡): lo ingrandiamo un po' */
+  &.is-fav {
+    color: var(--danger);
+    border-color: var(--danger);
+    font-size: 30px;
+  }
+}
+
+/* Barre di avanzamento e volume come un solco scavato nel legno
+   (sfondo scuro con un'ombra interna in alto) */
 .progress-bar,
 .volume-bar {
   background: #1a0f09;
   box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.8);
 }
 
+/* Riempimento delle barre in ottone, da scuro a chiaro */
 .progress-fill,
 .volume-fill {
   background: linear-gradient(90deg, #7a5c12, var(--accent), #f3dd8a);
 }
 
+/* Brano in riproduzione nella tracklist: in ottone */
 .track-row.is-playing {
   color: var(--accent);
 }
 
+/* Testo segnaposto della ricerca in un marrone chiaro, leggibile sull'avorio */
 .search-input::placeholder {
   color: #8a7357;
 }
 
 /* ============================ Icone ============================
-   Icone SVG dello sprite in cima a ogni pagina: linee sottili con estremità
-   arrotondate, colorate con il colore del testo (currentColor) */
+   Le icone sono SVG disegnati da noi e raccolti in uno "sprite" all'inizio di ogni pagina
+   (<svg> nascosto con i vari <symbol id="ico-...">).
+   Si usano così: <svg class="icon"><use href="#ico-home"></use></svg>
+   Sono a linea sottile, con le estremità arrotondate, e prendono il colore del testo
+   (currentColor): per cambiare colore a un'icona basta cambiare color al suo contenitore. */
 
 .icon {
-  width: 1em;
+  width: 1em; /* grande quanto il testo intorno: si ridimensiona con font-size */
   height: 1em;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vertical-align: -0.125em;
+  fill: none; /* niente riempimento, solo il contorno */
+  stroke: currentColor; /* contorno dello stesso colore del testo */
+  stroke-width: 1.5; /* spessore della linea */
+  stroke-linecap: round; /* estremità delle linee arrotondate */
+  stroke-linejoin: round; /* angoli arrotondati */
+  vertical-align: -0.125em; /* allinea l'icona al testo */
   flex-shrink: 0;
 }
 
+/* Icone della sidebar centrate nel loro spazio, un po' più grandi */
 .sidebar-nav .ico {
   display: grid;
   place-items: center;
   font-size: 20px;
 }
 
+/* Frecce Indietro/Avanti */
 .nav-btn .icon {
   font-size: 18px;
 }
 
+/* Comandi del player: icona centrata, in ottone al passaggio del mouse */
 .btn-ctrl {
   display: grid;
   place-items: center;
@@ -942,16 +1200,18 @@ article.row h2,
   transition: color 0.15s;
 
   &:hover {
-    color: var(--accent); /* ottone al passaggio del mouse */
+    color: var(--accent);
   }
 }
 
-/* Copertina del player: l'<img> creata dal JS resta nascosta finché non ha un src */
+/* Copertina del player: l'<img> creata dal JS resta nascosta finché non ha un src
+   (altrimenti il browser disegna il bordo dell'immagine mancante) */
 .player-cover img:not([src]),
 .player-cover img[src=""] {
   display: none;
 }
 
+/* Icona del volume */
 .volume-ico {
   display: grid;
   place-items: center;
@@ -959,10 +1219,277 @@ article.row h2,
   color: var(--text-secondary);
 }
 
+/* ============================ Modale "New user" ============================
+   Form di registrazione nello stile del tema vintage.
+   La modale è nascosta e si apre aggiungendo la classe is-open
+   all'overlay (#register-modal). */
+
+/* Overlay: copre tutta la finestra con uno sfondo scuro e sfocato */
+.welcome-overlay {
+  position: fixed; /* fisso sulla finestra, non scorre con la pagina */
+  inset: 0; /* copre tutto lo schermo */
+  z-index: 1050; /* sopra la topbar sticky di Bootstrap (che ha 1020) */
+  display: none; /* nascosto finché non ha la classe is-open */
+  place-items: center; /* riquadro al centro dello schermo */
+  padding: 16px;
+  background: rgb(10 6 4 / 0.72); /* marrone quasi nero al 72% */
+  backdrop-filter: blur(3px); /* sfoca la pagina dietro */
+  overflow-y: auto; /* su schermi bassi la modale può scorrere */
+
+  /* Modale aperta: compare con una dissolvenza... */
+  &.is-open {
+    display: grid;
+    animation: welcome-fade 0.25s ease-out;
+
+    /* ...e il riquadro sale leggermente */
+    & .welcome-box {
+      animation: welcome-rise 0.3s ease-out;
+    }
+  }
+}
+
+/* Riquadro della modale: legno scuro sfumato con il profilo in ottone in alto */
+.welcome-box {
+  position: relative; /* il pulsante di chiusura si posiziona rispetto a questo */
+  width: min(640px, 100%); /* largo 640px, ma mai più dello schermo */
+  padding: 32px 36px 24px;
+  background: linear-gradient(180deg, var(--bg-elev), var(--bg-base));
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.7);
+}
+
+/* Pulsante × di chiusura, in alto a destra */
+.welcome-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 32px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+}
+
+/* Intestazione: "NUOVO UTENTE" piccolo in ottone... */
+.welcome-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--accent);
+}
+
+/* ...titolo in Italiana... */
+.welcome-title {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-weight: 400; /* Italiana ha un solo peso */
+  font-size: 38px;
+  letter-spacing: 1px;
+}
+
+/* ...e testo di spiegazione in beige */
+.welcome-text {
+  margin: 0 0 24px;
+  color: var(--text-secondary);
+}
+
+/* Righe del form: due campi affiancati (su mobile uno sotto l'altro, vedi in fondo) */
+.register-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px; /* nessuno spazio verticale, 16px tra le colonne */
+}
+
+/* Singolo campo: etichetta, input e messaggio di errore uno sotto l'altro */
+.register-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Campo largo metà riga (data di nascita), allineato alle colonne sopra */
+.register-half {
+  width: calc(50% - 8px); /* metà riga meno metà dello spazio tra le colonne */
+}
+
+/* Etichette dei campi: piccole, maiuscole e spaziate */
+.welcome-label {
+  margin-bottom: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+}
+
+/* Campi di testo, email, password e data */
+.register-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgb(0 0 0 / 0.25); /* leggermente più scuro del riquadro */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font: inherit; /* stesso font del resto della pagina */
+  color-scheme: dark; /* calendario e icone del campo data in versione scura */
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  /* Campo selezionato: bordo in ottone con un alone */
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgb(201 162 39 / 0.25);
+  }
+
+  /* Campo non valido: bordo rosso mattone (quando il JS imposta aria-invalid="true") */
+  &[aria-invalid="true"] {
+    border-color: var(--danger);
+  }
+}
+
+/* Messaggi di errore sotto i campi. Hanno un'altezza minima anche quando sono vuoti:
+   così, quando compare un errore, il form non si sposta */
+.register-error {
+  min-height: 18px;
+  margin: 4px 0 8px;
+  font-size: 12px;
+  color: var(--danger);
+}
+
+/* Riga del consenso: checkbox + testo */
+.register-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  color: var(--text-secondary);
+
+  & input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent); /* la spunta della checkbox in ottone */
+    flex-shrink: 0;
+  }
+}
+
+/* Piede della modale: nota a sinistra, pulsanti a destra, con una linea sopra */
+.welcome-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap; /* su schermi stretti i pulsanti vanno sotto la nota */
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* "Tutti i campi sono obbligatori" */
+.register-note {
+  margin: 0;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Pulsanti Annulla e Registrati, spinti a destra */
+.welcome-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* "Annulla": solo testo, senza sfondo */
+.btn-skip {
+  background: transparent;
+  border: none;
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+/* "Registrati": pulsante pieno in ottone lucido */
+.btn-continue {
+  background: var(--brass);
+  border: none;
+  border-radius: 999px; /* completamente arrotondato ai lati */
+  padding: 10px 26px;
+  color: #2a1a10; /* marrone scuro sull'ottone */
+  font-weight: 700;
+  transition: filter 0.15s;
+
+  &:hover {
+    filter: brightness(1.08); /* leggermente più luminoso */
+  }
+}
+
+/* Dissolvenza dell'overlay all'apertura (parte da trasparente) */
+@keyframes welcome-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Il riquadro parte trasparente e 12px più in basso, poi sale al suo posto */
+@keyframes welcome-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* Modale su mobile: meno spazio interno, titolo più piccolo e campi uno sotto l'altro */
+@media (width < 576px) {
+  .welcome-box {
+    padding: 28px 20px 20px;
+  }
+
+  .welcome-title {
+    font-size: 30px;
+  }
+
+  .register-row {
+    grid-template-columns: 1fr;
+  }
+
+  .register-half {
+    width: 100%;
+  }
+}
+
+/* Niente animazioni di apertura per chi ha attivato "riduci movimento" */
+@media (prefers-reduced-motion: reduce) {
+  .welcome-overlay.is-open,
+  .welcome-overlay.is-open .welcome-box {
+    animation: none;
+  }
+}
+
 /* ============================ Responsive ============================ */
 
-/* Il main si restringe: hero in colonna, card più piccole.
-   Usiamo la larghezza del main (container query), non della finestra. */
+/* Container queries: guardano la larghezza del main, non quella della finestra.
+   Così funzionano bene anche quando la sidebar occupa parte dello schermo. */
+
+/* Main più stretto di 720px: nell'hero copertina e testi vanno uno sotto l'altro
+   e la copertina si rimpicciolisce */
 @container main (width < 720px) {
   .album-hero,
   .artist-hero {
@@ -975,19 +1502,25 @@ article.row h2,
   }
 }
 
+/* Main più stretto di 540px: card più piccole (almeno 140px invece di 180px),
+   così ne stanno di più per riga */
 @container main (width < 540px) {
   .grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 }
 
-/* Tablet (sotto il breakpoint md di Bootstrap): sidebar solo icone */
+/* Media queries: guardano la larghezza della finestra.
+   Usano gli stessi breakpoint di Bootstrap (576px = sm, 768px = md). */
+
+/* Tablet (sotto i 768px): sidebar stretta (80px) con le sole icone */
 @media (width < 768px) {
   .app {
     grid-template-columns: 80px 1fr;
   }
 
   .sidebar {
+    /* nascondiamo nome del logo, titolo e lista dei preferiti e i testi dei link */
     & .brand-text,
     & .sidebar-section-title,
     & .sidebar-list,
@@ -995,6 +1528,7 @@ article.row h2,
       display: none;
     }
 
+    /* icone dei link centrate */
     & .sidebar-nav a {
       justify-content: center;
       padding: 10px 0;
@@ -1002,8 +1536,9 @@ article.row h2,
   }
 }
 
-/* Mobile (sotto il breakpoint sm di Bootstrap): sidebar nascosta
-   (con d-none d-sm-block nell'HTML) e player a due colonne */
+/* Mobile (sotto i 576px): la sidebar sparisce (lo fanno le classi d-none d-sm-block
+   nell'HTML), la griglia ha una colonna sola e il player passa a due colonne
+   senza il volume */
 @media (width < 576px) {
   .app {
     grid-template-columns: 1fr;

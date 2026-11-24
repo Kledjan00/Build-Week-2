@@ -16,9 +16,10 @@
    6) Click cover senza play -> link a album.html?id=albumId (opzionale)
 */
 
-import { initPage } from "./common.js";
+import { initPage, renderSidebarFavs } from "./common.js";
 import {
   el,
+  $,
   fetchModular,
   historyDump as getHistory,
   getFavourites,
@@ -29,23 +30,23 @@ import {
 const player = initPage("home");
 const home = document.querySelector(".home");
 
-
-
 const renderCard = (track) => {
+  // Cuore: .card-fav lo posiziona e lo mostra con l'hover;
+  // .is-fav lo colora di rosso mattone e lo lascia sempre visibile se il brano è tra i preferiti
   const heartBtn = el("button", {
-    className: "btn btn-sm btn-dark position-absolute top-0 end-0 m-2 rounded-circle",
+    className: isFavourite(track) ? "card-fav is-fav" : "card-fav",
     text: isFavourite(track) ? "♥" : "♡",
     attrs: { "aria-label": "Preferito", type: "button" },
   });
 
+  // Play: pulsante in ottone che compare al passaggio del mouse sulla card
   const playBtn = el("button", {
-    className: "btn btn-success btn-sm position-absolute bottom-0 end-0 m-2 rounded-circle",
+    className: "card-play",
     text: "▶",
     attrs: { "aria-label": "Riproduci", type: "button" },
   });
 
   const cover = el("img", {
-    className: "card-img-top",
     attrs: {
       src: (track.artworkUrl100 || "").replace("100x100", "300x300"),
       alt: track.trackName ?? "",
@@ -53,50 +54,103 @@ const renderCard = (track) => {
     },
   });
 
+  // Stessa struttura delle card scritte nell'HTML: copertina, titolo, artista, play e cuore
   const card = el(
     "div",
-    { className: "card h-100 bg-dark text-light border-0 shadow-sm", style: { cursor: "pointer" } },
-    el("div", { className: "position-relative" }, cover, heartBtn, playBtn),
-    el(
-      "div",
-      { className: "card-body p-2" },
-      el("h3", { className: "card-title fs-6 mb-1 text-truncate", text: track.trackName ?? "Sconosciuto" }),
-      el("p", { className: "card-text small text-secondary mb-0 text-truncate", text: track.artistName ?? "—" })
-    )
+    {
+      className: "card",
+      attrs: { "data-track-id": track.trackId }
+    },
+    el("div", { className: "card-image-wrap" }, cover),
+    el("h3", { className: "card-title", text: track.trackName ?? "Sconosciuto" }),
+    el("p", { className: "card-sub", text: track.artistName ?? "—" }),
+    playBtn,
+    heartBtn
   );
 
   // click sulla card (e sul play) -> riproduce
-  card.addEventListener("click", () => player.play(track));
+  card.addEventListener("click", () => {
+    player.play(track);
+    updateHistory();
+  });
 
   // click sul cuore -> preferito, senza far partire il brano
   heartBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     toggleFavourite(track);
-    heartBtn.textContent = isFavourite(track) ? "♥" : "♡";
+
+    // sincronizza il cuore di ogni card con questa traccia
+    document
+      .querySelectorAll(`.card[data-track-id="${track.trackId}"] .card-fav`)
+      .forEach((btn) => {
+        btn.textContent = isFavourite(track) ? "♥" : "♡";
+        btn.classList.toggle("is-fav", isFavourite(track));
+      });
+
+    updateFavs();
   });
 
-  return el("div", { className: "col" }, card);
+  return card;
 };
 
-const renderRow = (rowTitle, tracks) => {
+const renderRow = (rowTitle, tracks, id = rowTitle) => {
   const playable = tracks.filter((t) => t.previewUrl);
-  if (!playable.length) return;
+  if (!playable.length) return null;
 
-  const grid = el(
-    "div",
-    { className: "row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-6 g-3" },
-    ...playable.map(renderCard)
+  const grid = el("div", { className: "grid", id }, ...playable.map(renderCard));
+  const section = el(
+    "article",
+    { className: "row", attrs: { "data-row": id } },
+    el("h2", { text: rowTitle }),
+    grid
   );
-
-  home.append(
-    el(
-      "section",
-      { className: "row-section mb-4" },
-      el("h2", { className: "h4 mb-3", text: rowTitle }),
-      grid
-    )
-  );
+  home.append(section);
+  return section;
 };
+
+function updateFavs() {
+  renderSidebarFavs();
+
+  const favourites = getFavourites().filter((t) => t.previewUrl);
+  const existing = $('[data-row="Preferiti"]');
+
+  // nessun preferito: rimuovi l'intera riga
+  if (!favourites.length) {
+    existing?.remove();
+    return;
+  }
+
+  // riga già presente: svuota e ridisegna
+  if (existing) {
+    existing.querySelector(".grid").replaceChildren(...favourites.map(renderCard));
+    return;
+  }
+
+  // riga assente (primo preferito): creala e mettila in cima, dopo la history
+  const section = renderRow("Preferiti", favourites);
+  const history = $('[data-row="Riprodotti di recente"]');
+  if (history) history.after(section);
+  else home.prepend(section);
+}
+
+function updateHistory() {
+  const history = getHistory().reverse().slice(0, 12).filter((t) => t.previewUrl);
+  const existing = $('[data-row="Riprodotti di recente"]');
+
+  if (!history.length) {
+    existing?.remove();
+    return;
+  }
+
+  if (existing) {
+    existing.querySelector(".grid").replaceChildren(...history.map(renderCard));
+    return;
+  }
+
+  const section = renderRow("Riprodotti di recente", history);
+  home.prepend(section);
+}
+
 
 const loadHome = async () => {
   const [pop, rock, hits] = await Promise.all([
@@ -105,15 +159,17 @@ const loadHome = async () => {
     fetchModular("hits pop", { media: "music", entity: "song", limit: 12 }),
   ]);
 
-  const history = getHistory();
+  const history = getHistory().reverse().slice(0, 12);
   const favourites = getFavourites();
 
   // renderRow salta da sola le liste vuote
   renderRow("Riprodotti di recente", history);
-  renderRow("I tuoi preferiti", favourites);
+  renderRow("Preferiti", favourites);
   renderRow("Suggerimenti pop", pop);
   renderRow("Suggerimenti rock", rock);
   renderRow("Suggerimenti hits", hits);
 };
+
+
 
 loadHome();

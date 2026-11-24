@@ -21,8 +21,8 @@
       - artist -> click = window.location.href = "artist.html?id=" + artistId
 */
 
-import { initPage } from "./common.js";
-import {el, $, debounce, fetchItem, fetchByGenre, fetchModular, isFavourite, toggleFavourite, getFavourites } from "./helper.js";
+import { initPage, renderSidebarFavs } from "./common.js";
+import { el, $, debounce, fetchItem, fetchByGenre, fetchModular, isFavourite, toggleFavourite, getFavourites } from "./helper.js";
 
 const player = initPage("search");
 
@@ -35,20 +35,22 @@ const gridAlbums = document.querySelector("#grid-albums");
 const gridArtists = document.querySelector("#grid-artists");
 
 const renderCard = (track) => {
+  // Cuore: .card-fav lo mette a destra di titolo e artista;
+  // .is-fav lo colora di rosso mattone e lo lascia sempre visibile
   const heartBtn = el("button", {
-    className: "btn btn-sm btn-dark position-absolute top-0 end-0 m-2 rounded-circle",
+    className: isFavourite(track) ? "card-fav is-fav" : "card-fav",
     text: isFavourite(track) ? "♥" : "♡",
     attrs: { "aria-label": "Preferito", type: "button" },
   });
 
+  // Play: cerchio trasparente al centro della copertina, compare con l'hover
   const playBtn = el("button", {
-    className: "btn btn-success btn-sm position-absolute bottom-0 end-0 m-2 rounded-circle",
+    className: "card-play",
     text: "▶",
     attrs: { "aria-label": "Riproduci", type: "button" },
   });
 
   const cover = el("img", {
-    className: "card-img-top",
     attrs: {
       src: (track.artworkUrl100 || "").replace("100x100", "300x300"),
       alt: track.trackName ?? "",
@@ -58,29 +60,59 @@ const renderCard = (track) => {
 
   const card = el(
     "div",
-    { className: "card h-100 bg-dark text-light border-0 shadow-sm", style: { cursor: "pointer" } },
-    el("div", { className: "position-relative" }, cover, heartBtn, playBtn),
-    el(
-      "div",
-      { className: "card-body p-2" },
-      el("h3", { className: "card-title fs-6 mb-1 text-truncate", text: track.trackName ?? "Sconosciuto" }),
-      el("p", { className: "card-text small text-secondary mb-0 text-truncate", text: track.artistName ?? "—" })
-    )
+    { className: "card" },
+    el("div", { className: "card-image-wrap" }, cover),
+    el("h3", { className: "card-title", text: track.trackName ?? "Sconosciuto" }),
+    el("p", { className: "card-sub", text: track.artistName ?? "—" }),
+    playBtn,
+    heartBtn
   );
 
   // click sulla card (e sul play) -> riproduce
-  card.addEventListener("click", () => player.play(track));
+  card.addEventListener("click", () => {
+    player.play(track);
+    updateHistory();
+  });
 
   // click sul cuore -> preferito, senza far partire il brano
   heartBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     toggleFavourite(track);
+    renderSidebarFavs();
     heartBtn.textContent = isFavourite(track) ? "♥" : "♡";
+    heartBtn.classList.toggle("is-fav", isFavourite(track));
   });
 
-  return el("div", { className: "col" }, card);
+  return card;
 };
-const renderAlbumCard = (album) => { /* TODO */ };
+
+const renderAlbumCard = (album) => {
+  const cover = el("img", {
+    attrs: {
+      src: (album.artworkUrl100 || "").replace("100x100", "300x300"),
+      alt: album.collectionName ?? "",
+      loading: "lazy",
+    },
+  });
+
+  // Stessa struttura delle card dei brani, senza play e cuore
+  const card = el(
+    "div",
+    { className: "card" },
+    el("div", { className: "card-image-wrap" }, cover),
+    el("h3", { className: "card-title", text: album.collectionName ?? "Sconosciuto" }),
+    el("p", { className: "card-sub", text: album.artistName ?? "—" })
+  );
+
+  // click sulla card -> pagina dell'album
+  card.addEventListener("click", () => {
+    window.location.href = "album.html?id=" + album.collectionId;
+    updateHistory();
+  });
+
+  return card;
+};
+
 const renderArtistCard = (artist) => { /* TODO */ };
 
 let lastTerm = "";
@@ -94,16 +126,26 @@ const doSearch = async (term) => {
 
   if (!term) {
     gridTracks.replaceChildren();
+    gridAlbums.replaceChildren();
     showRows(false);
     return;
   }
 
-  const results = await fetchItem(term);
-  if (term !== lastTerm) return; // risposta obsoleta
+  const [results, albums] = await Promise.all([
+    fetchModular(term, { media: "music", entity: "song", limit: 12 }),
+    fetchModular(term, { media: "music", entity: "album", limit: 8 }),
+  ]);
+
+  if (term !== lastTerm) return;
 
   const tracks = results.filter((t) => t.previewUrl);
+  const albumList = albums.filter((a) => a.collectionName);
+
   gridTracks.replaceChildren(...tracks.map(renderCard));
-  showRows(true);
+  gridAlbums.replaceChildren(...albumList.map(renderAlbumCard));
+
+  rowTracks.hidden = tracks.length === 0;
+  rowAlbums.hidden = albumList.length === 0;
 };
 
 const debouncedSearch = debounce(doSearch, 400);
@@ -111,7 +153,5 @@ const debouncedSearch = debounce(doSearch, 400);
 input.addEventListener("input", (event) => {
   debouncedSearch(event.target.value.trim());
 });
-
-
 
 // TODO: al caricamento, recupera l'ultima query da localStorage e lancia doSearch(lastQuery)
