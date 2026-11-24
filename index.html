@@ -124,16 +124,16 @@
         <h2 class="welcome-title" id="register-title">Crea il tuo account</h2>
         <p class="welcome-text">Compila i campi per registrarti a EpiTunes</p>
 
-        <form id="register-form" novalidate>
+        <form id="register-form">
           <div class="register-row">
             <div class="register-field">
               <label class="welcome-label" for="register-username">Nome utente</label>
-              <input class="register-input" type="text" id="register-username" autocomplete="username">
+              <input class="register-input" type="text" id="register-username" autocomplete="username" required minlength="3">
               <p class="register-error" id="register-username-error"></p>
             </div>
             <div class="register-field">
-              <label class="welcome-label" for="register-email">Email</label>
-              <input class="register-input" type="email" id="register-email" autocomplete="email">
+              <label class="welcome-label" for="register-email">E-mail</label>
+              <input class="register-input" type="email" id="register-email" autocomplete="email" required>
               <p class="register-error" id="register-email-error"></p>
             </div>
           </div>
@@ -141,24 +141,24 @@
           <div class="register-row">
             <div class="register-field">
               <label class="welcome-label" for="register-password">Password</label>
-              <input class="register-input" type="password" id="register-password" autocomplete="new-password">
+              <input class="register-input" type="password" id="register-password" autocomplete="new-password" required minlength="8">
               <p class="register-error" id="register-password-error"></p>
             </div>
             <div class="register-field">
               <label class="welcome-label" for="register-repeat">Ripeti password</label>
-              <input class="register-input" type="password" id="register-repeat" autocomplete="new-password">
+              <input class="register-input" type="password" id="register-repeat" autocomplete="new-password" required>
               <p class="register-error" id="register-repeat-error"></p>
             </div>
           </div>
 
           <div class="register-field register-half">
             <label class="welcome-label" for="register-birth">Data di nascita</label>
-            <input class="register-input" type="date" id="register-birth">
+            <input class="register-input" type="date" id="register-birth" required>
             <p class="register-error" id="register-birth-error"></p>
           </div>
 
           <div class="register-check">
-            <input type="checkbox" id="register-consent">
+            <input type="checkbox" id="register-consent" required>
             <label for="register-consent">Acconsento al trattamento dei miei dati personali</label>
           </div>
           <p class="register-error" id="register-consent-error"></p>

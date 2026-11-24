@@ -113,7 +113,47 @@ const renderAlbumCard = (album) => {
   return card;
 };
 
-const renderArtistCard = (artist) => { /* TODO */ };
+const getArtistPicture = async (term) => {
+  try {
+    const response = await fetch(
+      `https://api.deezer.com/search/artist?q=${encodeURIComponent(term)}`
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const results = await response.json();
+    const artist = results.data[0]; // i risultati stanno in results.data
+    return artist?.picture_xl ?? null;
+  } catch (err) {
+    console.error("Errore Deezer:", err);
+    return null;
+  }
+};
+
+const renderArtistCard = async (artist) => {
+  const pic = await getArtistPicture(artist.artistName);
+
+  const frame = el("img", {
+    attrs: {
+      src: pic,
+      alt: artist.artistName ?? "Artista",
+      loading: "lazy",
+    },
+  });
+
+  const card = el(
+    "div",
+    { className: "card" },
+    el("div", { className: "card-image-wrap" }, frame),
+    el("h3", { className: "card-title", text: artist.artistName ?? "Artista sconosciuto" }),
+    el("p", { className: "card-sub", text: artist.primaryGenreName ?? "Artista" })
+  );
+
+  card.addEventListener("click", () => {
+    window.location.href = "artist.html?id=" + artist.artistId;
+  });
+
+  return card;
+};
 
 let lastTerm = "";
 
@@ -127,26 +167,34 @@ const doSearch = async (term) => {
   if (!term) {
     gridTracks.replaceChildren();
     gridAlbums.replaceChildren();
+    gridArtists.replaceChildren();
     showRows(false);
     return;
   }
 
-  const [results, albums] = await Promise.all([
+  const [results, albums, artists] = await Promise.all([
     fetchModular(term, { media: "music", entity: "song", limit: 12 }),
     fetchModular(term, { media: "music", entity: "album", limit: 8 }),
+    fetchModular(term, { media: "music", entity: "musicArtist", attribute: "artistTerm", limit: 8 }),
   ]);
 
   if (term !== lastTerm) return;
 
   const tracks = results.filter((t) => t.previewUrl);
-  const albumList = albums.filter((a) => a.collectionName);
+  const albumList = albums.filter((a) => a.collectionName && a.collectionId);
+  const artistsList = artists.filter((a) => a.artistName && a.artistId);
+
+  const artistCards = await Promise.all(artistsList.map(renderArtistCard));
 
   gridTracks.replaceChildren(...tracks.map(renderCard));
   gridAlbums.replaceChildren(...albumList.map(renderAlbumCard));
+  gridArtists.replaceChildren(...artistCards);
 
   rowTracks.hidden = tracks.length === 0;
   rowAlbums.hidden = albumList.length === 0;
+  rowArtists.hidden = artistsList.length === 0;
 };
+
 
 const debouncedSearch = debounce(doSearch, 400);
 
@@ -155,3 +203,7 @@ input.addEventListener("input", (event) => {
 });
 
 // TODO: al caricamento, recupera l'ultima query da localStorage e lancia doSearch(lastQuery)
+
+
+
+

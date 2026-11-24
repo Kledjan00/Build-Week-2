@@ -1204,6 +1204,60 @@ article.row h2,
   }
 }
 
+/* --- Copertina del player come la busta di un vinile consumata ---
+   Sopra l'immagine mettiamo un livello (::after) con i segni dell'usura,
+   e l'immagine stessa è più sbiadita delle altre copertine. */
+.player-cover {
+  position: relative; /* il ::after si posiziona rispetto alla copertina */
+  border-radius: 3px; /* angoli appena smussati, come cartone usato */
+  /* bordo chiaro sottile (spigoli sfregati) + ombra scura all'interno (bordi rovinati) */
+  box-shadow:
+    inset 0 0 0 1px rgb(243 230 200 / 0.18),
+    0 2px 6px rgb(0 0 0 / 0.5);
+
+  /* Colori sbiaditi dal tempo: più seppia, meno saturazione e un po' meno contrasto */
+  & img {
+    filter: sepia(0.45) saturate(0.75) contrast(0.92) brightness(0.95);
+  }
+
+  /* Livello dei segni dell'usura (cerchio, pieghe, angoli), sopra l'immagine.
+     I segni sono avorio semitrasparente, quindi si vedono sia sulle copertine
+     chiare sia su quelle scure. Le sfumature sono sovrapposte
+     (la prima scritta sta sopra): */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none; /* non blocca i clic */
+    background:
+      /* 1. "ring wear": il cerchio chiaro lasciato dal disco dentro la busta */
+      radial-gradient(circle at 52% 50%, transparent 38%, rgb(243 230 200 / 0.16) 41%, transparent 45%),
+      /* 2. due pieghe sottili in diagonale */
+      linear-gradient(115deg, transparent 47%, rgb(243 230 200 / 0.14) 48%, transparent 49.5%),
+      linear-gradient(20deg, transparent 70%, rgb(243 230 200 / 0.1) 71%, transparent 72%),
+      /* 3. angoli consumati: più chiari agli angoli, come cartone sfregato */
+      radial-gradient(circle at 0 0, rgb(243 230 200 / 0.22), transparent 22%),
+      radial-gradient(circle at 100% 100%, rgb(243 230 200 / 0.16), transparent 20%),
+      radial-gradient(circle at 100% 0, rgb(243 230 200 / 0.1), transparent 16%);
+    /* bordi interni più scuri, come una busta rovinata ai lati */
+    box-shadow: inset 0 0 8px rgb(0 0 0 / 0.55);
+  }
+
+  /* Grana della carta: rumore generato con un filtro SVG (feTurbulence),
+     in un livello a parte e molto leggero (opacity), così non ingrigisce la copertina */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1; /* sopra l'immagine */
+    border-radius: inherit;
+    pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.12;
+  }
+}
+
 /* Copertina del player: l'<img> creata dal JS resta nascosta finché non ha un src
    (altrimenti il browser disegna il bordo dell'immagine mancante) */
 .player-cover img:not([src]),

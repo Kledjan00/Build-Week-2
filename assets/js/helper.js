@@ -4,26 +4,22 @@ const STORAGE_KEY_FAVOURITES = "epitunes_favourites";
 export const STORAGE_KEY_LAST_SEARCH = "epitunes_last_search";
 const MAX_HISTORY = 12;
 
-
-
 export function el(tag, { className, id, text, attrs, style } = {}, ...children) {
     const node = document.createElement(tag);
     if (className) node.className += className;
     if (id) node.id = id;
     if (text !== undefined) node.textContent = text;
     if (attrs) {
-        for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+        for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v); //k, v da sostituire
     }
     if (style) Object.assign(node.style, style);
     node.append(...children);
     return node;
 }
 
-
 export function $(selector) {
    return document.querySelector(selector);
 }
-
 
 export function debounce(fn, delay = 400) {
     let timer;
@@ -32,8 +28,6 @@ export function debounce(fn, delay = 400) {
         timer = setTimeout(() => fn(...args), delay);
     };
 }
-
-
 
 export async function fetchItem(term, entity = "song", limit = 25) {
     try {
@@ -48,7 +42,6 @@ export async function fetchItem(term, entity = "song", limit = 25) {
     }
 }
 
-
 export async function fetchByGenre(genre, entity = "song", limit = 25) {
     try {
         const res = await fetch(
@@ -61,7 +54,6 @@ export async function fetchByGenre(genre, entity = "song", limit = 25) {
         return [];
     }
 }
-
 
 export async function fetchModular(
     term = "Frank Sinatra",
@@ -84,8 +76,6 @@ export async function fetchModular(
         return [];
     }
 }
-
-
 
 //term = qualsiasi stringa
 //entity = ["musicArtist", "musicTrack", "album", "musicVideo", "mix", "song"]
@@ -149,5 +139,3 @@ export function toggleFavourite(track) {
     localStorage.setItem("STORAGE_KEY_FAVOURITES", JSON.stringify(updated)); //aggiorna il localStorage
     return !exists; // true se ha aggiunto, false se ha rimosso
 }
-
-

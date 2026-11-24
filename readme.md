@@ -212,7 +212,7 @@ L'applicazione ha un tema **vintage ispirato ai giradischi**, con un layout a 3 
 | **ver. 0.0** | Commit iniziale e impostazione del progetto |
 | **ver. 1.0** | **HTML:** aggiunto Bootstrap 5.3.8 (solo CSS) in tutte le pagine, sprite di icone SVG, sidebar e player scritti direttamente nell'HTML e topbar con il pulsante "+ New user"; **CSS:** tema vintage da giradischi con palette legno, ottone e avorio, font Italiana e Libre Baskerville, logo a vinile animato, pulsanti play in ottone, foto artista a forma di vinile e copertine con tinta seppia; **JavaScript:** nuove funzioni in helper.js (fetchModular, cronologia e preferiti), classi Track, Album, Artist e Player in common.js, righe di suggerimenti in home.js, ricerca con debounce in search.js e hero dell'album in album.js |
 | **ver. 2.0** | **HTML e CSS:** aggiunte le modali di registrazione e "Cosa ascolti di solito?", CSS riorganizzato con classi proprie al posto di Bootstrap per card, hero e righe dei brani; **JavaScript (album e home):** tracklist completa, cuori dei preferiti sincronizzati, righe "Riprodotti di recente" e "Preferiti" aggiornate in tempo reale; **JavaScript (ricerca):** la ricerca trova anche gli album e un clic apre la loro pagina; **In corso:** apertura e controllo della registrazione, passaggio alla scelta di generi e artisti |
-
+| **ver. 2.1** | HTML e CSS: form di registrazione con i controlli del browser, app.css commentato; JavaScript: pagina artista funzionante, la ricerca ora trova anche gli artisti con la loro foto. In corso: new-user.js, mancano il controllo dei campi e il passaggio alla scelta della musica.
 ---
 
 ## Realizzato da
