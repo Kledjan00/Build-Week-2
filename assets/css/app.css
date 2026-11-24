@@ -1,5 +1,7 @@
+@import url("https://fonts.googleapis.com/css2?family=Italiana&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap");
+
 /* ============================================================
-   EpiTunes — stile personalizzato
+   EpiTunes — stile personalizzato, tema VINTAGE (giradischi)
    Da caricare DOPO bootstrap.min.css.
 
    Bootstrap fornisce: tema scuro, reboot, utility, form e bottoni.
@@ -14,25 +16,38 @@
 /* ============================ Variabili ============================ */
 
 :root[data-bs-theme="dark"] {
-  /* Palette EpiTunes */
-  --bg-base: #121212;
-  --bg-elev: #181818;
-  --bg-elev-hover: #282828;
-  --bg-sidebar: #000000;
-  --bg-player: #181818;
-  --bg-input: #ffffff;
-  --text-primary: #ffffff;
-  --text-secondary: #b3b3b3;
-  --text-input: #000000;
-  --accent: #f7d800; /* giallo Epicode */
-  --accent-dark: #d6ba00;
-  --success: #1ed760; /* verde "play" */
-  --danger: #e25555;
-  --border: #2a2a2a;
+  /* Palette EpiTunes — legno, ottone e avorio */
+  --bg-base: #1e1410; /* marrone quasi nero: sfondo generale della pagina */
+  --bg-elev: #2b1d15; /* marrone scuro: sfondo di card e tracklist */
+  --bg-elev-hover: #3a281c; /* marrone medio: card e link al passaggio del mouse */
+  --bg-sidebar: #3b2416; /* noce: colore di base della sidebar */
+  --bg-player: #2a1a10; /* noce scuro: colore di base del player (sotto le venature) */
+  --bg-input: #f3e6c8; /* avorio: sfondo del campo di ricerca */
+  --text-primary: #f3e6c8; /* avorio: testo principale e titoli */
+  --text-secondary: #bfa98a; /* beige: testo secondario (artisti, durate, sottotitoli) */
+  --text-input: #2a1a10; /* marrone scuro: testo scritto nel campo di ricerca */
+  --accent: #c9a227; /* ottone: dettagli, link attivi, bordi e brano in riproduzione */
+  --success: #c9a227; /* ottone: pulsanti play */
+  --danger: #b5432f; /* rosso mattone: cuore dei preferiti */
+  --border: #5a3d28; /* marrone legno: bordi di card e separatori */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
-  --shadow: 0 6px 24px rgb(0 0 0 / 0.5);
+  --shadow: 0 6px 24px rgb(0 0 0 / 0.5); /* ombra nera al 50%: copertine e pulsanti in rilievo */
+
+  /* Ottone lucido per i pulsanti play: riflesso chiaro (#f3dd8a) in alto a sinistra,
+     ottone (#c9a227) al centro, bronzo scuro (#7a5c12) sul bordo */
+  --brass: radial-gradient(circle at 35% 30%, #f3dd8a, #c9a227 45%, #7a5c12);
+
+  /* Font: Italiana (art déco) per logo e titoli, Libre Baskerville per il testo */
+  --font-display: "Italiana", Georgia, serif;
+
+  /* Venature del legno del player: righe scure (nero al 12%) e chiare (bianco al 4%)
+     sovrapposte a una sfumatura di noce (#6b4026, #4a2c1a, #5e3720) */
+  --wood-h:
+    repeating-linear-gradient(180deg, rgb(0 0 0 / 0.12) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(180deg, rgb(255 255 255 / 0.04) 0 1px, transparent 1px 17px),
+    linear-gradient(180deg, #6b4026, #4a2c1a 40%, #5e3720);
 
   /* Bootstrap legge queste: così tutto il framework usa la nostra palette */
   --bs-body-bg: var(--bg-base);
@@ -40,9 +55,8 @@
   --bs-emphasis-color: var(--text-primary);
   --bs-secondary-color: var(--text-secondary);
   --bs-border-color: var(--border);
-  --bs-body-font-size: 0.875rem; /* 14px */
-  --bs-body-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  --bs-body-font-size: 0.8125rem; /* 13px: Libre Baskerville è un font largo */
+  --bs-body-font-family: "Libre Baskerville", Georgia, serif;
 }
 
 /* ============================ Base ============================ */
@@ -221,9 +235,17 @@ button {
   padding: 16px 24px 32px 24px;
 }
 
-/* NB: si chiama .music-row e non .row perché .row in Bootstrap
-   è la riga della griglia (flex + margini negativi) */
+/* Sezioni con titolo + griglia di card.
+   Nell'HTML e nel JS sono <section class="row"> o <article class="row">, ma in Bootstrap .row è la riga
+   della griglia (flex, margini negativi, padding sui figli): qui la
+   neutralizziamo azzerando i gutter. Vale anche il nome alternativo .music-row */
+section.row,
+article.row,
 .music-row {
+  --bs-gutter-x: 0;
+  --bs-gutter-y: 0;
+  display: block;
+  margin-inline: 0;
   margin-top: 24px;
 
   & h2 {
@@ -371,6 +393,11 @@ button {
     object-fit: cover;
     display: block;
   }
+}
+
+/* Nella pagina artista la foto è rotonda */
+.artist-hero .album-cover {
+  border-radius: 50%;
 }
 
 .hero-meta {
@@ -659,6 +686,276 @@ button {
 .empty {
   padding: 32px;
   text-align: center;
+  color: var(--text-secondary);
+}
+
+/* ============================ Tema vintage ============================
+   Rifiniture del tema giradischi: legno, ottone, titoli con grazie.
+   Stanno dopo le regole base e prima del responsive, quindi le sovrascrivono. */
+
+/* Sidebar in noce scuro liscio: il legno con le venature resta solo nel player */
+.sidebar {
+  background: linear-gradient(90deg, #2e1c11, #3b2416 60%, #33200f);
+  box-shadow: inset -8px 0 16px rgb(0 0 0 / 0.45);
+}
+
+/* Player come la base di un giradischi, con profilo in ottone */
+.player {
+  background: var(--wood-h);
+  border-top: 3px solid var(--accent);
+}
+
+/* Sfondo con i solchi di un vinile appena accennati */
+.main {
+  background:
+    repeating-radial-gradient(circle at 100% 0, rgb(255 255 255 / 0.018) 0 1px, transparent 1px 5px),
+    radial-gradient(circle at 50% -20%, #3a281c, var(--bg-base) 60%);
+}
+
+/* Logo: piccolo vinile con etichetta in ottone, nome in Italiana */
+.brand {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400; /* Italiana ha un solo peso: niente grassetto finto */
+  letter-spacing: 1px;
+}
+
+/* Il disco del logo è disegnato nel ::before, così può muoversi separatamente dal contenitore */
+.brand-mark {
+  position: relative;
+  background: none; /* toglie il quadrato giallo della regola base: il disco è tutto nel ::before */
+  border-radius: 50%; /* l'ombra del sollevamento resta rotonda */
+  /* Il contenitore gira come su un giradischi (circa 33 giri al minuto).
+     L'animazione è sempre applicata ma in pausa: con l'hover riparte,
+     quando il mouse esce si ferma dove si trova */
+  animation: spin-record 1.8s linear infinite paused;
+  transition: scale 1.2s ease-out, box-shadow 1.2s ease-out;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      /* etichetta in ottone al centro */
+      radial-gradient(circle, var(--accent) 0 20%, transparent 21%),
+      /* riflessi di luce sul vinile: rendono visibile la rotazione */
+      conic-gradient(
+        transparent 0 10%,
+        rgb(255 255 255 / 0.22) 14%,
+        transparent 20% 60%,
+        rgb(255 255 255 / 0.14) 64%,
+        transparent 70%
+      ),
+      /* solchi del vinile */
+      repeating-radial-gradient(circle, #111 0 2px, #262626 2px 3px);
+    /* Quando il mouse esce, il disco fa un ultimo giro rallentando fino a fermarsi (inerzia).
+       La curva parte alla stessa velocità della rotazione e decelera dolcemente */
+    animation: spin-down 3.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+}
+
+/* Con l'hover: il contenitore gira, il disco interno non fa l'inerzia e tutto si solleva leggermente */
+.brand:hover .brand-mark {
+  animation-play-state: running;
+  scale: 1.12;
+  /* ombra leggera sotto il disco sollevato + un alone tenue in ottone per staccarlo dal legno scuro */
+  box-shadow:
+    0 6px 14px rgb(0 0 0 / 0.9),
+    0 0 18px 2px rgb(201 162 39 / 0.45);
+
+  &::before {
+    animation: none;
+  }
+}
+
+@keyframes spin-record {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-down {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Niente rotazione né sollevamento per chi ha ridotto le animazioni nelle impostazioni del sistema */
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark,
+  .brand-mark::before,
+  .brand:hover .brand-mark {
+    animation: none;
+    transition: none;
+  }
+}
+
+.sidebar-nav a.active {
+  background: rgb(0 0 0 / 0.3);
+  color: var(--accent);
+}
+
+.sidebar-section-title {
+  color: var(--accent);
+}
+
+/* Titoli in Italiana (art déco) */
+section.row h2,
+article.row h2,
+.music-row h2,
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 400; /* Italiana ha un solo peso: niente grassetto finto */
+  letter-spacing: 1px;
+}
+
+.hero-kicker {
+  color: var(--accent);
+  letter-spacing: 3px;
+}
+
+.nav-btn {
+  --bs-btn-bg: #2a1a10;
+  --bs-btn-hover-bg: #3a281c;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.user-pill {
+  background: #2a1a10;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+/* Pulsante "+ New user" accanto alla pill utente, con bordo tratteggiato in ottone */
+.user-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-new-user {
+  background: transparent;
+  border: 1px dashed var(--accent);
+  color: var(--text-primary);
+  padding: 6px 14px;
+  font-size: 13px;
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background: rgb(201 162 39 / 0.12); /* ottone al 12% */
+    color: var(--accent);
+  }
+}
+
+/* Card come buste di dischi, copertine leggermente seppia */
+.card {
+  border: 1px solid var(--border);
+  transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgb(0 0 0 / 0.5);
+  }
+}
+
+.card-image-wrap img,
+.album-cover img,
+.player-cover img {
+  filter: sepia(0.25) contrast(1.05);
+}
+
+.album-cover {
+  border: 4px solid #f3e6c8;
+}
+
+/* Nella pagina artista la foto diventa un vinile */
+.artist-hero .album-cover {
+  border: none;
+  box-shadow: 0 0 0 10px #111, 0 0 0 12px #3a3a3a, 0 0 0 20px #111, var(--shadow);
+}
+
+/* Pulsanti play come manopole in ottone */
+.card-play,
+.btn-play-big,
+.btn-play {
+  background: var(--brass);
+  color: #2a1a10;
+}
+
+.btn-fav-big.is-fav {
+  border-color: var(--danger);
+}
+
+/* Barre in "solco" scavato nel legno, riempimento in ottone */
+.progress-bar,
+.volume-bar {
+  background: #1a0f09;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.8);
+}
+
+.progress-fill,
+.volume-fill {
+  background: linear-gradient(90deg, #7a5c12, var(--accent), #f3dd8a);
+}
+
+.track-row.is-playing {
+  color: var(--accent);
+}
+
+.search-input::placeholder {
+  color: #8a7357;
+}
+
+/* ============================ Icone ============================
+   Icone SVG dello sprite in cima a ogni pagina: linee sottili con estremità
+   arrotondate, colorate con il colore del testo (currentColor) */
+
+.icon {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.125em;
+  flex-shrink: 0;
+}
+
+.sidebar-nav .ico {
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.nav-btn .icon {
+  font-size: 18px;
+}
+
+.btn-ctrl {
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  padding: 4px;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--accent); /* ottone al passaggio del mouse */
+  }
+}
+
+/* Copertina del player: l'<img> creata dal JS resta nascosta finché non ha un src */
+.player-cover img:not([src]),
+.player-cover img[src=""] {
+  display: none;
+}
+
+.volume-ico {
+  display: grid;
+  place-items: center;
+  font-size: 18px;
   color: var(--text-secondary);
 }
 
