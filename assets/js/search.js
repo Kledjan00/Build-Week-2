@@ -21,8 +21,19 @@
       - artist -> click = window.location.href = "artist.html?id=" + artistId
 */
 
-import { initPage, renderSidebarFavs } from "./common.js";
-import { el, $, debounce, fetchItem, fetchByGenre, fetchModular, isFavourite, toggleFavourite, getFavourites } from "./helper.js";
+import { initPage, renderSidebarFavs, getArtistPicture, artistLink } from "./common.js";
+import {
+  el,
+  $,
+  debounce,
+  fetchItem,
+  fetchByGenre,
+  fetchModular,
+  isFavourite,
+  toggleFavourite,
+  getFavourites,
+  STORAGE_KEY_LAST_SEARCH,
+} from "./helper.js";
 
 const player = initPage("search");
 
@@ -62,16 +73,18 @@ const renderCard = (track) => {
     "div",
     { className: "card" },
     el("div", { className: "card-image-wrap" }, cover),
-    el("h3", { className: "card-title", text: track.trackName ?? "Sconosciuto" }),
-    el("p", { className: "card-sub", text: track.artistName ?? "—" }),
+    el("h3", {
+      className: "card-title",
+      text: track.trackName ?? "Sconosciuto",
+    }),
+    artistLink(track.artistName, track.artistId),
     playBtn,
-    heartBtn
+    heartBtn,
   );
 
   // click sulla card (e sul play) -> riproduce
   card.addEventListener("click", () => {
     player.play(track);
-    updateHistory();
   });
 
   // click sul cuore -> preferito, senza far partire il brano
@@ -100,41 +113,25 @@ const renderAlbumCard = (album) => {
     "div",
     { className: "card" },
     el("div", { className: "card-image-wrap" }, cover),
-    el("h3", { className: "card-title", text: album.collectionName ?? "Sconosciuto" }),
-    el("p", { className: "card-sub", text: album.artistName ?? "—" })
+    el("h3", {
+      className: "card-title",
+      text: album.collectionName ?? "Sconosciuto",
+    }),
+    artistLink(album.artistName, album.artistId),
   );
 
   // click sulla card -> pagina dell'album
   card.addEventListener("click", () => {
     window.location.href = "album.html?id=" + album.collectionId;
-    updateHistory();
   });
 
   return card;
 };
 
-const getArtistPicture = async (term) => {
-  try {
-    const response = await fetch(
-      `https://api.deezer.com/search/artist?q=${encodeURIComponent(term)}`
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const results = await response.json();
-    const artist = results.data[0]; // i risultati stanno in results.data
-    return artist?.picture_xl ?? null;
-  } catch (err) {
-    console.error("Errore Deezer:", err);
-    return null;
-  }
-};
-
-const renderArtistCard = async (artist) => {
-  const pic = await getArtistPicture(artist.artistName);
-
+const renderArtistCard = (artist, pic) => {
   const frame = el("img", {
     attrs: {
-      src: pic,
+      src: pic || "/assets/img/placeholderArtist.png",
       alt: artist.artistName ?? "Artista",
       loading: "lazy",
     },
@@ -144,8 +141,14 @@ const renderArtistCard = async (artist) => {
     "div",
     { className: "card" },
     el("div", { className: "card-image-wrap" }, frame),
-    el("h3", { className: "card-title", text: artist.artistName ?? "Artista sconosciuto" }),
-    el("p", { className: "card-sub", text: artist.primaryGenreName ?? "Artista" })
+    el("h3", {
+      className: "card-title",
+      text: artist.artistName ?? "Artista sconosciuto",
+    }),
+    el("p", {
+      className: "card-sub",
+      text: artist.primaryGenreName ?? "Artista",
+    }),
   );
 
   card.addEventListener("click", () => {
@@ -153,6 +156,32 @@ const renderArtistCard = async (artist) => {
   });
 
   return card;
+};
+
+// scarica le foto in parallelo e scarta i duplicati
+const buildArtistCards = async (artistsList) => {
+  const withPics = await Promise.all(
+    artistsList.map(async (artist) => ({
+      artist,
+      pic: await getArtistPicture(artist.artistName),
+    })),
+  );
+
+  const seenIds = new Set();
+  const seenPics = new Set();
+
+  return withPics
+    .filter(({ artist, pic }) => {
+      if (seenIds.has(artist.artistId)) return false; // stesso artista ripetuto
+      seenIds.add(artist.artistId);
+
+      if (pic) {
+        if (seenPics.has(pic)) return false; // stessa immagine di un altro
+        seenPics.add(pic);
+      }
+      return true; // i null (senza foto) non si confrontano tra loro
+    })
+    .map(({ artist, pic }) => renderArtistCard(artist, pic));
 };
 
 let lastTerm = "";
@@ -163,6 +192,7 @@ const showRows = (visible) => {
 
 const doSearch = async (term) => {
   lastTerm = term;
+  localStorage.setItem(STORAGE_KEY_LAST_SEARCH, term);
 
   if (!term) {
     gridTracks.replaceChildren();
@@ -175,7 +205,12 @@ const doSearch = async (term) => {
   const [results, albums, artists] = await Promise.all([
     fetchModular(term, { media: "music", entity: "song", limit: 12 }),
     fetchModular(term, { media: "music", entity: "album", limit: 8 }),
-    fetchModular(term, { media: "music", entity: "musicArtist", attribute: "artistTerm", limit: 8 }),
+    fetchModular(term, {
+      media: "music",
+      entity: "musicArtist",
+      attribute: "artistTerm",
+      limit: 8,
+    }),
   ]);
 
   if (term !== lastTerm) return;
@@ -184,7 +219,7 @@ const doSearch = async (term) => {
   const albumList = albums.filter((a) => a.collectionName && a.collectionId);
   const artistsList = artists.filter((a) => a.artistName && a.artistId);
 
-  const artistCards = await Promise.all(artistsList.map(renderArtistCard));
+  const artistCards = await buildArtistCards(artistsList);
 
   gridTracks.replaceChildren(...tracks.map(renderCard));
   gridAlbums.replaceChildren(...albumList.map(renderAlbumCard));
@@ -192,9 +227,8 @@ const doSearch = async (term) => {
 
   rowTracks.hidden = tracks.length === 0;
   rowAlbums.hidden = albumList.length === 0;
-  rowArtists.hidden = artistsList.length === 0;
+  rowArtists.hidden = artistCards.length === 0;
 };
-
 
 const debouncedSearch = debounce(doSearch, 400);
 
@@ -204,6 +238,8 @@ input.addEventListener("input", (event) => {
 
 // TODO: al caricamento, recupera l'ultima query da localStorage e lancia doSearch(lastQuery)
 
-
-
-
+const lastQuery = localStorage.getItem(STORAGE_KEY_LAST_SEARCH);
+if (lastQuery) {
+  input.value = lastQuery;
+  doSearch(lastQuery);
+}

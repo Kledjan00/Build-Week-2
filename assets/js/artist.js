@@ -17,7 +17,7 @@
    6) Costruisci #top-tracks come tracklist (uguale a album).
 */
 
-import { initPage, formatTime, renderSidebarFavs } from "./common.js";
+import { initPage, formatTime, renderSidebarFavs, getArtistPicture } from "./common.js";
 import { API_BASE, el, isFavourite, toggleFavourite } from "./helper.js";
 
 const player = initPage("home");
@@ -43,6 +43,7 @@ const loadArtist = async () => {
 
     const listeners = Math.floor(Math.random() * 5_000_000);
     const genre = artist.primaryGenreName ?? "Musica";
+    const pic = await getArtistPicture(artist.artistName);
 
     const playBtn = el("button", {
       className: "btn-play-big",
@@ -53,6 +54,13 @@ const loadArtist = async () => {
     playBtn.addEventListener("click", () => player.play(firstTrack));
 
     artistHero.replaceChildren(
+      el("img", {
+        className: "hero-img",
+        attrs: {
+          src: pic || "assets/img/placeholderArtist.png",
+          alt: artist.artistName ?? "Artista",
+        },
+      }),
       el(
         "div",
         { className: "hero-meta" },

@@ -85,6 +85,11 @@
             <button type="button" class="btn nav-btn rounded-circle p-0" aria-label="Indietro"><svg class="icon"><use href="#ico-chevron-left"></use></svg></button>
             <button type="button" class="btn nav-btn rounded-circle p-0" aria-label="Avanti"><svg class="icon"><use href="#ico-chevron-right"></use></svg></button>
           </div>
+          <!-- Barra di ricerca nell'header: è un link a search.html disegnato come il campo di ricerca -->
+          <a href="search.html" class="topbar-search" aria-label="Vai alla ricerca">
+            <svg class="icon search-ico" aria-hidden="true"><use href="#ico-search"></use></svg>
+            <span class="topbar-search-text">Cerca un brano, un album, un artista...</span>
+          </a>
           <div class="user-action">
             <button type="button" class="btn-new-user rounded-pill fw-semibold" id="btn-new-user">+ New user</button>
             <div class="user-pill rounded-pill fw-semibold">Studente Epicode</div>
@@ -106,8 +111,41 @@
 
       </main>
 
-      <!-- Player: generato da Player.mount() in common.js -->
-      <footer class="player"></footer>
+      <!-- Player: scritto nell'HTML e sostituito da Player.mount() in common.js quando il JS parte
+           (replaceChildren: il player non si duplica) -->
+      <footer class="player">
+        <div class="player-track">
+          <div class="player-cover" id="player-cover"><img id="player-cover-img" alt="" /></div>
+          <div class="player-meta">
+            <p class="player-title" id="player-title">Seleziona un brano</p>
+            <p class="player-artist" id="player-artist">—</p>
+          </div>
+        </div>
+
+        <div class="player-center">
+          <div class="player-controls">
+            <button type="button" class="btn-ctrl" id="btn-shuffle" aria-label="Riproduzione casuale"><svg class="icon"><use href="#ico-shuffle"></use></svg></button>
+            <button type="button" class="btn-ctrl" id="btn-prev" aria-label="Brano precedente"><svg class="icon"><use href="#ico-prev"></use></svg></button>
+            <button type="button" class="btn-play" id="btn-play" aria-label="Riproduci">▶</button>
+            <button type="button" class="btn-ctrl" id="btn-next" aria-label="Brano successivo"><svg class="icon"><use href="#ico-next"></use></svg></button>
+            <button type="button" class="btn-ctrl" id="btn-repeat" aria-label="Ripeti"><svg class="icon"><use href="#ico-repeat"></use></svg></button>
+          </div>
+          <div class="player-progress">
+            <span id="time-current">0:00</span>
+            <div class="progress-bar" id="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span id="time-total">0:00</span>
+          </div>
+        </div>
+
+        <div class="player-right">
+          <span class="volume-ico" aria-hidden="true"><svg class="icon"><use href="#ico-volume"></use></svg></span>
+          <div class="volume-bar" id="volume-bar">
+            <div class="volume-fill" id="volume-fill" style="width: 80%"></div>
+          </div>
+        </div>
+      </footer>
     </div>
 
     <!-- Modale "New user" (work in progress) -->

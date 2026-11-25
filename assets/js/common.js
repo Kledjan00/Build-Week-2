@@ -58,7 +58,7 @@
 
 /* ============================ 1. Costanti ============================ */
 
-
+const STORAGE_KEY_PLAYER = "epitunes_player";
 
 /* ============================ 2. Helpers ============================ */
 import { $, el, historyClear, historyDump, historyLog, getFavourites } from "./helper.js"
@@ -205,6 +205,7 @@ class Player {
     this.audio = $("#audio-element");
     this.currentTrack = null;
     this.isPlaying = false;
+    this.isSeeking = false; // true mentre si trascina la barra di avanzamento
     this.ui = null; // i riferimenti agli elementi vengono salvati in mount()
 
     // Gli elementi del footer non esistono ancora (li crea mount()),
@@ -212,6 +213,7 @@ class Player {
     this.audio.addEventListener("timeupdate", () => this.updateProgress());
     this.audio.addEventListener("loadedmetadata", () => {
       if (this.ui) this.ui.timeTotal.textContent = this.formatTime(this.audio.duration);
+      this.updateProgress();
     });
     this.audio.addEventListener("play", () => this.setPlayingState(true));
     this.audio.addEventListener("pause", () => this.setPlayingState(false));
@@ -220,6 +222,9 @@ class Player {
       this.audio.currentTime = 0;
       this.updateProgress();
     });
+    this.audio.addEventListener("timeupdate", () => this.saveState());
+    this.audio.addEventListener("pause", () => this.saveState());
+    window.addEventListener("pagehide", () => this.saveState());
   }
 
   mount() {
@@ -233,7 +238,10 @@ class Player {
       el("div", { className: "player-cover", id: "player-cover" }, coverImg),
       el("div", { className: "player-meta" },
         el("p", { className: "player-title", id: "player-title", text: "Seleziona un brano" }),
-        el("p", { className: "player-artist", id: "player-artist", text: "—" })
+        // il nome dell'artista è un link alla sua pagina (l'href lo imposta showArtist())
+        el("p", { className: "player-artist", id: "player-artist" },
+          el("a", { className: "artist-link", id: "player-artist-link", text: "—" })
+        )
       )
     );
 
@@ -274,15 +282,48 @@ class Player {
       )
     );
 
+    // --- Icone a linea per i tasti nascondi / espandi ---
+    // Disegnate qui con una linea SVG, così non serve aggiungere icone allo sprite in ogni pagina.
+    // d = il percorso della linea (coordinate in un quadrato 24x24)
+    const lineIcon = (d) => {
+      const svg = document.createElementNS(SVG_NS, "svg");
+      svg.setAttribute("class", "icon");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("aria-hidden", "true");
+      const path = document.createElementNS(SVG_NS, "path");
+      path.setAttribute("d", d);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", "currentColor");
+      path.setAttribute("stroke-width", "2");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      svg.append(path);
+      return svg;
+    };
+
+    // Freccia giù (in alto a destra): nasconde il player
+    const btnClose = el("button", {
+      className: "btn-ctrl btn-close-player",
+      id: "btn-close-player",
+      attrs: { type: "button", "aria-label": "Nascondi il player" },
+    }, lineIcon("M6 9l6 6 6-6")); // "V": da sinistra scende al centro e risale a destra
+
+    // Freccia su (linguetta al centro del bordo superiore): aprirà la modale #expandPlayer
+    const btnExpand = el("button", {
+      className: "btn-expand-player",
+      id: "btn-expand-player",
+      attrs: { type: "button", "aria-label": "Espandi il player", "aria-haspopup": "dialog" },
+    }, lineIcon("M6 15l6-6 6 6")); // "V" capovolta: sale al centro e riscende
+
     // --- Montaggio finale ---
     // replaceChildren sostituisce l'eventuale contenuto statico del footer: il player non si duplica
-    footer.replaceChildren(playerTrack, playerCenter, playerRight);
+    footer.replaceChildren(playerTrack, playerCenter, playerRight, btnClose, btnExpand);
 
     // --- Riferimenti agli elementi ---
     this.ui = {
       cover: coverImg,
       title: footer.querySelector("#player-title"),
-      artist: footer.querySelector("#player-artist"),
+      artist: footer.querySelector("#player-artist-link"), // il link dentro #player-artist
       btnToggle: footer.querySelector("#btn-play"),
       progressBar: footer.querySelector("#progress-bar"),
       progressFill: footer.querySelector("#progress-fill"),
@@ -294,18 +335,26 @@ class Player {
 
     // --- Eventi ---
     this.ui.btnToggle.addEventListener("click", () => this.togglePlay());
+    btnClose.addEventListener("click", () => this.close());
+    btnExpand.addEventListener("click", () => this.expand());
 
-    this.ui.progressBar.addEventListener("click", (e) => {
-      const rect = this.ui.progressBar.getBoundingClientRect();
-      this.seek((e.clientX - rect.left) / rect.width);
-    });
+    // Barra di avanzamento: mentre si trascina si sposta solo la barra (e il tempo),
+    // il brano salta al punto scelto quando si lascia il mouse
+    this.makeDraggable(
+      this.ui.progressBar,
+      (percent) => this.previewSeek(percent), // durante il trascinamento
+      (percent) => {                          // al rilascio
+        this.seek(percent);
+        this.isSeeking = false;
+      },
+      () => { this.isSeeking = true; }        // all'inizio
+    );
 
-    this.ui.volumeBar.addEventListener("click", (e) => {
-      const rect = this.ui.volumeBar.getBoundingClientRect();
-      this.setVolume((e.clientX - rect.left) / rect.width);
-    });
+    // Barra del volume: il volume cambia subito mentre si trascina
+    this.makeDraggable(this.ui.volumeBar, (percent) => this.setVolume(percent));
 
     this.setVolume(0.8);
+    this.restoreState();
   }
 
   play(track) {
@@ -322,7 +371,7 @@ class Player {
       // artworkUrl100 -> versione più grande per il player
       this.ui.cover.src = (track.artworkUrl100 || "").replace("100x100", "300x300");
       this.ui.title.textContent = track.trackName ?? "Titolo brano";
-      this.ui.artist.textContent = track.artistName ?? "—";
+      this.showArtist(track);
       this.ui.timeTotal.textContent = "0:00"; // si aggiorna su loadedmetadata
       this.ui.progressFill.style.width = "0%";
     }
@@ -364,8 +413,56 @@ class Player {
     }
   }
 
-  updateProgress() {
+  /*
+    makeDraggable(bar, onMove, onEnd, onStart)
+    - Rende una barra trascinabile con mouse e dito (eventi pointer)
+    - onMove(percent): chiamata alla pressione e a ogni movimento, con la posizione da 0 a 1
+    - onEnd(percent): chiamata quando si lascia (facoltativa)
+    - onStart(): chiamata quando si preme (facoltativa)
+    I movimenti si ascoltano sulla finestra (window), così il trascinamento continua
+    anche se il mouse esce dalla barra mentre il tasto è ancora premuto.
+  */
+  makeDraggable(bar, onMove, onEnd, onStart) {
+    let dragging = false;
+
+    // posizione del mouse sulla barra, da 0 (inizio) a 1 (fine)
+    const percentFrom = (e) => {
+      const rect = bar.getBoundingClientRect();
+      return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    };
+
+    bar.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      bar.classList.add("is-dragging"); // nel CSS toglie la transizione: la barra segue il mouse senza ritardo
+      if (onStart) onStart();
+      onMove(percentFrom(e));
+      e.preventDefault(); // evita di selezionare il testo trascinando
+    });
+
+    window.addEventListener("pointermove", (e) => {
+      if (dragging) onMove(percentFrom(e));
+    });
+
+    const stop = (e) => {
+      if (!dragging) return;
+      dragging = false;
+      bar.classList.remove("is-dragging");
+      if (onEnd) onEnd(percentFrom(e));
+    };
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+  }
+
+  // Durante il trascinamento: sposta la barra e aggiorna il tempo, senza toccare l'audio
+  previewSeek(percent) {
     if (!this.ui || !this.audio.duration) return;
+    this.ui.progressFill.style.width = `${percent * 100}%`;
+    this.ui.timeCurrent.textContent = this.formatTime(this.audio.duration * percent);
+  }
+
+  updateProgress() {
+    // mentre si trascina la barra, non la aggiorniamo con il tempo reale (andrebbe "a scatti" all'indietro)
+    if (!this.ui || !this.audio.duration || this.isSeeking) return;
     const percent = (this.audio.currentTime / this.audio.duration) * 100;
     this.ui.progressFill.style.width = `${percent}%`;
     this.ui.timeCurrent.textContent = this.formatTime(this.audio.currentTime);
@@ -377,8 +474,104 @@ class Player {
     const s = Math.floor(seconds % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   }
-}
 
+  /*
+    showArtist(track)
+    - Scrive il nome dell'artista nel player e lo collega alla sua pagina (artist.html?id=...)
+    - Se il brano non ha artistId (o track è null), il nome resta testo senza link
+  */
+  showArtist(track) {
+    if (!this.ui) return;
+    const link = this.ui.artist;
+    link.textContent = track?.artistName ?? "—";
+    if (track?.artistId) {
+      link.href = "artist.html?id=" + track.artistId;
+    } else {
+      link.removeAttribute("href"); // un <a> senza href non è cliccabile
+    }
+  }
+
+  /*
+    expand()
+    - Aprirà la modale #expandPlayer con il player a schermo intero
+    - La modale non esiste ancora: finché non c'è, il click non fa nulla
+  */
+  expand() {
+    const modal = document.querySelector("#expandPlayer");
+    if (!modal) return; // modale non ancora scritta
+
+    // TODO: aprire la modale (es. modal.classList.add("is-open")) e riempirla con this.currentTrack
+  }
+
+  /*
+    close()
+    - Fa uscire il player con l'animazione (classe .is-closing nel CSS)
+    - Alla fine dell'animazione ferma la musica e svuota il player:
+      senza immagine di copertina, il CSS nasconde la riga del player
+    - Cancella lo stato salvato, così cambiando pagina il player non ricompare
+  */
+  close() {
+    const footer = document.querySelector(".player");
+    if (!footer || footer.classList.contains("is-closing")) return; // evita doppi click
+
+    footer.classList.add("is-closing");
+
+    footer.addEventListener("animationend", () => {
+      // Prima togliamo il brano corrente: la pausa qui sotto fa scattare saveState()
+      // (evento "pause"), che così non trova niente da salvare
+      this.currentTrack = null;
+      this.audio.pause();
+      this.audio.removeAttribute("src"); // nessun brano caricato
+      this.audio.load();                  // fa "dimenticare" all'audio il brano precedente
+      localStorage.removeItem(STORAGE_KEY_PLAYER);
+
+      this.ui.cover.removeAttribute("src"); // senza src il CSS nasconde il player
+      this.ui.title.textContent = "Seleziona un brano";
+      this.showArtist(null); // nessun artista: "—" senza link
+      this.ui.progressFill.style.width = "0%";
+      this.ui.timeCurrent.textContent = "0:00";
+      this.ui.timeTotal.textContent = "0:00";
+      $(".track-row.is-playing")?.classList.remove("is-playing");
+
+      footer.classList.remove("is-closing");
+    }, { once: true });
+  }
+
+  saveState() {
+    if (!this.currentTrack) return;
+    localStorage.setItem(
+      STORAGE_KEY_PLAYER,
+      JSON.stringify({
+        track: this.currentTrack,
+        time: this.audio.currentTime,
+        playing: !this.audio.paused,
+      })
+    );
+  }
+
+  restoreState() {
+    let state;
+    try {
+      state = JSON.parse(localStorage.getItem(STORAGE_KEY_PLAYER));
+    } catch {
+      return;
+    }
+    if (!state?.track) return;
+
+    const { track, time, playing } = state;
+    this.currentTrack = track;
+    this.audio.src = track.previewUrl;
+    this.audio.currentTime = time;
+
+    if (this.ui) {
+      this.ui.cover.src = (track.artworkUrl100 || "").replace("100x100", "300x300");
+      this.ui.title.textContent = track.trackName ?? "Titolo brano";
+      this.showArtist(track);
+    }
+
+    if (playing) this.audio.play().catch(() => { });
+  }
+}
 
 
 /* ============================ 6. Render sidebar ============================ */
@@ -396,9 +589,56 @@ export const renderSidebarFavs = () => {
     return;
   }
 
-  list.replaceChildren(...favs.map((track) => el("li", { text: `${track.trackName} - ${track.artistName}` })));
+  list.replaceChildren(
+    ...favs.map((track) => {
+      const item = el("li", { text: `${track.trackName} - ${track.artistName}`, style: { cursor: "pointer" } });
+      item.addEventListener("click", () => window.player.play(track));
+      return item;
+    })
+  );
 };
 
+export const getArtistPicture = async (term) => {
+  try {
+    const response = await fetch(
+      `https://www.theaudiodb.com/api/v1/json/123/search.php?s=${encodeURIComponent(term)}`,
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const results = await response.json();
+    const result = results.artists?.[0]?.strArtistThumb || null;
+
+    return result;
+  } catch (err) {
+    console.error("Errore api:", err);
+    return null; // errore: non salvo in cache, così posso riprovare
+  }
+};
+
+const initNavButtons = () => {
+  $('button[aria-label="Indietro"]')?.addEventListener("click", () => history.back());
+  $('button[aria-label="Avanti"]')?.addEventListener("click", () => history.forward());
+};
+
+export const artistLink = (name, id) => {
+  const p = el("p", { className: "card-sub" });
+
+  if (!id) {
+    p.textContent = name ?? "—";
+    return p;
+  }
+
+  const link = el("a", {
+    className: "artist-link",
+    text: name ?? "—",
+    attrs: { href: "artist.html?id=" + id },
+  });
+
+  link.addEventListener("click", (e) => e.stopPropagation());
+
+  p.append(link);
+  return p;
+};
 
 /* ============================ 7. Inizializzazione ============================ */
 
@@ -411,6 +651,7 @@ export const initPage = (activePage) => {
   const player = new Player();
   player.mount();
   renderSidebarFavs();
+  initNavButtons();
   window.player = player;
   return player;
 };

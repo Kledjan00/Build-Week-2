@@ -383,6 +383,17 @@ article.row,
     border-radius: 50%;
   }
 
+  /* Le card degli artisti sono sempre rotonde, in tutte le pagine, anche se il JS
+     non aggiunge la classe .round. Le riconosciamo dall'immagine che contengono:
+     - foto da TheAudioDB (getArtistPicture in common.js), oppure
+     - il disco di riserva placeholderArtist.png (quando la foto non c'è)
+     Le copertine degli album arrivano da iTunes, quindi restano quadrate.
+     In più, nella ricerca, tutta la riga "Artisti" è rotonda. */
+  &:has(img[src*="theaudiodb"], img[src*="placeholderArtist"]),
+  #row-artists & {
+    border-radius: 50%;
+  }
+
   /* L'immagine riempie il quadrato; object-fit: cover la ritaglia senza deformarla */
   & img {
     width: 100%;
@@ -512,6 +523,21 @@ article.row,
 /* Nella pagina artista la foto è rotonda */
 .artist-hero .album-cover {
   border-radius: 50%;
+}
+
+/* Foto dell'artista messa direttamente nell'hero, senza il contenitore .album-cover:
+   stessa misura della copertina degli album, ma rotonda e con gli anelli del vinile */
+.artist-hero > img {
+  width: 220px;
+  aspect-ratio: 1;
+  height: auto;
+  object-fit: cover; /* ritaglia la foto invece di schiacciarla */
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin: 20px; /* spazio per gli anelli, che sono disegnati fuori dalla foto */
+  background: url("../img/artist-placeholder.png") center / cover no-repeat, #1e1410;
+  box-shadow: 0 0 0 10px #111, 0 0 0 12px #3a3a3a, 0 0 0 20px #111, var(--shadow);
+  filter: sepia(0.25) contrast(1.05);
 }
 
 /* Colonna con i testi dell'hero */
@@ -829,6 +855,64 @@ article.row,
   border-radius: 2px;
 }
 
+/* Volume: quando si clicca sulla barra il riempimento scorre fino al punto scelto
+   invece di saltarci di colpo. ease-out = parte veloce e rallenta arrivando. */
+.volume-fill {
+  transition: width 0.25s ease-out;
+}
+
+/* Avanzamento del brano: transizione lineare di 0,25 secondi.
+   Mentre il brano suona il JS aggiorna la larghezza circa 4 volte al secondo
+   (evento timeupdate): con una transizione della stessa durata i piccoli scatti
+   diventano un movimento continuo, senza che la barra resti indietro.
+   Quando si clicca su un punto della barra, il riempimento scorre fino a lì. */
+.progress-fill {
+  transition: width 0.25s linear;
+}
+
+/* --- Trascinamento delle barre (gestito dal JS con gli eventi pointer) ---
+   Mentre si trascina, il JS aggiunge alla barra la classe is-dragging:
+   togliamo la transizione, così il riempimento segue il mouse senza ritardo. */
+.progress-bar.is-dragging .progress-fill,
+.volume-bar.is-dragging .volume-fill {
+  transition: none;
+}
+
+/* Sul touch screen, trascinare la barra non deve far scorrere la pagina */
+.progress-bar,
+.volume-bar {
+  touch-action: none;
+}
+
+/* Pallino in ottone alla fine del riempimento: compare al passaggio del mouse
+   e durante il trascinamento, per far capire che la barra si può trascinare */
+.progress-fill,
+.volume-fill {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    translate: 0 -50%;
+    width: 12px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--brass);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+}
+
+.progress-bar:hover .progress-fill::after,
+.volume-bar:hover .volume-fill::after,
+.is-dragging .progress-fill::after,
+.is-dragging .volume-fill::after {
+  opacity: 1;
+}
+
 /* Con il mouse sopra, il riempimento cambia colore */
 .progress-bar:hover .progress-fill,
 .volume-bar:hover .volume-fill {
@@ -889,12 +973,19 @@ article.row,
   border-top: 3px solid var(--accent);
 }
 
-/* Sfondo del main: una luce calda in alto e i solchi di un vinile appena accennati
-   (cerchi chiarissimi che partono dall'angolo in alto a destra) */
+/* Sfondo del main: come una lampada da lettura accesa in una stanza buia.
+   Tre strati sovrapposti (il primo scritto sta sopra):
+   1. cono di luce calda che scende dall'angolo in alto a sinistra
+   2. vignettatura: bordi dell'area in ombra, il centro resta più chiaro
+   3. solchi di un vinile appena accennati, che partono dall'angolo in alto a destra
+   Sotto a tutto c'è il colore di base del tema.
+   Lo sfondo resta fermo mentre il contenuto del main scorre. */
 .main {
   background:
+    radial-gradient(ellipse 60% 55% at 18% -5%, rgb(255 190 110 / 0.28), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 40%, transparent 55%, rgb(0 0 0 / 0.55) 100%),
     repeating-radial-gradient(circle at 100% 0, rgb(255 255 255 / 0.018) 0 1px, transparent 1px 5px),
-    radial-gradient(circle at 50% -20%, #3a281c, var(--bg-base) 60%);
+    var(--bg-base);
 }
 
 /* Nome "EpiTunes" in Italiana */
@@ -1029,11 +1120,32 @@ article.row h2,
   color: var(--accent);
 }
 
-/* "Studente Epicode": stesso stile dei bottoni Indietro/Avanti */
+/* "Studente Epicode": stesso stile dei bottoni Indietro/Avanti.
+   È un <button>, quindi è cliccabile e si raggiunge anche con il tasto Tab */
 .user-pill {
   background: #2a1a10;
   border: 1px solid var(--accent);
   color: var(--accent);
+  line-height: 1.5; /* i <button> hanno un'interlinea diversa dal testo: la uniformiamo alla pill "New user" */
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s, scale 0.1s;
+
+  /* Al passaggio del mouse: fondo in ottone tenue, testo più luminoso e un alone dorato */
+  &:hover {
+    background: rgb(201 162 39 / 0.15); /* ottone al 15% */
+    color: #f3dd8a; /* ottone chiaro */
+    box-shadow: 0 0 10px rgb(201 162 39 / 0.35);
+  }
+
+  /* Mentre si clicca si schiaccia leggermente */
+  &:active {
+    scale: 0.96;
+  }
+
+  /* Contorno solo con la tastiera, non con il clic del mouse */
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 }
 
 /* Contenitore del pulsante "New user" e della pill utente, affiancati */
@@ -1090,6 +1202,49 @@ article.row h2,
 .btn-play {
   background: var(--brass);
   color: #2a1a10;
+}
+
+/* Play del player: niente contorno di focus quando si clicca con il mouse.
+   Con la tastiera (tasto Tab) il contorno resta, grazie a :focus-visible,
+   così chi naviga senza mouse vede sempre dove si trova. */
+.btn-play {
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+/* Animazione di clic: mentre tieni premuto il tasto si abbassa (più piccolo e incassato);
+   quando lo rilasci torna su con un piccolo rimbalzo, come un tasto a molla.
+   Il rimbalzo lo fa la curva cubic-bezier, che supera di poco la misura finale e poi rientra. */
+.btn-play {
+  /* simbolo centrato e interlinea fissa: il tasto resta un cerchio anche con il ⏸ più grande */
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+  transition:
+    scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.15s;
+
+  &:active {
+    scale: 0.86;
+    transition-duration: 0.08s; /* in discesa è rapido, come un clic */
+    box-shadow:
+      inset 0 3px 6px rgb(0 0 0 / 0.5),
+      inset 0 -1px 1px rgb(255 240 200 / 0.25);
+  }
+}
+
+/* Simbolo della pausa "incavato" nell'ottone (mentre il brano suona il tasto mostra ⏸).
+   Il colore è lo stesso del ▶ (marrone scuro, dalla regola .btn-play del tema).
+   Il Player nel JS mette aria-label="Pausa" quando l'audio suona: ci agganciamo a quello.
+   L'effetto inciso si fa con due ombre del testo: una scura sopra (il bordo dell'incavo
+   in ombra) e una chiara sotto (la luce che prende il bordo inferiore). */
+.btn-play[aria-label="Pausa"] {
+  font-size: 26px; /* nel font il simbolo ⏸ è piccolo: lo ingrandiamo */
+  text-shadow:
+    0 -1px 1px rgb(0 0 0 / 0.45),
+    0 1px 0 rgb(255 240 200 / 0.6);
 }
 
 /* Play e cuore grandi di album/artista: due cerchi uguali in ottone,
@@ -1155,9 +1310,118 @@ article.row h2,
   color: var(--accent);
 }
 
+/* Lente dentro il campo di ricerca, a sinistra.
+   Il contenitore .search-box fa da riferimento per la posizione dell'icona;
+   l'icona non intercetta i clic (pointer-events: none), così cliccandoci sopra
+   si scrive comunque nel campo. */
+.search-box {
+  position: relative;
+}
+
+.search-ico {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  translate: 0 -50%; /* centrata in verticale rispetto al campo */
+  font-size: 20px;
+  color: #8a7357; /* stesso marrone chiaro del testo segnaposto */
+  pointer-events: none;
+}
+
+/* Il testo parte più a destra, per lasciare spazio alla lente */
+.search-input {
+  padding-left: 44px;
+}
+
+/* Quando il campo è selezionato la lente diventa marrone scuro come il testo scritto.
+   :focus-within vale per il contenitore quando un elemento al suo interno ha il focus. */
+.search-box:focus-within .search-ico {
+  color: var(--text-input);
+}
+
+/* --- Barra di ricerca nell'header ---
+   Sta tra le frecce Indietro/Avanti e i pulsanti utente.
+   Su home, album e artista è un link a search.html (a.topbar-search) disegnato come il campo;
+   su search.html contiene il campo vero (#search-input). Le due versioni hanno lo stesso aspetto. */
+.topbar-search {
+  flex: 1; /* prende lo spazio libero... */
+  max-width: 420px; /* ...ma non oltre 420px */
+  min-width: 0; /* può restringersi sotto la larghezza del testo (che allora finisce con i puntini) */
+  margin: 0 auto 0 16px; /* 16px dalle frecce; il margine automatico a destra spinge i pulsanti utente in fondo */
+}
+
+/* Versione link: stessa pillola avorio del campo, con la lente e il testo segnaposto */
+a.topbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px 0 44px; /* a sinistra spazio per la lente */
+  border-radius: 999px;
+  background: var(--bg-input);
+  color: #8a7357; /* come il testo segnaposto */
+  font-size: 14px;
+  transition: box-shadow 0.15s;
+
+  /* testo su una riga, con i puntini se la barra è stretta */
+  & .topbar-search-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* al passaggio del mouse un sottile anello in ottone */
+  &:hover {
+    box-shadow: 0 0 0 2px rgb(201 162 39 / 0.5);
+  }
+
+  /* con la tastiera (Tab) il contorno di focus si vede */
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Versione campo (search.html): il campo prende tutta la larghezza della barra */
+.topbar-search .search-input {
+  max-width: none;
+  height: 40px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Spazio minimo tra frecce, ricerca e pulsanti utente, anche quando l'header è stretto */
+.topbar {
+  gap: 8px;
+}
+
+/* Su schermi stretti nascondiamo l'etichetta "Studente Epicode" per lasciare spazio alla ricerca */
+@media (width < 768px) {
+  .topbar .user-pill {
+    display: none;
+  }
+}
+
 /* Testo segnaposto della ricerca in un marrone chiaro, leggibile sull'avorio */
 .search-input::placeholder {
   color: #8a7357;
+}
+
+/* --- Immagine di riserva per gli artisti ---
+   L'API di iTunes non ha foto degli artisti. Nelle card rotonde (.card-image-wrap.round)
+   e nella foto della pagina artista mettiamo come sfondo un disco in vinile come il logo
+   (file assets/img/artist-placeholder.png). Se c'è un'immagine vera la copre;
+   se l'immagine manca o ha il src vuoto, la nascondiamo e si vede il disco. */
+.card-image-wrap.round,
+.card-image-wrap:has(img[src*="theaudiodb"], img[src*="placeholderArtist"]),
+#row-artists .card-image-wrap,
+.artist-hero .album-cover {
+  background: url("../img/artist-placeholder.png") center / cover no-repeat, #1e1410;
+
+  & img:not([src]),
+  & img[src=""] {
+    display: none;
+  }
 }
 
 /* ============================ Icone ============================
@@ -1537,6 +1801,183 @@ article.row h2,
   }
 }
 
+/* ============================ Player solo quando serve ============================
+   Il player compare solo dopo che è stato scelto un brano, e da lì resta visibile
+   (anche in pausa, altrimenti non ci sarebbe il tasto per farlo ripartire).
+   Come lo capiamo: quando parte un brano, il Player nel JS dà un'immagine (src)
+   alla copertina #player-cover-img. Finché la copertina non ha un'immagine,
+   la riga del player nella griglia è alta 0 e il contenuto prende tutta l'altezza. */
+.app:not(:has(#player-cover-img[src]:not([src=""]))) {
+  grid-template-rows: 1fr 0;
+}
+
+/* Il player non deve uscire dalla sua riga quando è alta 0 */
+.player {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Quando compare, il player entra scorrendo dal basso.
+   L'animazione parte nel momento in cui la regola inizia a valere (primo brano scelto);
+   se per qualche motivo non partisse, il player è comunque al suo posto. */
+.app:has(#player-cover-img[src]:not([src=""])) .player {
+  animation: player-in 0.45s ease-out;
+}
+
+@keyframes player-in {
+  from {
+    transform: translateY(100%); /* parte da sotto il bordo dello schermo */
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app:has(#player-cover-img[src]:not([src=""])) .player {
+    animation: none;
+  }
+}
+
+/* --- Freccia giù per nascondere il player ---
+   Sta nell'angolo in alto a destra del player, fuori dalle tre colonne,
+   così resta visibile anche su mobile (dove la colonna del volume è nascosta) */
+.player {
+  position: relative; /* punto di riferimento per la freccia */
+}
+
+.btn-close-player {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 18px;
+  opacity: 0.6;
+  transition: opacity 0.15s, translate 0.15s;
+
+  /* Con l'hover la freccia scende un po', per suggerire che il player andrà giù */
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    translate: 0 2px;
+  }
+}
+
+/* --- Linguetta con la freccia su per espandere il player ---
+   Sporge sopra il bordo in ottone del player, al centro, come la maniglia di un cassetto.
+   È nascosta e compare solo quando il mouse passa sul player.
+
+   Il player ha overflow: hidden (serve quando la sua riga è alta 0 e il player è nascosto),
+   che taglierebbe la linguetta perché esce dal player. Quindi, solo mentre il player
+   è visibile (la copertina ha un'immagine), lasciamo uscire il contenuto. */
+.app:has(#player-cover-img[src]:not([src=""])) .player {
+  overflow: visible;
+}
+
+.btn-expand-player {
+  position: absolute;
+  bottom: 100%; /* appoggiata sopra il player: copre il bordo in ottone e ci si attacca */
+  left: 50%;
+  z-index: 2; /* sopra il contenuto del main */
+  width: 44px;
+  height: 16px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0; /* arrotondata solo sopra */
+  background: var(--accent); /* ottone, come il bordo del player */
+  color: var(--bg-base); /* freccia scura sull'ottone */
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 -3px 8px rgb(0 0 0 / 0.35); /* leggera ombra verso l'alto */
+
+  translate: -50% 0; /* la centra in orizzontale */
+
+  /* Nascosta: invece di spostarla (finirebbe sopra il player), la "tagliamo" con clip-path.
+     inset(alto destra basso sinistra) = quanto tagliare da ogni lato:
+     tagliata al 100% dall'alto non si vede niente. Quando compare, il taglio scende a 0
+     e la linguetta si scopre dal basso verso l'alto, come se uscisse da dietro il bordo.
+     I -10px ai lati e in alto lasciano visibile l'ombra. */
+  clip-path: inset(100% -10px 0 -10px);
+  transition: clip-path 0.2s ease-out, height 0.15s;
+
+  & .icon {
+    transition: translate 0.15s;
+  }
+
+  /* Con il mouse sulla linguetta si allunga verso l'alto e la freccia sale, come per "tirarla su" */
+  &:hover {
+    height: 20px;
+
+    & .icon {
+      translate: 0 -1px;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* Compare (si scopre dal basso) quando il mouse è sul player,
+   oppure quando ci si arriva con il tasto Tab */
+.player:hover .btn-expand-player,
+.btn-expand-player:focus-visible {
+  clip-path: inset(-10px -10px 0 -10px);
+}
+
+/* Su telefoni e tablet non c'è il passaggio del mouse: la linguetta resta sempre visibile */
+@media (hover: none) {
+  .btn-expand-player {
+    clip-path: inset(-10px -10px 0 -10px);
+  }
+}
+
+/* --- Uscita del player ---
+   Il JS aggiunge .is-closing: il player scende sotto il bordo dello schermo e sfuma.
+   Il selettore è lungo apposta: è quello dell'animazione di entrata con in più .is-closing,
+   così è più specifico e la sua animazione sostituisce quella di entrata.
+   forwards: a fine animazione il player resta nella posizione finale (fuori schermo)
+   finché il JS non lo svuota e la sua riga nella griglia si chiude. */
+.app:has(#player-cover-img[src]:not([src=""])) .player.is-closing {
+  animation: player-out 0.35s ease-in forwards;
+  pointer-events: none; /* niente click mentre sta uscendo */
+}
+
+@keyframes player-out {
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Con le animazioni ridotte l'uscita è quasi istantanea.
+   Non usiamo "none": il JS aspetta la fine dell'animazione (animationend) per svuotare il player */
+@media (prefers-reduced-motion: reduce) {
+  .app:has(#player-cover-img[src]:not([src=""])) .player.is-closing {
+    animation-duration: 0.01s;
+  }
+}
+
+/* --- Nomi degli artisti cliccabili (card e player) ---
+   Sono link (<a class="artist-link">) alla pagina dell'artista.
+   Di base restano come il testo intorno (colore e niente sottolineatura, vedi la regola "a" in alto);
+   con l'hover diventano avorio e sottolineati, come nei player musicali. */
+.artist-link[href] {
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px; /* sottolineatura un po' staccata dal testo */
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
 /* ============================ Responsive ============================ */
 
 /* Container queries: guardano la larghezza del main, non quella della finestra.
@@ -1551,7 +1992,8 @@ article.row h2,
     align-items: flex-start;
   }
 
-  .album-cover {
+  .album-cover,
+  .artist-hero > img {
     width: 160px;
   }
 }

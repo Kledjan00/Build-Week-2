@@ -94,8 +94,14 @@
             </svg></button>
         </div>
 
+        <!-- Barra di ricerca nell'header: è un link a search.html disegnato come il campo di ricerca -->
+        <a href="search.html" class="topbar-search" aria-label="Vai alla ricerca">
+          <svg class="icon search-ico" aria-hidden="true"><use href="#ico-search"></use></svg>
+          <span class="topbar-search-text">Cerca un brano, un album, un artista...</span>
+        </a>
+
         <div class="user-action">
-          <button type="button" class="btn-new-user rounded-pill fw-semibold" id="btn-new-user"> New user</button>
+          <button type="button" class="btn-new-user rounded-pill fw-semibold" id="btn-new-user">+ New user</button>
           <div class="user-pill rounded-pill fw-semibold">Studente Epicode</div>
         </div>
       </header>

@@ -16,7 +16,7 @@
    6) Click cover senza play -> link a album.html?id=albumId (opzionale)
 */
 
-import { initPage, renderSidebarFavs } from "./common.js";
+import { initPage, renderSidebarFavs, artistLink } from "./common.js";
 import {
   el,
   $,
@@ -29,6 +29,7 @@ import {
 
 const player = initPage("home");
 const home = document.querySelector(".home");
+const MAX_GENRES = 5; // evita troppe righe e troppe richieste
 
 const renderCard = (track) => {
   // Cuore: .card-fav lo posiziona e lo mostra con l'hover;
@@ -63,10 +64,11 @@ const renderCard = (track) => {
     },
     el("div", { className: "card-image-wrap" }, cover),
     el("h3", { className: "card-title", text: track.trackName ?? "Sconosciuto" }),
-    el("p", { className: "card-sub", text: track.artistName ?? "—" }),
+    artistLink(track.artistName, track.artistId),
     playBtn,
     heartBtn
   );
+
 
   // click sulla card (e sul play) -> riproduce
   card.addEventListener("click", () => {
@@ -152,24 +154,95 @@ function updateHistory() {
 }
 
 
-const loadHome = async () => {
-  const [pop, rock, hits] = await Promise.all([
-    fetchModular("pop", { media: "music", entity: "song", limit: 12 }),
-    fetchModular("rock", { media: "music", entity: "song", limit: 12 }),
-    fetchModular("hits pop", { media: "music", entity: "song", limit: 12 }),
-  ]);
+function songLimit(percentage) {
+  // minimo 6 card, massimo 24
+  return Math.min(24, Math.max(6, Math.floor(percentage / 3)));
+}
 
+
+const loadHome = async () => {
   const history = getHistory().reverse().slice(0, 12);
   const favourites = getFavourites();
 
-  // renderRow salta da sola le liste vuote
+  const genres = history.map((t) => t.primaryGenreName);
+  const ranked = [...countGenres(genres)].sort((a, b) => b[1] - a[1]);
+  let percentages = genrePercentage(ranked).slice(0, MAX_GENRES);
+
+  // history vuota: righe di partenza
+  if (!percentages.length) {
+    percentages = [["Pop", 40], ["Rock", 30], ["Hip-Hop/Rap", 30]];
+  }
+
+  // una fetch per ogni genere, in parallelo
+  const results = await Promise.all(
+    percentages.map(([genre, pct]) =>
+      fetchModular(genre, {
+        media: "music",
+        entity: "song",
+        attribute: "genreIndex",
+        limit: songLimit(pct),
+      })
+    )
+  );
+
   renderRow("Riprodotti di recente", history);
   renderRow("Preferiti", favourites);
-  renderRow("Suggerimenti pop", pop);
-  renderRow("Suggerimenti rock", rock);
-  renderRow("Suggerimenti hits", hits);
+
+  // results[i] corrisponde a percentages[i]
+  percentages.forEach(([genre], i) => {
+    renderRow(`Suggerimenti ${genre}`, results[i]);
+  });
 };
 
 
 
+function countGenres(genres) {
+  const counts = new Map();
+  for (const g of genres) {
+    if (!g) continue; // salta undefined / stringhe vuote
+    counts.set(g, (counts.get(g) ?? 0) + 1);
+  }
+  return counts;
+}
+
+
+const history = getHistory().reverse().slice(0, 12);
+const genres = history.map((t) => t.primaryGenreName);
+const counts = countGenres(genres);
+const ranked = [...counts].sort((a, b) => b[1] - a[1]);
+
+
+
+
+console.log(ranked);
+console.log(genrePercentage(ranked))
+
+function genrePercentage(ranked) {
+  const total = ranked.reduce((sum, [, count]) => sum + count, 0);
+  if (!total) return [];
+
+  const rows = ranked.map(([genre, count]) => {
+    const exact = (count / total) * 100;
+    return { genre, pct: Math.floor(exact), remainder: exact - Math.floor(exact) };
+  });
+
+  // punti persi dall'arrotondamento per difetto
+  let missing = 100 - rows.reduce((sum, r) => sum + r.pct, 0);
+
+  // li assegno a chi ha il resto più alto
+  [...rows]
+    .sort((a, b) => b.remainder - a.remainder)
+    .slice(0, missing)
+    .forEach((r) => r.pct++);
+
+  return rows.map(({ genre, pct }) => [genre, pct]);
+}
+
+
+
+
+
 loadHome();
+
+
+
