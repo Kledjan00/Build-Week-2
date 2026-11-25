@@ -100,29 +100,112 @@ registerForm.addEventListener("submit", (event) => {
     clearErrors(); //toglie errori della volta prima
 
 
-let isValid = true;
+    let isValid = true;
 
-if (repeatInput.value !== passwordInput.value) {
-    showError(repeatError, "Le password non coincidono", repeatInput);
-    isValid = false;
-}
-    if(new Date(birthInput.value) > new Date()) {
+    if (repeatInput.value !== passwordInput.value) {
+        showError(repeatError, "Le password non coincidono", repeatInput);
+        isValid = false;
+    }
+    if (new Date(birthInput.value) > new Date()) {
         showError(birthError, "la data non può essere nel futuro", birthInput);
         isValid = false;
     }
 
-    if (isValid===false) {
+    if (isValid === false) {
         return;
     }
 
-newUser = {
-    username: usernameInput.value.trim(),
-    email: emailInput.value.trim(), // trim toglie gli spazi all'inizio e alla fine 
-    birthDate: birthInput.value 
-};
+    newUser = {
+        username: usernameInput.value.trim(),
+        email: emailInput.value.trim(), // trim toglie gli spazi all'inizio e alla fine 
+        birthDate: birthInput.value
+    };
 
-console.log("Nuovo utente registrato:", newUser);
-closeRegister();
-//openWelcome();
+    console.log("Nuovo utente registrato:", newUser);
+    closeRegister();
+    openWelcome();
 
 });
+// listener per uscire dalla modale con esc
+document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape") {
+        closeRegister();
+    }
+});
+
+/*-----Modale 2 genere e artisti----*/
+
+//selezionare e togliere un genere o artista
+const toggleChoice = (selectedList, value, element) => {
+    const index = selectedList.indexOf(value); // indexOf mi da la posizione nell'array
+
+    if (index === -1) {
+        selectedList.push(value);
+        element.classList.add("is-selected"); //lisa lo colora con css
+    } else {
+        selectedList.splice(index, 1); // rimuove 1 elemento da quella posione
+        element.classList.remove("is-selected"); // il bottone diventa normale
+    }
+
+    showCount(); // aggiortna contatore e bottone continua 
+};
+
+// creare i bottoni generi musicali
+const renderGenres = () => {
+    genreList.replaceChildren(); // svuoto il contenitore
+
+    genres.forEach((genre) => { // per ogni genere musicale creo un bottone
+        const chip = el("button", { className: "genre-chip", text: genre, attrs: { type: "button" } }); // el sempre da helper.js 
+        chip.addEventListener("click", () => toggleChoice(selectedGenres, genre, chip));
+        genreList.append(chip);
+    });
+};
+// creare vinili degli artisti 
+const renderArtists = () => {
+    artistList.replaceChildren(); // svuoto il contenitore
+
+    artists.forEach((artist) => { // per ogni artista creo un vinile
+        const label = el("span", { className: "artist-label" });
+        const disc = el("span", { className: "artist-disc" }, label);
+        const name = el("span", { className: "artist-name", text: artist });
+        const item = el("button", { className: "artist-item", attrs: { type: "button" } }, disc, name);
+
+        item.addEventListener("click", () => toggleChoice(selectedArtists, artist, item));
+        artistList.append(item);
+    });
+};
+
+// Contatore che scrive numero selezionati e accende e spegne il Continua
+const showCount = () => {
+    const total = selectedGenres.length + selectedArtists.length; // generi + artisti 
+
+    if (total === 1) {
+        welcomeCount.textContent = "1 selezionato";
+    } else {
+        welcomeCount.textContent = `${total} selezionati`; 
+    }
+    btnContinue.disabled = total < MIN_CHOICES; // meno di tre bottone spento
+};
+
+// aprire e chiudere la modale 2
+const openWelcome = () => {
+    selectedGenres = [];
+    selectedArtists = [];
+    welcomeModal.querySelectorAll(".is-selected").forEach((item) => {
+        item.classList.remove("is-selected");
+    });
+    showCount();
+    welcomeModal.classList.add("is-open");
+};
+
+const closeWelcome = () => {
+    welcomeModal.classList.remove("is-open");
+};
+
+btnClose.addEventListener("click", closeWelcome);
+btnSkip.addEventListener("click", closeWelcome);
+
+btnContinue.addEventListener("click", () => {
+    userTastes = { genres: selectedGenres, artists: selectedArtists};
+    
+})

@@ -21,7 +21,7 @@
       - artist -> click = window.location.href = "artist.html?id=" + artistId
 */
 
-import { initPage, renderSidebarFavs, getArtistPicture, artistLink } from "./common.js";
+import { initPage, renderSidebarFavs, artistLink } from "./common.js";
 import {
   el,
   $,
@@ -33,6 +33,7 @@ import {
   toggleFavourite,
   getFavourites,
   STORAGE_KEY_LAST_SEARCH,
+  getArtistPicture
 } from "./helper.js";
 
 const player = initPage("search");
@@ -80,6 +81,7 @@ const renderCard = (track) => {
     artistLink(track.artistName, track.artistId),
     playBtn,
     heartBtn,
+    
   );
 
   // click sulla card (e sul play) -> riproduce
@@ -95,6 +97,14 @@ const renderCard = (track) => {
     heartBtn.textContent = isFavourite(track) ? "♥" : "♡";
     heartBtn.classList.toggle("is-fav", isFavourite(track));
   });
+   // Bottone +: aggiunge il brano a una playlist (in alto a destra sulla copertina)
+  const plusBtn = el("button", {
+    className: "card-plus",
+    text: "+",
+    attrs: { "aria-label": "Aggiungi a una playlist", type: "button" },
+  });
+
+  card.append(plusBtn);
 
   return card;
 };
@@ -125,7 +135,25 @@ const renderAlbumCard = (album) => {
     window.location.href = "album.html?id=" + album.collectionId;
   });
 
+  // Bottone +: aggiunge il brano a una playlist (in alto a destra sulla copertina)
+  const plusBtn = el("button", {
+    className: "card-plus",
+    text: "+",
+    attrs: { "aria-label": "Aggiungi a una playlist", type: "button" },
+  });
+
+  const heartBtn = el("button", {
+    className: "card-fav",
+    text: "♡",
+    attrs: {
+        type: "button",
+        "aria-label": "Album preferito"
+    }
+});
+
+card.append(plusBtn, heartBtn);
   return card;
+  
 };
 
 const renderArtistCard = (artist, pic) => {

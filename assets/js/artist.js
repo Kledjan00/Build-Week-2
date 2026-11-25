@@ -17,8 +17,8 @@
    6) Costruisci #top-tracks come tracklist (uguale a album).
 */
 
-import { initPage, formatTime, renderSidebarFavs, getArtistPicture } from "./common.js";
-import { API_BASE, el, isFavourite, toggleFavourite } from "./helper.js";
+import { initPage, formatTime, renderSidebarFavs } from "./common.js";
+import { API_BASE, el, isFavourite, toggleFavourite, getArtistPicture } from "./helper.js";
 
 const player = initPage("home");
 

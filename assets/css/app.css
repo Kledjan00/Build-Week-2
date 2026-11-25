@@ -140,6 +140,12 @@ button {
   background: var(--bg-sidebar);
   padding: 24px 16px;
   overflow-y: auto; /* se il contenuto è più alto dello schermo, scorre solo la sidebar */
+  /* ...ma senza barra di scorrimento visibile: si scorre con la rotellina o il trackpad */
+  scrollbar-width: none; /* Firefox */
+
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Edge, Safari */
+  }
 }
 
 /* Zona centrale con la topbar e il contenuto della pagina */
@@ -187,8 +193,9 @@ button {
   gap: 4px;
   margin-bottom: 24px;
 
-  /* Ogni link: icona + testo affiancati */
-  & a {
+  /* Ogni link (e il pulsante Impostazioni): icona + testo affiancati */
+  & a,
+  & button {
     display: flex;
     align-items: center;
     gap: 14px;
@@ -196,6 +203,13 @@ button {
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     font-weight: 600;
+    /* per il <button>: niente bordo e sfondo di default, stesso font e larghezza dei link */
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    text-align: left;
 
     /* Al passaggio del mouse il link si schiarisce */
     &:hover {
@@ -215,6 +229,53 @@ button {
     font-size: 18px;
     width: 22px;
     text-align: center;
+  }
+}
+
+/* Pulsante "Nuova playlist" nella sidebar, sopra "I tuoi preferiti".
+   Stessa forma dei link del menu (icona + testo), con l'icona + dentro un quadratino
+   tratteggiato in ottone, come il pulsante "New user" dell'header. */
+.btn-new-playlist {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  transition: color 0.15s, background-color 0.15s;
+
+  /* Quadratino dell'icona */
+  & .ico {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    aspect-ratio: 1;
+    border: 1px dashed var(--accent);
+    border-radius: 4px;
+    color: var(--accent);
+    font-size: 16px;
+    transition: background-color 0.15s;
+  }
+
+  /* Al passaggio del mouse: come i link del menu, e il quadratino si riempie di ottone */
+  &:hover {
+    color: var(--text-primary);
+    background: var(--bg-elev-hover);
+
+    & .ico {
+      background: rgb(201 162 39 / 0.15);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 }
 
@@ -490,6 +551,48 @@ article.row,
   }
 }
 
+/* Pulsante + (aggiungi a playlist): piccolo cerchio di "vetro scuro" nell'angolo in alto
+   a destra della copertina, come il tasto "Scopri di più" della hero.
+   Il fondo scuro semitrasparente lo rende leggibile su qualsiasi copertina, chiara o scura.
+   È invisibile e compare con l'hover sulla card, come il cuore. */
+.card-plus {
+  position: absolute;
+  z-index: 1; /* sopra il velo scuro della copertina */
+  top: 20px; /* padding della card (14px) + 6px dentro la copertina */
+  right: 20px;
+  width: 28px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  background: rgb(30 20 16 / 0.65); /* marrone scuro al 65% */
+  border: 1px solid rgb(243 230 200 / 0.3); /* filo avorio al 30% */
+  backdrop-filter: blur(4px); /* sfoca la copertina dietro, come un vetro */
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0; /* invisibile finché il mouse non passa sulla card */
+  transition: opacity 0.2s, color 0.15s, border-color 0.15s;
+
+  /* Al passaggio del mouse sul + diventa ottone */
+  &:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  &:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Con l'hover sulla card compare anche il + (come il cuore) */
+.card:hover .card-plus {
+  opacity: 1;
+}
+
 /* ============================ Hero album / artista ============================ */
 
 /* Parte alta delle pagine album e artista: copertina a sinistra, testi a destra,
@@ -535,7 +638,7 @@ article.row,
   border-radius: 50%;
   flex-shrink: 0;
   margin: 20px; /* spazio per gli anelli, che sono disegnati fuori dalla foto */
-  background: url("../img/artist-placeholder.png") center / cover no-repeat, #1e1410;
+  background: url("../img/placeholderArtist.png") center / cover no-repeat, #1e1410;
   box-shadow: 0 0 0 10px #111, 0 0 0 12px #3a3a3a, 0 0 0 20px #111, var(--shadow);
   filter: sepia(0.25) contrast(1.05);
 }
@@ -871,12 +974,10 @@ article.row,
 }
 
 /* --- Trascinamento delle barre (gestito dal JS con gli eventi pointer) ---
-   Mentre si trascina, il JS aggiunge alla barra la classe is-dragging:
-   togliamo la transizione, così il riempimento segue il mouse senza ritardo. */
-.progress-bar.is-dragging .progress-fill,
-.volume-bar.is-dragging .volume-fill {
-  transition: none;
-}
+   Mentre si trascina, il JS aggiunge alla barra la classe is-dragging.
+   Non togliamo la transizione: il JS aggiunge la classe già quando si preme il tasto,
+   quindi anche un semplice click perderebbe l'animazione. Così il click scorre fino
+   al punto scelto e, trascinando, il riempimento segue il mouse con un leggero ritardo. */
 
 /* Sul touch screen, trascinare la barra non deve far scorrere la pagina */
 .progress-bar,
@@ -942,6 +1043,304 @@ article.row,
   text-align: initial;
   overflow: visible; /* Bootstrap mette hidden, che taglierebbe l'area cliccabile del ::before */
   transition: height 0.15s; /* si anima solo lo spessore, non la larghezza come in Bootstrap */
+}
+
+/* ============================ Hero della home: artista suggerito ============================
+   Grande banner in cima alla home, come la pagina artista di Apple Music:
+   foto dell'artista sullo sfondo, nome grande in basso a sinistra, pulsanti
+   e, sotto, la fila delle sue uscite (album).
+   La sezione parte nascosta (hidden) e la mostra home.js quando ha i dati. */
+.home-hero {
+  position: relative;
+  isolation: isolate; /* crea un "livello" a sé: i figli con z-index restano dentro l'hero */
+  overflow: hidden;
+  /* sale sotto la topbar (alta 72px), che è trasparente e sfocata:
+     così la foto si intravede dietro la barra, come nell'esempio */
+  margin-top: -72px;
+  padding: calc(72px + 120px) 24px 24px; /* 120px di spazio per la foto sopra il nome */
+  min-height: 460px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* nome, pulsanti e uscite stanno in basso */
+}
+
+/* Foto dell'artista: occupa la parte destra e sfuma verso sinistra e verso il basso.
+   L'immagine la imposta il JS (style.backgroundImage). */
+.home-hero-bg {
+  position: absolute;
+  z-index: -1; /* dietro ai testi */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(70%, 900px);
+  background: url("../img/placeholderArtist.png") center 25% / cover no-repeat;
+  /* Effetto "foto d'epoca", che nasconde anche la bassa risoluzione delle foto di TheAudioDB:
+     - blur(0.6px): ammorbidisce appena i pixel quadrettati quando la foto viene ingrandita
+     - sepia + saturate + contrast: colori un po' sbiaditi, come una stampa vecchia
+     La grana vera e propria è nel ::after qui sotto. */
+  filter: blur(0.6px) sepia(0.35) saturate(0.85) contrast(1.05);
+  transition: opacity 0.3s; /* dissolvenza quando si cambia artista (vedi .is-changing) */
+  /* Due maschere sovrapposte: la prima sfuma il bordo sinistro, la seconda il fondo.
+     mask-composite: intersect = si vede solo dove sono "piene" tutte e due */
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 45%),
+    linear-gradient(to top, transparent, #000 45%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent, #000 45%),
+    linear-gradient(to top, transparent, #000 45%);
+  mask-composite: intersect;
+}
+
+/* Grana della pellicola sopra la foto.
+   Il rumore è generato da un piccolo SVG con il filtro feTurbulence (come la grana della
+   copertina nel player), ripetuto su tutta la foto. È più fitto e più visibile che nel player:
+   i puntini "rompono" i bordi dei pixel ingranditi e l'occhio non nota più la bassa risoluzione.
+   Sta dentro .home-hero-bg, quindi sfuma insieme alla foto (le maschere valgono anche per lui). */
+.home-hero-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.18; /* intensità della grana: alzala per più grana, abbassala per meno */
+  pointer-events: none;
+}
+
+/* Mentre si cambia artista la foto sparisce un attimo e ricompare con quella nuova */
+.home-hero-bg.is-changing {
+  opacity: 0;
+}
+
+/* Testi e pulsanti in basso a sinistra */
+.home-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 60%;
+  margin-bottom: 28px;
+}
+
+/* Nome dell'artista: molto grande, in Italiana, con un'ombra per staccarlo dalla foto */
+.home-hero-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(36px, 7cqi, 72px);
+  line-height: 1.1;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 0.6);
+}
+
+/* Riga dei pulsanti sotto il nome */
+.home-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* "Casuale": cerchio con il bordo in ottone e solo l'icona dello shuffle (niente scritta),
+   come play e cuore delle pagine album e artista */
+.btn-hero-shuffle {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  font-size: 20px; /* grandezza dell'icona (è larga 1em) */
+  transition: background-color 0.15s;
+
+  /* Al passaggio del mouse si riempie di ottone tenue */
+  &:hover {
+    background: rgb(201 162 39 / 0.15); /* ottone al 15% */
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
+  }
+
+  /* Senza brani dell'artista il tasto è disattivato (lo decide home.js) */
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: transparent;
+  }
+}
+
+/* "Scopri di più": pillola scura semitrasparente con il testo e una freccetta,
+   alta quanto il tasto Casuale accanto. Porta alla pagina dell'artista. */
+.btn-hero-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px; /* stessa altezza del cerchio "Casuale" */
+  padding: 0 20px 0 24px;
+  border-radius: 999px;
+  background: rgb(30 20 16 / 0.6);
+  border: 1px solid rgb(243 230 200 / 0.25);
+  color: var(--text-primary);
+  font-size: 14px;
+  letter-spacing: 1px;
+  backdrop-filter: blur(6px); /* sfoca la foto dietro, così il testo si legge sempre */
+  transition: border-color 0.15s, color 0.15s;
+
+  & .icon {
+    font-size: 16px;
+    transition: translate 0.15s;
+  }
+
+  /* Al passaggio del mouse diventa ottone e la freccetta si sposta un po' a destra */
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+
+    & .icon {
+      translate: 3px 0;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* --- Altri artisti suggeriti, in fondo all'hero --- */
+.home-hero-artists-title {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 1px;
+}
+
+/* Carosello: la fila delle card con una freccia per lato, sovrapposta al bordo.
+   Lo stesso carosello è usato nell'hero (.hero-carousel) e nelle righe della home (.carousel). */
+.hero-carousel,
+.carousel {
+  position: relative; /* le frecce si posizionano rispetto a questo */
+}
+
+/* Fila delle card: si vedono 6 card alla volta.
+   Ogni colonna è larga (larghezza della fila - 5 spazi) / 6.
+   grid-auto-flow: column = le card si mettono tutte su una riga sola, che scorre di lato.
+   Nelle righe della home la fila ha anche la classe .grid: grid-template-columns: none
+   annulla le colonne automatiche della .grid normale (quella che va a capo). */
+.hero-artists-track,
+.grid.carousel-track {
+  --gap: 16px;
+  display: grid;
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 5 * var(--gap)) / 6);
+  gap: var(--gap);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory; /* a fine scorrimento una card si "aggancia" al bordo */
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* niente barra di scorrimento visibile (Firefox) */
+  padding: 6px 0 4px; /* spazio per il sollevamento delle card con l'hover */
+
+  &::-webkit-scrollbar {
+    display: none; /* niente barra di scorrimento visibile (Chrome, Edge, Safari) */
+  }
+
+  & .card {
+    scroll-snap-align: start;
+  }
+}
+
+/* Artista mostrato in questo momento nell'hero: card con il bordo in ottone */
+.hero-artists-track .card.is-active {
+  border-color: var(--accent);
+
+  & .card-title {
+    color: var(--accent);
+  }
+}
+
+/* Frecce ai lati: cerchi scuri a metà altezza delle copertine, sovrapposti al bordo della fila */
+.hero-arrow,
+.carousel-arrow {
+  position: absolute;
+  z-index: 2; /* sopra le card */
+  top: 40%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid rgb(243 230 200 / 0.25);
+  border-radius: 50%;
+  background: rgb(30 20 16 / 0.85);
+  color: var(--text-primary);
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.5);
+  transition: color 0.15s, border-color 0.15s, opacity 0.2s;
+
+  &:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* all'inizio o alla fine della fila la freccia corrispondente sparisce (disabled lo mette il JS) */
+  &:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.hero-arrow-prev,
+.carousel-arrow-prev {
+  left: -14px; /* metà fuori dalla fila, come nei caroselli di Spotify */
+}
+
+.hero-arrow-next,
+.carousel-arrow-next {
+  right: -14px;
+}
+
+/* Main stretto (tablet/telefono): la foto prende tutta la larghezza e i testi tutto lo spazio */
+@container main (width < 720px) {
+  .home-hero-bg {
+    width: 100%;
+  }
+
+  .home-hero-content {
+    max-width: none;
+  }
+
+  /* nei caroselli 3 card alla volta invece di 6 */
+  .hero-artists-track,
+  .grid.carousel-track {
+    grid-auto-columns: calc((100% - 2 * var(--gap)) / 3);
+  }
+}
+
+/* ============================ Libreria ============================ */
+
+/* Intestazione della pagina Libreria: usa le classi dell'hero di album/artista
+   (hero-kicker, hero-title, hero-sub), ma senza copertina accanto */
+.library-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px 0 8px;
+  border-bottom: 1px solid var(--border); /* linea sottile che separa l'intestazione dalle sezioni */
+  margin-bottom: 8px;
+}
+
+/* Messaggio "lista vuota" dentro le sezioni della libreria: allineato a sinistra
+   come le card, invece che centrato come il .empty generico */
+.library .empty {
+  padding: 8px 0 16px;
+  text-align: left;
+  font-style: italic;
 }
 
 /* ============================ Caricamento / nessun risultato ============================ */
@@ -1250,7 +1649,8 @@ article.row h2,
 /* Play e cuore grandi di album/artista: due cerchi uguali in ottone,
    con il bordo sottile e senza riempimento. */
 .btn-play-big,
-.btn-fav-big {
+.btn-fav-big,
+.btn-plus-big {
   width: 44px;
   aspect-ratio: 1;
   display: grid;
@@ -1288,6 +1688,18 @@ article.row h2,
     color: var(--danger);
     border-color: var(--danger);
     font-size: 30px;
+  }
+}
+
+/* + grande (aggiungi l'album a una playlist): cerchio uguale a play e cuore, accanto al cuore */
+.btn-plus-big {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 26px; /* il + nel font è sottile: lo ingrandiamo per pareggiarlo a ▶ e ♡ */
+  line-height: 1;
+
+  &:hover {
+    background: rgb(201 162 39 / 0.15); /* ottone al 15%, come play e cuore */
   }
 }
 
@@ -1410,13 +1822,13 @@ a.topbar-search {
 /* --- Immagine di riserva per gli artisti ---
    L'API di iTunes non ha foto degli artisti. Nelle card rotonde (.card-image-wrap.round)
    e nella foto della pagina artista mettiamo come sfondo un disco in vinile come il logo
-   (file assets/img/artist-placeholder.png). Se c'è un'immagine vera la copre;
+   (file assets/img/placeholderArtist.png). Se c'è un'immagine vera la copre;
    se l'immagine manca o ha il src vuoto, la nascondiamo e si vede il disco. */
 .card-image-wrap.round,
 .card-image-wrap:has(img[src*="theaudiodb"], img[src*="placeholderArtist"]),
 #row-artists .card-image-wrap,
 .artist-hero .album-cover {
-  background: url("../img/artist-placeholder.png") center / cover no-repeat, #1e1410;
+  background: url("../img/placeholderArtist.png") center / cover no-repeat, #1e1410;
 
   & img:not([src]),
   & img[src=""] {
@@ -1548,21 +1960,76 @@ a.topbar-search {
   inset: 0; /* copre tutto lo schermo */
   z-index: 1050; /* sopra la topbar sticky di Bootstrap (che ha 1020) */
   display: none; /* nascosto finché non ha la classe is-open */
-  place-items: center; /* riquadro al centro dello schermo */
+  /* riquadro al centro dello schermo. "safe": se la modale è più alta della finestra,
+     invece di uscire in alto (dove non si può scorrere) parte dall'alto e si scorre */
+  place-items: safe center;
   padding: 16px;
   background: rgb(10 6 4 / 0.72); /* marrone quasi nero al 72% */
   backdrop-filter: blur(3px); /* sfoca la pagina dietro */
   overflow-y: auto; /* su schermi bassi la modale può scorrere */
 
-  /* Modale aperta: compare con una dissolvenza... */
+  /* --- Entrata e uscita animate ---
+     Il JS aggiunge e toglie solo la classe is-open: tutto il resto lo fa il CSS con le transizioni.
+     Il problema: display: none non si può animare, la modale sparirebbe di colpo.
+     La soluzione: "transition-behavior: allow-discrete" (qui scritto dentro transition)
+     fa aspettare al display la fine delle altre transizioni prima di diventare none.
+     Così chiudendo la modale prima sfuma, e solo dopo sparisce davvero.
+     Questa è l'USCITA (lo stato senza is-open): un po' più veloce dell'entrata. */
+  opacity: 0;
+  transition:
+    opacity 0.2s ease-in,
+    display 0.2s allow-discrete;
+
+  /* Riquadro chiuso: trasparente e 12px più in basso (uscendo scende e sfuma) */
+  & .welcome-box {
+    opacity: 0;
+    translate: 0 12px;
+    transition:
+      opacity 0.2s ease-in,
+      translate 0.2s ease-in;
+  }
+
+  /* Modale aperta (ENTRATA): l'overlay compare in dissolvenza e il riquadro sale al suo posto */
   &.is-open {
     display: grid;
-    animation: welcome-fade 0.25s ease-out;
+    opacity: 1;
+    transition:
+      opacity 0.25s ease-out,
+      display 0.25s allow-discrete;
 
-    /* ...e il riquadro sale leggermente */
     & .welcome-box {
-      animation: welcome-rise 0.3s ease-out;
+      opacity: 1;
+      translate: 0 0;
+      transition:
+        opacity 0.3s ease-out,
+        translate 0.3s ease-out;
     }
+  }
+}
+
+/* @starting-style = "da dove parte" l'animazione quando la modale passa da display: none a visibile.
+   Senza, il browser la mostrerebbe subito già nello stato finale e l'entrata non si vedrebbe. */
+@starting-style {
+  .welcome-overlay.is-open {
+    opacity: 0;
+  }
+
+  .welcome-overlay.is-open .welcome-box {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+/* Foto della modale "Cosa ascolti di solito": entra come quella della modale "New user",
+   in dissolvenza e "mettendosi a fuoco" (da un po' più grande alla misura giusta) */
+#welcome-modal.is-open .welcome-box::before {
+  animation: welcome-photo-in 0.8s ease-out 0.1s both;
+}
+
+@keyframes welcome-photo-in {
+  from {
+    opacity: 0;
+    scale: 1.06;
   }
 }
 
@@ -1727,7 +2194,7 @@ a.topbar-search {
 /* Pulsanti Annulla e Registrati, spinti a destra */
 .welcome-actions {
   display: flex;
-  gap: 8px;
+  gap: 18px; /* spazio tra "Annulla" e il pulsante, che ha il filo esterno sporgente */
   margin-left: auto;
 }
 
@@ -1744,33 +2211,236 @@ a.topbar-search {
   }
 }
 
-/* "Registrati": pulsante pieno in ottone lucido */
+/* "Registrati" / "Continua": cornice doppia.
+   Niente riempimento e due fili con gli angoli arrotondati:
+   - dentro, il bordo (border): un filo sottile chiaro e quasi trasparente
+   - fuori, il contorno (outline) in ottone, staccato di 3px.
+   L'outline segue la curva del border-radius, così anche la cornice esterna è arrotondata.
+   Testo avorio, piccolo e molto spaziato. */
 .btn-continue {
-  background: var(--brass);
-  border: none;
-  border-radius: 999px; /* completamente arrotondato ai lati */
-  padding: 10px 26px;
-  color: #2a1a10; /* marrone scuro sull'ottone */
-  font-weight: 700;
-  transition: filter 0.15s;
+  background: transparent;
+  color: var(--text-primary); /* avorio */
+  border: 1px solid rgb(243 230 200 / 0.15); /* filo interno: avorio al 15% */
+  outline: 1.5px solid var(--accent); /* filo esterno in ottone */
+  outline-offset: 3px; /* distanza tra i due fili */
+  border-radius: 8px;
+  padding: 9px 26px;
+  font-size: 14px;
+  letter-spacing: 4px;
+  text-transform: uppercase; /* tutto maiuscolo; per averlo minuscolo basta togliere questa riga */
 
+  /* Al passaggio del mouse il testo diventa ottone */
   &:hover {
-    filter: brightness(1.08); /* leggermente più luminoso */
+    color: var(--accent);
+  }
+
+  /* "Continua" è disattivato finché non si scelgono almeno tre generi o artisti */
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    color: var(--text-primary);
   }
 }
 
-/* Dissolvenza dell'overlay all'apertura (parte da trasparente) */
-@keyframes welcome-fade {
-  from {
-    opacity: 0;
+/* ============================ Modale "Cosa ascolti di solito" ============================
+   In alto una foto di vinili su uno scaffale (da Pexels) che sfuma nel legno del riquadro.
+   La foto è nel ::before del riquadro, quindi non serve nessun elemento in più nell'HTML. */
+#welcome-modal .welcome-box {
+  overflow: hidden; /* la foto segue gli angoli arrotondati del riquadro */
+  padding-top: 150px; /* i testi partono più in basso: sopra c'è la foto */
+  isolation: isolate; /* la foto con z-index -1 resta dentro il riquadro, sopra il suo sfondo */
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1; /* dietro ai testi */
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 230px;
+    /* Foto presa direttamente da Pexels: "Arte vintage, sfocatura, musica".
+       ?auto=compress&w=1000 = versione compressa larga 1000px, più leggera dell'originale */
+    background: url("https://images.pexels.com/photos/4491533/pexels-photo-4491533.jpeg?auto=compress&cs=tinysrgb&w=1000")
+        center 40% / cover no-repeat,
+      #4a3324; /* marrone mentre la foto si carica */
+    filter: sepia(0.35) saturate(0.85) contrast(1.05); /* tono d'epoca come le altre foto */
+    /* Dissolvenza verso il basso: piena in alto, trasparente in fondo (si vede il legno del riquadro) */
+    -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent);
+    mask-image: linear-gradient(to bottom, #000 35%, transparent);
+  }
+
+  /* il kicker in ottone, sopra la parte che sfuma, ha un'ombra per leggersi bene */
+  & .welcome-kicker,
+  & .welcome-title {
+    text-shadow: 0 2px 10px rgb(0 0 0 / 0.7);
   }
 }
 
-/* Il riquadro parte trasparente e 12px più in basso, poi sale al suo posto */
-@keyframes welcome-rise {
+/* Titoletti "Generi" e "Artisti" */
+#welcome-modal .welcome-label {
+  display: block;
+  margin: 18px 0 10px;
+  font-weight: 400;
+}
+
+/* Liste di generi e artisti: "chip" una accanto all'altra, che vanno a capo */
+.genre-list,
+.artist-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  /* Ogni scelta (la crea new-user.js): pillola trasparente con il bordo color legno */
+  & > * {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.2);
+    color: var(--text-secondary);
+    font: inherit;
+    cursor: pointer;
+    user-select: none; /* cliccando in fretta non si seleziona il testo */
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+
+    &:hover {
+      color: var(--text-primary);
+      border-color: var(--accent);
+    }
+
+    /* Scelta selezionata: ottone. Copre i nomi di classe/attributo più comuni
+       che può usare new-user.js (is-selected, selected, active, aria-pressed) */
+    &.is-selected,
+    &.selected,
+    &.active,
+    &[aria-pressed="true"] {
+      color: #2a1a10;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  }
+
+  /* Se le chip degli artisti hanno una foto, diventa un cerchietto a sinistra del nome */
+  & img {
+    width: 26px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-left: -10px; /* la foto si avvicina al bordo sinistro della pillola */
+    filter: sepia(0.25);
+  }
+}
+
+/* "0 selezionati": piccolo e in corsivo come la nota del form */
+.welcome-count {
+  margin: 0;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Su mobile la foto è più bassa */
+@media (width < 576px) {
+  #welcome-modal .welcome-box {
+    padding-top: 110px;
+
+    &::before {
+      height: 170px;
+    }
+  }
+}
+
+
+/* --- Modale "New user" con la foto a destra ---
+   Il form resta a sinistra; la foto (.register-photo) occupa la parte destra del riquadro,
+   da cima a fondo. Il bordo sinistro della foto sfuma nel legno del riquadro, così
+   le due sezioni si fondono invece di essere separate da una linea netta. */
+.register-box {
+  width: min(860px, 100%); /* più larga della modale base (640px): deve contenere anche la foto */
+  overflow: hidden; /* la foto non esce dagli angoli arrotondati del riquadro */
+  /* Due colonne: a sinistra tutti i contenuti, a destra uno spazio vuoto del 40%
+     dove si appoggia la foto (che è posizionata absolute, quindi non occupa la colonna).
+     minmax(0, 1fr) = la colonna del form prende tutto lo spazio rimasto, senza allargarsi oltre */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40%;
+  column-gap: 32px; /* distanza tra il form e l'inizio della foto */
+
+  /* tutti i figli (titoli, testo, form) vanno nella colonna di sinistra, uno sotto l'altro */
+  & > * {
+    grid-column: 1;
+  }
+}
+
+.register-photo {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 44%; /* un po' più larga della colonna vuota: la parte che sfuma passa sotto il form */
+  /* Foto presa direttamente da Pexels (non scaricata nel progetto): "Vintage rivista vinile disco".
+     I parametri dopo il ? chiedono a Pexels una versione compressa larga 800px,
+     più leggera dell'originale (1944×2896). Il marrone sotto si vede finché la foto non è caricata
+     o se Pexels non risponde. */
+  background:
+    url("https://images.pexels.com/photos/7676528/pexels-photo-7676528.jpeg?auto=compress&cs=tinysrgb&w=800") center / cover no-repeat,
+    #4a3324;
+  filter: sepia(0.25) contrast(1.05); /* stesso tono seppia delle copertine */
+  pointer-events: none; /* non blocca i clic sui campi che le stanno vicino */
+
+  /* Sfumatura: la maschera decide quanto si vede della foto in ogni punto.
+     Da sinistra: trasparente (si vede il legno del riquadro) e poi, entro il 45%
+     della sua larghezza, piena. È questo il passaggio "trasparente" tra form e foto. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 45%);
+  mask-image: linear-gradient(to right, transparent, #000 45%);
+}
+
+/* Entrata della foto quando si apre la modale: compare in dissolvenza scivolando
+   leggermente da destra e "rimpicciolendo" appena, come una foto che si mette a fuoco.
+   - parte 0,1 secondi dopo il riquadro, così i due movimenti non si accavallano
+   - both: prima di partire resta nello stato iniziale (invisibile), dopo resta in quello finale */
+.welcome-overlay.is-open .register-photo {
+  animation: register-photo-in 0.7s ease-out 0.1s both;
+}
+
+@keyframes register-photo-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    translate: 24px 0; /* 24px più a destra */
+    scale: 1.06; /* 6% più grande */
+  }
+}
+
+/* Con "riduci movimento" attivo la foto compare senza animazione */
+@media (prefers-reduced-motion: reduce) {
+  .welcome-overlay.is-open .register-photo {
+    animation: none;
+  }
+}
+
+/* La × di chiusura finisce sopra la foto: le diamo un fondo scuro per farla leggere */
+.register-box .welcome-close {
+  z-index: 1; /* sopra la foto */
+  background: rgb(30 20 16 / 0.6);
+  border-color: rgb(243 230 200 / 0.3);
+  color: var(--text-primary);
+}
+
+/* Sotto i 768px la foto sarebbe una striscia troppo stretta: la togliamo
+   e il form torna a occupare tutta la larghezza */
+@media (width < 768px) {
+  .register-box {
+    grid-template-columns: minmax(0, 1fr); /* una sola colonna: niente spazio per la foto */
+  }
+
+  .register-photo {
+    display: none;
   }
 }
 
@@ -1793,10 +2463,17 @@ a.topbar-search {
   }
 }
 
-/* Niente animazioni di apertura per chi ha attivato "riduci movimento" */
+/* Niente animazioni di entrata e uscita per chi ha attivato "riduci movimento":
+   la modale compare e sparisce di colpo */
 @media (prefers-reduced-motion: reduce) {
+  .welcome-overlay,
+  .welcome-overlay .welcome-box,
   .welcome-overlay.is-open,
   .welcome-overlay.is-open .welcome-box {
+    transition: none;
+  }
+
+  #welcome-modal.is-open .welcome-box::before {
     animation: none;
   }
 }
@@ -2020,12 +2697,16 @@ a.topbar-search {
     & .brand-text,
     & .sidebar-section-title,
     & .sidebar-list,
-    & .sidebar-nav a span:not(.ico) {
+    & .sidebar-nav a span:not(.ico),
+    & .sidebar-nav button span:not(.ico),
+    & .btn-new-playlist-text {
       display: none;
     }
 
-    /* icone dei link centrate */
-    & .sidebar-nav a {
+    /* icone dei link (e del pulsante nuova playlist) centrate */
+    & .sidebar-nav a,
+    & .sidebar-nav button,
+    & .btn-new-playlist {
       justify-content: center;
       padding: 10px 0;
     }

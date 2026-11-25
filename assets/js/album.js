@@ -26,7 +26,7 @@
 import { initPage, bigArt, formatTime, renderSidebarFavs } from "./common.js";
 import { API_BASE, el, isFavourite, toggleFavourite } from "./helper.js";
 
-const player = initPage("home");
+const player = initPage("album");
 
 const albumHero = document.querySelector("#album-hero");
 const tracklist = document.querySelector("#tracklist");

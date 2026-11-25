@@ -214,13 +214,14 @@ L'applicazione ha un tema **vintage ispirato ai giradischi**, con un layout a 3 
 | **ver. 2.0** | **HTML e CSS:** aggiunte le modali di registrazione e "Cosa ascolti di solito?", CSS riorganizzato con classi proprie al posto di Bootstrap per card, hero e righe dei brani; **JavaScript (album e home):** tracklist completa, cuori dei preferiti sincronizzati, righe "Riprodotti di recente" e "Preferiti" aggiornate in tempo reale; **JavaScript (ricerca):** la ricerca trova anche gli album e un clic apre la loro pagina; **In corso:** apertura e controllo della registrazione, passaggio alla scelta di generi e artisti |
 | **ver. 2.1** | HTML e CSS: form di registrazione con i controlli del browser, app.css commentato; JavaScript: pagina artista funzionante, la ricerca ora trova anche gli artisti con la loro foto. In corso: new-user.js, mancano il controllo dei campi e il passaggio alla scelta della musica.
 | **ver. 2.2** | **HTML e CSS:** barra di ricerca nell'header, nuovo sfondo, modali "New user" anche in search.html; **JavaScript:** player con barre trascinabili, home con suggerimenti per genere, registrazione con controllo password. **In corso:** scelta di generi e artisti |
+| **ver. 3.2** | **HTML e CSS:** pagina Libreria, hero "Suggerito per te" in home con carosello di artisti, modali di registrazione con foto e di scelta musica con stile; **JavaScript:** playlist (crea, aggiungi con +, elimina), suggerimenti artisti in home, scelta di generi e artisti funzionante |
 
 ## Realizzato da
 
 | Persona | Ruolo |
 | :--- | :--- |
 | Lisa Irene Sciacca | Team leader, README, Layout |
-| Kledjan Lleshi | Gestore Git e LiveShare, Layout |
+| Kledjan Lleshi | Gestore Git e LiveShare, JavaScript |
 | Matteo Brucculeri | Responsabile API, JavaScript |
 | Mattia Pirró | JavaScript, Testing/QA |
 | Giuseppe Cascini | JavaScript, Testing/QA |

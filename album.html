@@ -1,159 +1,259 @@
 <!DOCTYPE html>
 <html lang="it" data-bs-theme="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EpiTunes — Album</title>
-    <!-- Bootstrap 5 (solo CSS) -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-    />
-    <!-- Stile EpiTunes: sempre DOPO Bootstrap -->
-    <link rel="stylesheet" href="assets/css/app.css" />
-  </head>
-  <body>
-    <!-- Icone del tema vintage: sprite SVG, si usano con <svg class="icon"><use href="#ico-..."></use></svg> -->
-    <svg xmlns="http://www.w3.org/2000/svg" style="display: none" aria-hidden="true">
-      <symbol id="ico-home" viewBox="0 0 24 24">
-        <path d="M3 11.5 12 4l9 7.5" />
-        <path d="M5.5 10v9.5h13V10" />
-        <path d="M10 19.5v-5h4v5" />
-      </symbol>
-      <symbol id="ico-search" viewBox="0 0 24 24">
-        <circle cx="10.5" cy="10.5" r="6.5" />
-        <circle cx="10.5" cy="10.5" r="4" opacity="0.45" />
-        <path d="M15.5 15.5 20.5 20.5" stroke-width="2.5" />
-      </symbol>
-      <symbol id="ico-chevron-left" viewBox="0 0 24 24">
-        <path d="M14.5 5.5 8 12l6.5 6.5" />
-      </symbol>
-      <symbol id="ico-chevron-right" viewBox="0 0 24 24">
-        <path d="M9.5 5.5 16 12l-6.5 6.5" />
-      </symbol>
-      <symbol id="ico-shuffle" viewBox="0 0 24 24">
-        <path d="M3 7h3.5c4 0 6.5 10 10.5 10H21" />
-        <path d="M3 17h3.5c1.6 0 2.9-1.6 4-3.5" />
-        <path d="M13.5 10.5c1.1-1.9 2.4-3.5 4-3.5H21" />
-        <path d="M18.5 4.5 21 7l-2.5 2.5" />
-        <path d="M18.5 14.5 21 17l-2.5 2.5" />
-      </symbol>
-      <symbol id="ico-prev" viewBox="0 0 24 24">
-        <path d="M6 5v14" />
-        <path d="M18 5.5 8.5 12l9.5 6.5z" fill="currentColor" />
-      </symbol>
-      <symbol id="ico-next" viewBox="0 0 24 24">
-        <path d="M18 5v14" />
-        <path d="M6 5.5l9.5 6.5L6 18.5z" fill="currentColor" />
-      </symbol>
-      <symbol id="ico-repeat" viewBox="0 0 24 24">
-        <path d="M4 11V9.5A3.5 3.5 0 0 1 7.5 6H19" />
-        <path d="M16 3l3 3-3 3" />
-        <path d="M20 13v1.5a3.5 3.5 0 0 1-3.5 3.5H5" />
-        <path d="M8 21l-3-3 3-3" />
-      </symbol>
-      <symbol id="ico-volume" viewBox="0 0 24 24">
-        <path d="M4 9.5h3l5-4v13l-5-4H4z" />
-        <path d="M15.5 9a4 4 0 0 1 0 6" />
-        <path d="M18 6.5a7.5 7.5 0 0 1 0 11" />
-      </symbol>
-    </svg>
 
-    <div class="app">
-      <!-- Sidebar statica: nascosta sotto i 576px (d-none d-sm-block) -->
-      <aside class="sidebar d-none d-sm-block">
-        <a href="index.html" class="brand">
-          <span class="brand-mark" aria-hidden="true"></span>
-          <span class="brand-text">EpiTunes</span>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EpiTunes — Album</title>
+  <!-- Bootstrap 5 (solo CSS) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" />
+  <!-- Stile EpiTunes: sempre DOPO Bootstrap -->
+  <link rel="stylesheet" href="assets/css/app.css" />
+</head>
+
+<body>
+
+  <!-- Icone del tema vintage: sprite SVG, si usano con <svg class="icon"><use href="#ico-..."></use></svg> -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display: none" aria-hidden="true">
+    <symbol id="ico-home" viewBox="0 0 24 24">
+      <path d="M3 11.5 12 4l9 7.5" />
+      <path d="M5.5 10v9.5h13V10" />
+      <path d="M10 19.5v-5h4v5" />
+    </symbol>
+    <symbol id="ico-search" viewBox="0 0 24 24">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <circle cx="10.5" cy="10.5" r="4" opacity="0.45" />
+      <path d="M15.5 15.5 20.5 20.5" stroke-width="2.5" />
+    </symbol>
+    <symbol id="ico-library" viewBox="0 0 24 24">
+      <path d="M5 4v16" />
+      <path d="M9 4v16" />
+      <path d="M13 5l4.5 15" />
+      <path d="M3.5 20h17" />
+    </symbol>
+    <symbol id="ico-plus" viewBox="0 0 24 24">
+      <path d="M12 6v12" />
+      <path d="M6 12h12" />
+    </symbol>
+    <symbol id="ico-chevron-left" viewBox="0 0 24 24">
+      <path d="M14.5 5.5 8 12l6.5 6.5" />
+    </symbol>
+    <symbol id="ico-chevron-right" viewBox="0 0 24 24">
+      <path d="M9.5 5.5 16 12l-6.5 6.5" />
+    </symbol>
+    <symbol id="ico-shuffle" viewBox="0 0 24 24">
+      <path d="M3 7h3.5c4 0 6.5 10 10.5 10H21" />
+      <path d="M3 17h3.5c1.6 0 2.9-1.6 4-3.5" />
+      <path d="M13.5 10.5c1.1-1.9 2.4-3.5 4-3.5H21" />
+      <path d="M18.5 4.5 21 7l-2.5 2.5" />
+      <path d="M18.5 14.5 21 17l-2.5 2.5" />
+    </symbol>
+    <symbol id="ico-prev" viewBox="0 0 24 24">
+      <path d="M6 5v14" />
+      <path d="M18 5.5 8.5 12l9.5 6.5z" fill="currentColor" />
+    </symbol>
+    <symbol id="ico-next" viewBox="0 0 24 24">
+      <path d="M18 5v14" />
+      <path d="M6 5.5l9.5 6.5L6 18.5z" fill="currentColor" />
+    </symbol>
+    <symbol id="ico-repeat" viewBox="0 0 24 24">
+      <path d="M4 11V9.5A3.5 3.5 0 0 1 7.5 6H19" />
+      <path d="M16 3l3 3-3 3" />
+      <path d="M20 13v1.5a3.5 3.5 0 0 1-3.5 3.5H5" />
+      <path d="M8 21l-3-3 3-3" />
+    </symbol>
+    <symbol id="ico-volume" viewBox="0 0 24 24">
+      <path d="M4 9.5h3l5-4v13l-5-4H4z" />
+      <path d="M15.5 9a4 4 0 0 1 0 6" />
+      <path d="M18 6.5a7.5 7.5 0 0 1 0 11" />
+    </symbol>
+    <symbol id="ico-settings" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3" />
+      <path
+        d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" />
+      <circle cx="12" cy="12" r="6.5" />
+    </symbol>
+  </svg>
+
+  <div class="app">
+    <!-- Sidebar statica: nascosta sotto i 576px (d-none d-sm-block) -->
+    <aside class="sidebar d-none d-sm-block">
+      <a href="index.html" class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-text">EpiTunes</span>
+      </a>
+
+      <nav class="sidebar-nav" aria-label="Navigazione principale">
+        <a href="index.html"><span class="ico" aria-hidden="true"><svg class="icon">
+              <use href="#ico-home"></use>
+            </svg></span><span>Home</span></a>
+        <a href="library.html"><span class="ico" aria-hidden="true"><svg class="icon">
+              <use href="#ico-library"></use>
+            </svg></span><span>Libreria</span></a>
+        <button type="button" id="btn-settings" aria-haspopup="dialog">
+          <span class="ico" aria-hidden="true"><svg class="icon">
+              <use href="#ico-settings"></use>
+            </svg></span>
+          <span>Impostazioni</span>
+        </button>
+        <a href="search.html"><span class="ico" aria-hidden="true"><svg class="icon">
+              <use href="#ico-search"></use>
+            </svg></span><span>Cerca</span></a>
+      </nav>
+
+      <!-- Playlist: titolo, pulsante per crearne una nuova (id btn-new-playlist, lo collega il JS)
+           e lista delle playlist dell'utente, riempita via JS da localStorage -->
+      <h2 class="sidebar-section-title">Le tue playlist</h2>
+      <button type="button" class="btn-new-playlist" id="btn-new-playlist">
+        <span class="ico" aria-hidden="true"><svg class="icon">
+            <use href="#ico-plus"></use>
+          </svg></span>
+        <span class="btn-new-playlist-text">Nuova playlist</span>
+      </button>
+      <ul class="sidebar-list" id="sidebar-playlists"></ul>
+
+      <h2 class="sidebar-section-title">I tuoi preferiti</h2>
+      <!-- Unica parte dinamica: la lista viene riempita via JS dai preferiti in localStorage -->
+      <ul class="sidebar-list" id="sidebar-favourites">
+        <li class="fst-italic">Nessuno ancora</li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <header class="topbar sticky-top d-flex align-items-center justify-content-between px-4 py-3">
+        <div class="d-flex gap-2">
+          <button type="button" class="btn nav-btn rounded-circle p-0" aria-label="Indietro"><svg class="icon">
+              <use href="#ico-chevron-left"></use>
+            </svg></button>
+          <button type="button" class="btn nav-btn rounded-circle p-0" aria-label="Avanti"><svg class="icon">
+              <use href="#ico-chevron-right"></use>
+            </svg></button>
+        </div>
+
+        <!-- Barra di ricerca nell'header: è un link a search.html disegnato come il campo di ricerca -->
+        <a href="search.html" class="topbar-search" aria-label="Vai alla ricerca">
+          <svg class="icon search-ico" aria-hidden="true">
+            <use href="#ico-search"></use>
+          </svg>
+          <span class="topbar-search-text">Cerca un brano, un album, un artista...</span>
         </a>
 
-        <nav class="sidebar-nav" aria-label="Navigazione principale">
-          <a href="index.html" class="active"><span class="ico" aria-hidden="true"><svg class="icon"><use href="#ico-home"></use></svg></span><span>Home</span></a>
-          <a href="search.html"><span class="ico" aria-hidden="true"><svg class="icon"><use href="#ico-search"></use></svg></span><span>Cerca</span></a>
-        </nav>
-
-        <h2 class="sidebar-section-title">I tuoi preferiti</h2>
-        <!-- Unica parte dinamica: la lista viene riempita via JS dai preferiti in localStorage -->
-        <ul class="sidebar-list" id="sidebar-favourites">
-          <li class="fst-italic">Nessuno ancora</li>
-        </ul>
-      </aside>
-
-      <main class="main">
-        <header class="topbar sticky-top d-flex align-items-center justify-content-between px-4 py-3">
-          <div class="d-flex gap-2">
-            <button type="button" class="btn nav-btn rounded-circle p-0" aria-label="Indietro"><svg class="icon"><use href="#ico-chevron-left"></use></svg></button>
-            <button type="button" class="btn nav-btn rounded-circle p-0" aria-label="Avanti"><svg class="icon"><use href="#ico-chevron-right"></use></svg></button>
-          </div>
-          <!-- Barra di ricerca nell'header: è un link a search.html disegnato come il campo di ricerca -->
-          <a href="search.html" class="topbar-search" aria-label="Vai alla ricerca">
-            <svg class="icon search-ico" aria-hidden="true"><use href="#ico-search"></use></svg>
-            <span class="topbar-search-text">Cerca un brano, un album, un artista...</span>
-          </a>
-          <div class="user-action">
-            <button type="button" class="btn-new-user rounded-pill fw-semibold" id="btn-new-user">+ New user</button>
-            <div class="user-pill rounded-pill fw-semibold">Studente Epicode</div>
-          </div>
-        </header>
-
-        <!--
-          COSTRUISCI IN album.js:
-          - Leggi l'id dalla query string con URLSearchParams
-          - fetch lookup?id=NNN&entity=song
-          - Primo risultato = collection (album), gli altri = tracks
-          - Hero: cover grande + titolo album + artista + anno + numero brani
-          - Tracklist: lista numerata di brani con titolo + durata; click su brano -> Player
-        -->
-        <section class="album-page page">
-          <div class="album-hero" id="album-hero"></div>
-          <div class="tracklist" id="tracklist"></div>
-        </section>
-
-      </main>
-
-      <!-- Player: scritto nell'HTML e sostituito da Player.mount() in common.js quando il JS parte
-           (replaceChildren: il player non si duplica) -->
-      <footer class="player">
-        <div class="player-track">
-          <div class="player-cover" id="player-cover"><img id="player-cover-img" alt="" /></div>
-          <div class="player-meta">
-            <p class="player-title" id="player-title">Seleziona un brano</p>
-            <p class="player-artist" id="player-artist">—</p>
-          </div>
+        <div class="user-action">
+          <button type="button" class="btn-new-user rounded-pill fw-semibold" id="btn-new-user">New user</button>
+          <button type="button" class="user-pill rounded-pill fw-semibold" id="btn-user">Log in</button>
         </div>
+      </header>
 
-        <div class="player-center">
-          <div class="player-controls">
-            <button type="button" class="btn-ctrl" id="btn-shuffle" aria-label="Riproduzione casuale"><svg class="icon"><use href="#ico-shuffle"></use></svg></button>
-            <button type="button" class="btn-ctrl" id="btn-prev" aria-label="Brano precedente"><svg class="icon"><use href="#ico-prev"></use></svg></button>
-            <button type="button" class="btn-play" id="btn-play" aria-label="Riproduci">▶</button>
-            <button type="button" class="btn-ctrl" id="btn-next" aria-label="Brano successivo"><svg class="icon"><use href="#ico-next"></use></svg></button>
-            <button type="button" class="btn-ctrl" id="btn-repeat" aria-label="Ripeti"><svg class="icon"><use href="#ico-repeat"></use></svg></button>
-          </div>
-          <div class="player-progress">
-            <span id="time-current">0:00</span>
-            <div class="progress-bar" id="progress-bar">
-              <div class="progress-fill" id="progress-fill"></div>
+      <!--
+        COSTRUISCI IN album.js:
+        - Leggi l'id dalla query string con URLSearchParams
+        - fetch lookup?id=NNN&entity=song
+        - Primo risultato = collection (album), gli altri = tracks
+        - Hero: cover grande + titolo album + artista + anno + numero brani
+        - Tracklist: lista numerata di brani con titolo + durata; click su brano -> Player
+      -->
+      <section class="album-page page">
+        <div class="album-hero" id="album-hero"></div>
+        <div class="tracklist" id="tracklist"></div>
+      </section>
+
+    </main>
+
+    <!-- Player: vuoto nell'HTML, lo costruisce Player.mount() in common.js -->
+    <footer class="player">
+
+    </footer>
+    <audio id="audio-element"></audio>
+
+    <!--Modale "New user"-->
+    <div class="welcome-overlay" id="register-modal">
+      <div class="welcome-box register-box" role="dialog" aria-modal="true" aria-labelledby="register-title">
+        <button type="button" class="welcome-close" id="register-close" aria-label="Chiudi">×</button>
+        <!-- Foto a destra del form (sfondo preso da Pexels, vedi .register-photo in app.css) -->
+        <div class="register-photo" aria-hidden="true"></div>
+
+        <p class="welcome-kicker">Nuovo utente</p>
+        <h2 class="welcome-title" id="register-title">Crea il tuo account</h2>
+        <p class="welcome-text">Compila i campi per registrarti a EpiTunes</p>
+
+        <form id="register-form">
+          <div class="register-row">
+            <div class="register-field">
+              <label class="welcome-label" for="register-username">Nome utente</label>
+              <input class="register-input" type="text" id="register-username" autocomplete="username" required
+                minlength="3">
+              <p class="register-error" id="register-username-error"></p>
             </div>
-            <span id="time-total">0:00</span>
+            <div class="register-field">
+              <label class="welcome-label" for="register-email">E-mail</label>
+              <input class="register-input" type="email" id="register-email" autocomplete="email" required>
+              <p class="register-error" id="register-email-error"></p>
+            </div>
           </div>
-        </div>
 
-        <div class="player-right">
-          <span class="volume-ico" aria-hidden="true"><svg class="icon"><use href="#ico-volume"></use></svg></span>
-          <div class="volume-bar" id="volume-bar">
-            <div class="volume-fill" id="volume-fill" style="width: 80%"></div>
+          <div class="register-row">
+            <div class="register-field">
+              <label class="welcome-label" for="register-password">Password</label>
+              <input class="register-input" type="password" id="register-password" autocomplete="new-password" required
+                minlength="8">
+              <p class="register-error" id="register-password-error"></p>
+            </div>
+            <div class="register-field">
+              <label class="welcome-label" for="register-repeat">Ripeti password</label>
+              <input class="register-input" type="password" id="register-repeat" autocomplete="new-password" required>
+              <p class="register-error" id="register-repeat-error"></p>
+            </div>
           </div>
-        </div>
-      </footer>
+
+          <div class="register-field register-half">
+            <label class="welcome-label" for="register-birth">Data di nascita</label>
+            <input class="register-input" type="date" id="register-birth" required>
+            <p class="register-error" id="register-birth-error"></p>
+          </div>
+
+          <div class="register-check">
+            <input type="checkbox" id="register-consent" required>
+            <label for="register-consent">Acconsento al trattamento dei miei dati personali</label>
+          </div>
+          <p class="register-error" id="register-consent-error"></p>
+
+          <div class="welcome-footer">
+            <p class="register-note">Tutti i campi sono obbligatori</p>
+            <div class="welcome-actions">
+              <button type="button" class="btn-skip" id="register-cancel">Annulla</button>
+              <button type="submit" class="btn-continue">Registrati</button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
+    <!--Modale "Cosa ascolti di solito"-->
+    <div class="welcome-overlay" id="welcome-modal">
+      <div class="welcome-box" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+        <button type="button" class="welcome-close" id="welcome-close" aria-label="Chiudi">×</button>
+        <p class="welcome-kicker">Benvenuto su EpiTunes</p>
+        <h2 class="welcome-title" id="welcome-title">Cosa ascolti di solito?</h2>
+        <p class="welcome-text">Scegli almeno tre generi o artisti: li useremo per i tuoi suggerimenti in home.</p>
 
-    <!-- Modale "New user" (work in progress) -->
-  <div id="modal-new-user"></div>
+        <h3 class="welcome-label">Generi</h3>
+        <div class="genre-list" id="genre-list"></div>
 
-  <audio id="audio-element"></audio>
+        <h3 class="welcome-label artist-title">Artisti</h3>
+        <div class="artist-list" id="artist-list"></div>
 
-    <script type="module" src="assets/js/common.js"></script>
-    <script type="module" src="assets/js/album.js"></script>
-  </body>
+        <div class="welcome-footer">
+          <p class="welcome-count" id="welcome-count">0 selezionati</p>
+          <div class="welcome-actions">
+            <button type="button" class="btn-skip" id="btn-skip">Salta</button>
+            <button type="button" class="btn-continue" id="btn-continue" disabled>Continua</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="assets/js/new-user.js"></script>
+  <script type="module" src="assets/js/common.js"></script>
+  <script type="module" src="assets/js/album.js"></script>
+</body>
+
 </html>

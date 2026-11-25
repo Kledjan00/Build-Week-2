@@ -56,13 +56,13 @@
      fetch("https://itunes.apple.com/lookup?id=909253&entity=song&limit=10")
 */
 
+import { $, el, historyDump, historyLog, getFavourites, getPlaylist, setPlaylist, killPLaylist } from "./helper.js"
+
 /* ============================ 1. Costanti ============================ */
 
 const STORAGE_KEY_PLAYER = "epitunes_player";
 
 /* ============================ 2. Helpers ============================ */
-import { $, el, historyClear, historyDump, historyLog, getFavourites } from "./helper.js"
-const historyArray = [];
 
 /*
 
@@ -158,6 +158,19 @@ class Artist {
     this.artistId = _artistId;
     this.artistName = _artistName;
     this.primaryGenreName = _primaryGenreName;
+  }
+}
+
+/*
+  Classe PlayList
+  Campi utili: _trackList, _id, _title.
+  
+*/
+class Playlist {
+  constructor(_trackList = [], _id, _title) {
+    this.trackList = _trackList
+    this.id = _id
+    this.title = _title
   }
 }
 
@@ -598,23 +611,6 @@ export const renderSidebarFavs = () => {
   );
 };
 
-export const getArtistPicture = async (term) => {
-  try {
-    const response = await fetch(
-      `https://www.theaudiodb.com/api/v1/json/123/search.php?s=${encodeURIComponent(term)}`,
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const results = await response.json();
-    const result = results.artists?.[0]?.strArtistThumb || null;
-
-    return result;
-  } catch (err) {
-    console.error("Errore api:", err);
-    return null; // errore: non salvo in cache, così posso riprovare
-  }
-};
-
 const initNavButtons = () => {
   $('button[aria-label="Indietro"]')?.addEventListener("click", () => history.back());
   $('button[aria-label="Avanti"]')?.addEventListener("click", () => history.forward());
@@ -647,11 +643,121 @@ export const artistLink = (name, id) => {
   - Chiamata da home.js / search.js / album.js / artist.js
   - Monta sidebar, monta player, restituisce il player per essere usato.
 */
+
+function playListBuilder(tracks = [], title) {
+  const id = self.crypto.randomUUID();
+  return new Playlist(tracks, id, title);
+}
+
+const renderPlaylistDropdown = (playlist) => {
+  const toggle = el("button", {
+    className: "btn btn-sm btn-outline-light dropdown-toggle flex-grow-1 text-start",
+    text: playlist.title,
+    attrs: {
+      type: "button",
+      "data-bs-toggle": "dropdown",
+      "data-bs-auto-close": "outside",
+      "aria-expanded": "false",
+    },
+  });
+
+  const list = el("ul", {
+    className: "dropdown-menu dropdown-menu-dark w-100",
+    id: `playlist-${playlist.id}`,
+  });
+
+  const deleteBtn = el("button", {
+    className: "btn btn-sm btn-outline-danger ms-2",
+    text: "X",
+    attrs: {
+      type: "button",
+      "aria-label": `Elimina playlist ${playlist.title}`,
+    },
+  });
+
+
+  return el(
+    "div",
+    {
+      className: "dropdown d-flex align-items-center mb-1",
+      attrs: { "data-playlist-id": playlist.id },
+    },
+    toggle,
+    list,
+    deleteBtn
+  );
+};
+
+export const renderSidebarPlaylists = () => {
+  const sidebarContainer = $("#sidebar-playlists");
+  if (!sidebarContainer) return;
+
+  const playlists = getPlaylist();
+  sidebarContainer.replaceChildren();
+
+  playlists.forEach((playlist) => {
+    const dropdownList = renderPlaylistDropdown(playlist);
+    const menu = dropdownList.querySelector(".dropdown-menu");
+    const deleteBtn = dropdownList.querySelector(".btn-outline-danger");
+
+    deleteBtn.addEventListener("click", (e) => {
+      const id = e.currentTarget.closest("[data-playlist-id]").dataset.playlistId;
+      killPLaylist(id);
+    })
+    const tracks = playlist.tracks ?? playlist.trackList ?? [];
+
+    tracks.forEach((track) => {
+      const li = el(
+        "li",
+        {
+          className: "dropdown-item text-truncate",
+          text: `${track.trackName} — ${track.artistName}`,
+          style: { cursor: "pointer" },
+        }
+      );
+      li.addEventListener("click", () => window.player?.play(track));
+      menu.append(li);
+    });
+
+    sidebarContainer.appendChild(dropdownList);
+  });
+};
+
+$("#btn-new-playlist")?.addEventListener("click", () => {
+  if ($(".playList-title-input")) return;
+
+  const input = el("input", {
+    className: "form-control form-control-sm playList-title-input",
+    attrs: { type: "text", placeholder: "Titolo playlist", "aria-label": "Titolo playlist" },
+  });
+
+  $("#sidebar-playlists").append(input);
+  input.focus();
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") return input.remove();
+    if (e.key !== "Enter") return;
+
+    const title = input.value.trim();
+    if (!title) return input.remove();
+
+    const playlist = playListBuilder([], title);
+    setPlaylist(playlist);
+    renderSidebarPlaylists();
+  });
+});
+
+document.addEventListener("playlists:changed", () => {
+  renderSidebarPlaylists();
+});
+
 export const initPage = (activePage) => {
   const player = new Player();
   player.mount();
   renderSidebarFavs();
   initNavButtons();
+  renderSidebarPlaylists();
   window.player = player;
   return player;
 };
+

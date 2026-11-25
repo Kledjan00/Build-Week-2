@@ -25,6 +25,16 @@
       <circle cx="10.5" cy="10.5" r="4" opacity="0.45" />
       <path d="M15.5 15.5 20.5 20.5" stroke-width="2.5" />
     </symbol>
+    <symbol id="ico-library" viewBox="0 0 24 24">
+      <path d="M5 4v16" />
+      <path d="M9 4v16" />
+      <path d="M13 5l4.5 15" />
+      <path d="M3.5 20h17" />
+    </symbol>
+    <symbol id="ico-plus" viewBox="0 0 24 24">
+      <path d="M12 6v12" />
+      <path d="M6 12h12" />
+    </symbol>
     <symbol id="ico-chevron-left" viewBox="0 0 24 24">
       <path d="M14.5 5.5 8 12l6.5 6.5" />
     </symbol>
@@ -57,6 +67,11 @@
       <path d="M15.5 9a4 4 0 0 1 0 6" />
       <path d="M18 6.5a7.5 7.5 0 0 1 0 11" />
     </symbol>
+    <symbol id="ico-settings" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="3" />
+  <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" />
+  <circle cx="12" cy="12" r="6.5" />
+</symbol>
   </svg>
 
   <div class="app">
@@ -71,10 +86,30 @@
         <a href="index.html" class="active" aria-current="page"><span class="ico" aria-hidden="true"><svg class="icon">
               <use href="#ico-home"></use>
             </svg></span><span>Home</span></a>
+        <a href="library.html"><span class="ico" aria-hidden="true"><svg class="icon">
+              <use href="#ico-library"></use>
+            </svg></span><span>Libreria</span></a>
+        <button type="button" id="btn-settings" aria-haspopup="dialog">
+          <span class="ico" aria-hidden="true"><svg class="icon">
+              <use href="#ico-settings"></use>
+            </svg></span>
+          <span>Impostazioni</span>
+        </button>
         <a href="search.html"><span class="ico" aria-hidden="true"><svg class="icon">
               <use href="#ico-search"></use>
             </svg></span><span>Cerca</span></a>
       </nav>
+
+      <!-- Playlist: titolo, pulsante per crearne una nuova (id btn-new-playlist, lo collega il JS)
+           e lista delle playlist dell'utente, riempita via JS da localStorage -->
+      <h2 class="sidebar-section-title">Le tue playlist</h2>
+      <button type="button" class="btn-new-playlist" id="btn-new-playlist">
+        <span class="ico" aria-hidden="true"><svg class="icon">
+            <use href="#ico-plus"></use>
+          </svg></span>
+        <span class="btn-new-playlist-text">Nuova playlist</span>
+      </button>
+      <ul class="sidebar-list" id="sidebar-playlists"></ul>
 
       <h2 class="sidebar-section-title">I tuoi preferiti</h2>
       <!-- Unica parte dinamica: la lista viene riempita via JS dai preferiti in localStorage -->
@@ -96,15 +131,65 @@
 
         <!-- Barra di ricerca nell'header: è un link a search.html disegnato come il campo di ricerca -->
         <a href="search.html" class="topbar-search" aria-label="Vai alla ricerca">
-          <svg class="icon search-ico" aria-hidden="true"><use href="#ico-search"></use></svg>
+          <svg class="icon search-ico" aria-hidden="true">
+            <use href="#ico-search"></use>
+          </svg>
           <span class="topbar-search-text">Cerca un brano, un album, un artista...</span>
         </a>
 
         <div class="user-action">
-          <button type="button" class="btn-new-user rounded-pill fw-semibold" id="btn-new-user">+ New user</button>
-          <div class="user-pill rounded-pill fw-semibold">Studente Epicode</div>
+          <button type="button" class="btn-new-user rounded-pill fw-semibold" id="btn-new-user">New user</button>
+          <button type="button" class="user-pill rounded-pill fw-semibold" id="btn-user">Log in</button>
         </div>
       </header>
+
+      <!-- Hero: artista suggerito. Parte nascosta, la riempie e la mostra home.js (renderHero) -->
+      <section class="home-hero" id="home-hero" aria-labelledby="hero-artist-name" hidden>
+        <div class="home-hero-bg" id="home-hero-bg"></div>
+
+        <div class="home-hero-content">
+          <p class="hero-kicker">Suggerito per te</p>
+          <h1 class="home-hero-title" id="hero-artist-name"></h1>
+          <p class="hero-sub" id="hero-artist-sub"></p>
+          <div class="home-hero-actions">
+            <!-- Casuale: solo icona, il testo per i lettori di schermo è nell'aria-label -->
+            <button type="button" class="btn-hero-shuffle" id="hero-shuffle" aria-label="Riproduzione casuale"
+              title="Casuale">
+              <svg class="icon" aria-hidden="true">
+                <use href="#ico-shuffle"></use>
+              </svg>
+            </button>
+            <!-- Scopri di più: porta alla pagina dell'artista (l'href lo imposta home.js) -->
+            <a class="btn-hero-more" id="hero-more">
+              <span>Scopri di più</span>
+              <svg class="icon" aria-hidden="true">
+                <use href="#ico-chevron-right"></use>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="home-hero-artists">
+          <h2 class="home-hero-artists-title">Altri artisti per te</h2>
+
+          <!-- Carosello: frecce ai lati, al centro la fila delle card (6 alla volta) -->
+          <div class="hero-carousel">
+            <button type="button" class="hero-arrow hero-arrow-prev" id="hero-artists-prev"
+              aria-label="Artisti precedenti">
+              <svg class="icon" aria-hidden="true">
+                <use href="#ico-chevron-left"></use>
+              </svg>
+            </button>
+            <div class="hero-artists-track" id="hero-artists"></div>
+            <button type="button" class="hero-arrow hero-arrow-next" id="hero-artists-next"
+              aria-label="Artisti successivi">
+              <svg class="icon" aria-hidden="true">
+                <use href="#ico-chevron-right"></use>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
 
       <section class="home page">
 
@@ -112,19 +197,18 @@
 
     </main>
 
-    <!-- Player statico: il JS aggiorna solo testi, copertina e barre -->
+    <!-- Player: vuoto nell'HTML, lo costruisce Player.mount() in common.js -->
     <footer class="player">
 
     </footer>
     <audio id="audio-element"></audio>
 
-
-
-
     <!--Modale "New user"-->
     <div class="welcome-overlay" id="register-modal">
       <div class="welcome-box register-box" role="dialog" aria-modal="true" aria-labelledby="register-title">
         <button type="button" class="welcome-close" id="register-close" aria-label="Chiudi">×</button>
+        <!-- Foto a destra del form (sfondo preso da Pexels, vedi .register-photo in app.css) -->
+        <div class="register-photo" aria-hidden="true"></div>
 
         <p class="welcome-kicker">Nuovo utente</p>
         <h2 class="welcome-title" id="register-title">Crea il tuo account</h2>
@@ -134,7 +218,8 @@
           <div class="register-row">
             <div class="register-field">
               <label class="welcome-label" for="register-username">Nome utente</label>
-              <input class="register-input" type="text" id="register-username" autocomplete="username" required minlength="3">
+              <input class="register-input" type="text" id="register-username" autocomplete="username" required
+                minlength="3">
               <p class="register-error" id="register-username-error"></p>
             </div>
             <div class="register-field">
@@ -147,7 +232,8 @@
           <div class="register-row">
             <div class="register-field">
               <label class="welcome-label" for="register-password">Password</label>
-              <input class="register-input" type="password" id="register-password" autocomplete="new-password" required minlength="8">
+              <input class="register-input" type="password" id="register-password" autocomplete="new-password" required
+                minlength="8">
               <p class="register-error" id="register-password-error"></p>
             </div>
             <div class="register-field">
@@ -206,6 +292,7 @@
   <script type="module" src="assets/js/new-user.js"></script>
   <script type="module" src="assets/js/common.js"></script>
   <script type="module" src="assets/js/home.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

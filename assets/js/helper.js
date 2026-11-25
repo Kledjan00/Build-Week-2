@@ -1,6 +1,9 @@
+import { renderSidebarPlaylists } from "./common.js"
+
 export const API_BASE = "https://itunes.apple.com";
 const STORAGE_KEY_HISTORY = "epitunes_history";
 const STORAGE_KEY_FAVOURITES = "epitunes_favourites";
+const STORAGE_KEY_PLAYLISTS = "epitunes_playlists";
 export const STORAGE_KEY_LAST_SEARCH = "epitunes_last_search";
 const MAX_HISTORY = 12;
 
@@ -18,7 +21,7 @@ export function el(tag, { className, id, text, attrs, style } = {}, ...children)
 }
 
 export function $(selector) {
-   return document.querySelector(selector);
+    return document.querySelector(selector);
 }
 
 export function debounce(fn, delay = 400) {
@@ -94,7 +97,7 @@ export async function fetchModular(
 
 
 //FUNZIONI BASE DEL LOCALE_STORAGE
- 
+
 // history
 export function historyLog(historyArray, track) {
     // evita doppioni: se il brano c'è già, lo togliamo e lo rimettiamo in coda
@@ -139,3 +142,112 @@ export function toggleFavourite(track) {
     localStorage.setItem("STORAGE_KEY_FAVOURITES", JSON.stringify(updated)); //aggiorna il localStorage
     return !exists; // true se ha aggiunto, false se ha rimosso
 }
+
+export function setPlaylist(playlist) {
+    const playlists = getPlaylist();
+    playlists.push(playlist);
+    localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(playlists));
+}
+
+export function getPlaylist() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_PLAYLISTS)) || [];
+    } catch {
+        return [];
+    }
+}
+
+export function killPLaylist(id) {
+  const filtered = getPlaylist().filter((p) => p.id !== id);
+  localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(filtered));
+  document.dispatchEvent(new Event("playlists:changed"));
+}
+
+export function addTrackToPlaylist(playlistId, track) {
+    const playlists = getPlaylist();
+    const playlist = playlists.find((p) => p.id === playlistId);
+    if (!playlist) return false;
+
+    playlist.tracks ??= [];
+    if (playlist.tracks.some((t) => t.trackId === track.trackId)) return false;
+
+    playlist.tracks.push(track);
+    localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(playlists));
+    return true;
+}
+
+export const getArtistPicture = async (term) => {
+    try {
+        const response = await fetch(
+            `https://www.theaudiodb.com/api/v1/json/123/search.php?s=${encodeURIComponent(term)}`,
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const results = await response.json();
+        const result = results.artists?.[0]?.strArtistThumb || null;
+
+        return result;
+    } catch (err) {
+        console.error("Errore api:", err);
+        return null;
+    }
+};
+
+export const showPlaylistModal = (track, onSelect) => {
+    document.querySelector(".playlist-modal-overlay")?.remove();
+
+    const playlists = getPlaylist();
+
+    // 1. Filtra le playlist che non contengono già il brano
+    const availablePlaylists = playlists.filter(pl => {
+        const tracks = pl.tracks ?? pl.trackList ?? [];
+        return !tracks.some(t => t.trackId === track.trackId);
+    });
+
+    // 2. QUI VA IL CODICE: mappiamo le playlist filtrate creando gli <li> e aggiungendo l'evento click
+    const listItems = availablePlaylists.length > 0
+        ? availablePlaylists.map(pl => {
+            const li = el("li", {
+                className: "list-group-item list-group-item-action bg-dark text-white border-secondary",
+                text: pl.title,
+                style: { cursor: "pointer" }
+            });
+
+            // Aggiungiamo l'evento click per selezionare la playlist
+            li.addEventListener("click", () => {
+                onSelect(pl.id);
+                overlay.remove();
+            });
+
+            return li;
+        })
+        : [el("li", { className: "list-group-item text-muted fst-italic bg-dark border-secondary", text: "Il brano è già in tutte le playlist" })];
+
+    // 3. Creazione della struttura della modale
+    const modalBody = el(
+        "div",
+        { className: "card bg-dark text-white p-3 shadow-lg border-secondary", style: { maxWidth: "400px", width: "100%" } },
+        el("div", { className: "d-flex justify-content-between align-items-center mb-3" },
+            el("h5", { className: "m-0", text: "Aggiungi a playlist" }),
+            el("button", { className: "btn-close btn-close-white", attrs: { type: "button", "aria-label": "Chiudi" } })
+        ),
+        el("ul", { className: "list-group list-group-flush bg-transparent" }, ...listItems)
+    );
+
+    const closeBtn = modalBody.querySelector(".btn-close");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => overlay.remove());
+    }
+
+    const overlay = el(
+        "div",
+        { className: "playlist-modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center", style: { backgroundColor: "rgba(0,0,0,0.6)", zIndex: "1050" } },
+        modalBody
+    );
+
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
+
+    document.body.appendChild(overlay);
+};
