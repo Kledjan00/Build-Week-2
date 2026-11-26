@@ -1,5 +1,3 @@
-import { renderSidebarPlaylists } from "./common.js"
-
 export const API_BASE = "https://itunes.apple.com";
 const STORAGE_KEY_HISTORY = "epitunes_history";
 const STORAGE_KEY_FAVOURITES = "epitunes_favourites";
@@ -14,7 +12,7 @@ export function el(tag, { className, id, text, attrs, style } = {}, ...children)
     if (id) node.id = id;
     if (text !== undefined) node.textContent = text;
     if (attrs) {
-        for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v); //k, v da sostituire
+        for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
     }
     if (style) Object.assign(node.style, style);
     node.append(...children);
@@ -36,7 +34,7 @@ export function debounce(fn, delay = 400) {
 export async function fetchItem(term, entity = "song", limit = 25) {
     try {
         const res = await fetch(
-            `https://itunes.apple.com/search?term=${term}&media=music&entity=${entity}&limit=${limit}`
+            `${API_BASE}/search?term=${encodeURIComponent(term)}&media=music&entity=${encodeURIComponent(entity)}&limit=${limit}`
         );
         const data = await res.json();
         return data.results;
@@ -49,7 +47,7 @@ export async function fetchItem(term, entity = "song", limit = 25) {
 export async function fetchByGenre(genre, entity = "song", limit = 25) {
     try {
         const res = await fetch(
-            `https://itunes.apple.com/search?term=${genre}&media=music&entity=${entity}&attribute=genreIndex&limit=${limit}`  //attribute=genreIndex fa in modo che "term" sia matchato con la "primaryGenreName" property dell'item invece che con il titolo.
+            `${API_BASE}/search?term=${encodeURIComponent(genre)}&media=music&entity=${encodeURIComponent(entity)}&attribute=genreIndex&limit=${limit}`
         );
         const data = await res.json();
         return data.results;
@@ -63,7 +61,7 @@ export async function fetchModular(
     term = "Frank Sinatra",
     { media, entity, attribute, limit } = {},
 ) {
-    const params = new URLSearchParams({ term }); //ritorna "term=${term}"
+    const params = new URLSearchParams({ term });
 
     if (media) params.append("media", media);
     if (entity) params.append("entity", entity);
@@ -71,8 +69,7 @@ export async function fetchModular(
     if (limit) params.append("limit", limit);
 
     try {
-        const res = await fetch(`https://itunes.apple.com/search?${params}`
-        );
+        const res = await fetch(`${API_BASE}/search?${params}`);
         const data = await res.json();
         return data.results;
     } catch (err) {
@@ -81,67 +78,46 @@ export async function fetchModular(
     }
 }
 
-//term = qualsiasi stringa
-//entity = ["musicArtist", "musicTrack", "album", "musicVideo", "mix", "song"]
-
-/*http
-    attributi: mixTerm, genreIndex, artistTerm, composerTerm, albumTerm, ratingIndex, songTerm
-    ES.
-    `https://itunes.apple.com/search?term=${term}&media=music&entity=song&attribute=genreIndex&limit=${limit}`, 
-	
-	
-	
-    explicit:	Yes, No  --- Flag per includere contenuti espliciti tra i risultati della ricerca (default: Yes)
-    Es.
-    https://itunes.apple.com/search?term=venom&media=music&entity=song&explicit=No
-*/
-
-
-//FUNZIONI BASE DEL LOCALE_STORAGE
-
-// history
 export function historyLog(historyArray, track) {
-    // evita doppioni: se il brano c'è già, lo togliamo e lo rimettiamo in coda
-    const filtered = historyArray.filter((t) => t.trackId !== track.trackId);
+    const filtered = (historyArray ?? []).filter((t) => t.trackId !== track.trackId);
     filtered.push(track);
-    if (filtered.length > MAX_HISTORY) filtered.shift(); // toglie il più vecchio
-    localStorage.setItem("STORAGE_KEY_HISTORY", JSON.stringify(filtered));
-    historyArray = JSON.parse(localStorage.getItem("STORAGE_KEY_HISTORY"))
+    if (filtered.length > MAX_HISTORY) filtered.shift();
+    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(filtered));
+    return filtered;
 }
 
 export function historyDump() {
     try {
-        return JSON.parse(localStorage.getItem("STORAGE_KEY_HISTORY")) || [];
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY)) || [];
     } catch {
         return [];
     }
 }
 
 export function historyClear() {
-    localStorage.removeItem("STORAGE_KEY_HISTORY");
+    localStorage.removeItem(STORAGE_KEY_HISTORY);
 }
 
-//preferiti
 export function getFavourites() {
     try {
-        return JSON.parse(localStorage.getItem("STORAGE_KEY_FAVOURITES")) || [];
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_FAVOURITES)) || [];
     } catch {
         return [];
     }
 }
 
 export function isFavourite(track) {
-    return getFavourites().some((t) => t.trackId === track.trackId); // ritorna true se l'ID della traccia è nei preferiti del localStorage 
+    return getFavourites().some((t) => t.trackId === track.trackId);
 }
 
 export function toggleFavourite(track) {
     const favs = getFavourites();
-    const exists = favs.some((t) => t.trackId === track.trackId);  //true se la track selezionata è già tra i preferiti 
+    const exists = favs.some((t) => t.trackId === track.trackId);
     const updated = exists
-        ? favs.filter((t) => t.trackId !== track.trackId)   // se true restituisce l'array dei preferiti meno la track selezionata
-        : [...favs, track]; //se false la aggiunge
-    localStorage.setItem("STORAGE_KEY_FAVOURITES", JSON.stringify(updated)); //aggiorna il localStorage
-    return !exists; // true se ha aggiunto, false se ha rimosso
+        ? favs.filter((t) => t.trackId !== track.trackId)
+        : [...favs, track];
+    localStorage.setItem(STORAGE_KEY_FAVOURITES, JSON.stringify(updated));
+    return !exists;
 }
 
 export function setPlaylist(playlist) {
@@ -153,7 +129,6 @@ export function setPlaylist(playlist) {
 export function getPlaylist() {
     try {
         const playlists = JSON.parse(localStorage.getItem(STORAGE_KEY_PLAYLISTS)) || [];
-        // le playlist vecchie possono avere i brani in "tracks": li unisco in "trackList"
         return playlists.map(({ tracks, ...playlist }) => ({
             ...playlist,
             trackList: [...(playlist.trackList ?? []), ...(tracks ?? [])],
@@ -185,10 +160,22 @@ export function removeTrackFromPlaylist(playlistId, trackId) {
     return true;
 }
 
+
 export function killPLaylist(id) {
     const filtered = getPlaylist().filter((p) => p.id !== id);
     localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(filtered));
     document.dispatchEvent(new Event("playlists:changed"));
+}
+
+
+export function renamePlaylist(playlistId, newTitle) {
+    const playlists = getPlaylist();
+    const playlist = playlists.find((p) => p.id === playlistId);
+    if (!playlist) return false;
+
+    playlist.title = newTitle;
+    localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(playlists));
+    return true;
 }
 
 
@@ -209,9 +196,6 @@ export const getArtistPicture = async (term) => {
     }
 };
 
-
-
-
 export function setCurrentTrackList(tracklist) {
     localStorage.setItem(STORAGE_KEY_TRACKLIST, JSON.stringify(tracklist));
 }
@@ -220,48 +204,131 @@ export function getCurrentTrackList() {
     return JSON.parse(localStorage.getItem(STORAGE_KEY_TRACKLIST)) || [];
 }
 
-
-
-export const showPlaylistModal = (track, onSelect) => {
+export const showPlaylistModal = (item, onSelect, albumTracks = null) => {
     document.querySelector(".playlist-modal-overlay")?.remove();
 
-    const playlists = getPlaylist();
+    const createPlusIcon = () => {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("class", "icon");
+        const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        use.setAttribute("href", "#ico-plus");
+        svg.append(use);
+        return el("span", { className: "ico", attrs: { "aria-hidden": "true" } }, svg);
+    };
 
-    const availablePlaylists = playlists.filter(pl => {
-        return !pl.trackList.some(t => t.trackId === track.trackId);
+    const isAlreadyInPlaylist = (pl) => {
+        const list = pl.trackList ?? [];
+        if (Array.isArray(albumTracks) && albumTracks.length > 0) {
+            return albumTracks.every((t) => list.some((pt) => pt.trackId === t.trackId));
+        }
+        return list.some((t) => t.trackId === item.trackId);
+    };
+
+    const listEl = el("ul", { className: "list-group list-group-flush bg-transparent" });
+    const createWrap = el("div", { className: "mb-2" });
+
+    const renderList = () => {
+        const playlists = getPlaylist();
+        const availablePlaylists = playlists.filter((pl) => !isAlreadyInPlaylist(pl));
+
+        let listItems;
+
+        if (playlists.length === 0) {
+            listItems = [
+                el("li", {
+                    className: "list-group-item text-muted fst-italic bg-dark border-secondary",
+                    text: "Nessuna playlist disponibile",
+                }),
+            ];
+        } else if (availablePlaylists.length === 0) {
+            listItems = [
+                el("li", {
+                    className: "list-group-item text-muted fst-italic bg-dark border-secondary",
+                    text: Array.isArray(albumTracks) && albumTracks.length > 0
+                        ? "L'album è già presente in tutte le playlist"
+                        : "Il brano è già in tutte le playlist",
+                }),
+            ];
+        } else {
+            listItems = availablePlaylists.map((pl) => {
+                const li = el("li", {
+                    className: "list-group-item list-group-item-action bg-dark text-white border-secondary",
+                    text: pl.title,
+                    style: { cursor: "pointer" },
+                });
+
+                li.addEventListener("click", () => {
+                    onSelect(pl.id);
+                    overlay.remove();
+                });
+
+                return li;
+            });
+        }
+
+        listEl.replaceChildren(...listItems);
+    };
+
+    const newPlaylistBtn = el(
+        "button",
+        {
+            className: "btn-new-playlist",
+            attrs: { type: "button" },
+        },
+        createPlusIcon(),
+        el("span", { className: "btn-new-playlist-text", text: "Nuova playlist" })
+    );
+
+    newPlaylistBtn.addEventListener("click", () => {
+        if (createWrap.querySelector(".modal-new-playlist-input")) return;
+
+        const input = el("input", {
+            className: "form-control form-control-sm bg-dark text-white border-secondary modal-new-playlist-input",
+            attrs: { type: "text", placeholder: "Titolo playlist", "aria-label": "Titolo playlist" },
+        });
+
+        createWrap.replaceChildren(input);
+        input.focus();
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") return createWrap.replaceChildren();
+            if (e.key !== "Enter") return;
+
+            const title = input.value.trim();
+            createWrap.replaceChildren();
+            if (!title) return;
+
+            const newPlaylist = {
+                id: self.crypto.randomUUID(),
+                title,
+                trackList: [],
+            };
+            const currentPlaylists = getPlaylist();
+            currentPlaylists.push(newPlaylist);
+            localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(currentPlaylists));
+            document.dispatchEvent(new Event("playlists:changed"));
+            renderList();
+        });
     });
 
-    let listItems;
-
-    if (playlists.length === 0) {
-        listItems = [el("li", { className: "list-group-item text-muted fst-italic bg-dark border-secondary", text: "Nessuna playlist disponibile" })];
-    } else if (availablePlaylists.length === 0) {
-        listItems = [el("li", { className: "list-group-item text-muted fst-italic bg-dark border-secondary", text: "Il brano è già in tutte le playlist" })];
-    } else {
-        listItems = availablePlaylists.map(pl => {
-            const li = el("li", {
-                className: "list-group-item list-group-item-action bg-dark text-white border-secondary",
-                text: pl.title,
-                style: { cursor: "pointer" }
-            });
-
-            li.addEventListener("click", () => {
-                onSelect(pl.id);
-                overlay.remove();
-            });
-
-            return li;
-        });
-    }
+    renderList();
 
     const modalBody = el(
         "div",
         { className: "card bg-dark text-white p-3 shadow-lg border-secondary", style: { maxWidth: "400px", width: "100%" } },
-        el("div", { className: "d-flex justify-content-between align-items-center mb-3" },
-            el("h5", { className: "m-0", text: "Aggiungi a playlist" }),
+        el(
+            "div",
+            { className: "d-flex justify-content-between align-items-center gap-2 mb-3" },
+            el(
+                "div",
+                { className: "d-flex align-items-center gap-2" },
+                el("h5", { className: "m-0", text: "Aggiungi a playlist" }),
+                newPlaylistBtn
+            ),
             el("button", { className: "btn-close btn-close-white", attrs: { type: "button", "aria-label": "Chiudi" } })
         ),
-        el("ul", { className: "list-group list-group-flush bg-transparent" }, ...listItems)
+        createWrap,
+        listEl
     );
 
     const closeBtn = modalBody.querySelector(".btn-close");
@@ -271,7 +338,10 @@ export const showPlaylistModal = (track, onSelect) => {
 
     const overlay = el(
         "div",
-        { className: "playlist-modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center", style: { backgroundColor: "rgba(0,0,0,0.6)", zIndex: "1050" } },
+        {
+            className: "playlist-modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center",
+            style: { backgroundColor: "rgba(0,0,0,0.6)", zIndex: "1050" },
+        },
         modalBody
     );
 
@@ -281,4 +351,3 @@ export const showPlaylistModal = (track, onSelect) => {
 
     document.body.appendChild(overlay);
 };
-

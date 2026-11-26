@@ -23,6 +23,7 @@
 
 import { initPage, renderSidebarFavs, renderSidebarPlaylists, artistLink } from "./common.js";
 import {
+  API_BASE,
   el,
   $,
   debounce,
@@ -80,7 +81,10 @@ const renderCard = (track, _index, rowTracks) => {
 
   const card = el(
     "div",
-    { className: "card" },
+    {
+      className: "card",
+      attrs: { "data-explicit": track.trackExplicitness === "explicit" }
+    },
     el("div", { className: "card-image-wrap" }, cover),
     el("h3", {
       className: "card-title",
@@ -89,8 +93,10 @@ const renderCard = (track, _index, rowTracks) => {
     artistLink(track.artistName, track.artistId),
     playBtn,
     heartBtn,
-    
+
   );
+
+
 
   // click sulla card (e sul play) -> riproduce
   card.addEventListener("click", () => {
@@ -105,7 +111,7 @@ const renderCard = (track, _index, rowTracks) => {
     heartBtn.textContent = isFavourite(track) ? "♥" : "♡";
     heartBtn.classList.toggle("is-fav", isFavourite(track));
   });
-   // Bottone +: aggiunge il brano a una playlist (in alto a destra sulla copertina)
+  // Bottone +: aggiunge il brano a una playlist (in alto a destra sulla copertina)
   const plusBtn = el("button", {
     className: "card-plus",
     text: "+",
@@ -127,6 +133,27 @@ const renderCard = (track, _index, rowTracks) => {
   return card;
 };
 
+const getAlbumTracks = async (collectionId) => {
+  if (!collectionId) return [];
+  try {
+    const res = await fetch(`${API_BASE}/lookup?id=${encodeURIComponent(collectionId)}&entity=song`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results || []).filter((item) => item.wrapperType === "track");
+  } catch (err) {
+    console.error("Errore recupero brani album:", err);
+    return [];
+  }
+};
+
+// true solo se l'album ha tracce e sono tutte nei preferiti
+const allSaved = (tracks) => tracks.length > 0 && tracks.every((t) => isFavourite(t));
+
+const setHeart = (btn, filled) => {
+  btn.textContent = filled ? "♥" : "♡";
+  btn.classList.toggle("is-fav", filled);
+};
+
 const renderAlbumCard = (album) => {
   const cover = el("img", {
     attrs: {
@@ -136,42 +163,89 @@ const renderAlbumCard = (album) => {
     },
   });
 
-  // Stessa struttura delle card dei brani, senza play e cuore
-  const card = el(
-    "div",
-    { className: "card" },
-    el("div", { className: "card-image-wrap" }, cover),
-    el("h3", {
-      className: "card-title",
-      text: album.collectionName ?? "Sconosciuto",
-    }),
-    artistLink(album.artistName, album.artistId),
-  );
-
-  // click sulla card -> pagina dell'album
-  card.addEventListener("click", () => {
-    window.location.href = "album.html?id=" + album.collectionId;
-  });
-
-  // Bottone +: aggiunge il brano a una playlist (in alto a destra sulla copertina)
   const plusBtn = el("button", {
     className: "card-plus",
     text: "+",
-    attrs: { "aria-label": "Aggiungi a una playlist", type: "button" },
+    attrs: {
+      type: "button",
+      "aria-label": "Aggiungi album a una playlist",
+    },
   });
 
   const heartBtn = el("button", {
     className: "card-fav",
     text: "♡",
     attrs: {
-        type: "button",
-        "aria-label": "Album preferito"
-    }
-});
+      type: "button",
+      "aria-label": "Album preferito",
+    },
+  });
 
-card.append(plusBtn, heartBtn);
+  getAlbumTracks(album.collectionId).then((tracks) => setHeart(heartBtn, allSaved(tracks)));
+
+  const card = el(
+    "div",
+    {
+      className: "card",
+      attrs: { "data-collection-id": album.collectionId },
+    },
+    el("div", { className: "card-image-wrap" }, cover),
+    el("h3", {
+      className: "card-title",
+      text: album.collectionName ?? "Sconosciuto",
+    }),
+    artistLink(album.artistName, album.artistId),
+    plusBtn,
+    heartBtn
+  );
+
+  plusBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const tracks = await getAlbumTracks(album.collectionId);
+    if (!tracks.length) return;
+
+    showPlaylistModal(album, (playlistId) => {
+      let anyAdded = false;
+      for (const track of tracks) {
+        if (addTrackToPlaylist(playlistId, track)) {
+          anyAdded = true;
+        }
+      }
+      if (anyAdded) document.dispatchEvent(new Event("playlists:changed"));
+      renderSidebarPlaylists();
+    }, tracks);
+  });
+
+  heartBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const tracks = await getAlbumTracks(album.collectionId);
+    if (!tracks.length) return;
+
+    const allFavs = tracks.every((t) => isFavourite(t));
+    for (const track of tracks) {
+      if (allFavs) {
+        if (isFavourite(track)) toggleFavourite(track);
+      } else {
+        if (!isFavourite(track)) toggleFavourite(track);
+      }
+    }
+
+    const nowAllFavs = tracks.every((t) => isFavourite(t));
+    document
+      .querySelectorAll(`.card[data-collection-id="${album.collectionId}"] .card-fav`)
+      .forEach((btn) => {
+        btn.textContent = nowAllFavs ? "♥" : "♡";
+        btn.classList.toggle("is-fav", nowAllFavs);
+      });
+
+    renderSidebarFavs();
+  });
+
+  card.addEventListener("click", () => {
+    window.location.href = "album.html?id=" + album.collectionId;
+  });
+
   return card;
-  
 };
 
 const renderArtistCard = (artist, pic) => {

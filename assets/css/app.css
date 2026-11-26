@@ -971,6 +971,47 @@ article.row,
   }
 }
 
+/* + per aggiungere un brano a una playlist (righe di album e artista): è un btn-outline-secondary
+   di Bootstrap. Lo rendiamo come il cuore accanto: niente riquadro, beige, un po' più grande;
+   compare passando sulla riga e diventa ottone passandoci sopra */
+.tracklist .btn-outline-secondary {
+  --bs-btn-padding-x: 4px;
+  --bs-btn-padding-y: 0;
+  --bs-btn-font-size: 20px; /* il + nel font è sottile: lo ingrandiamo come quello delle card */
+  --bs-btn-color: var(--text-secondary);
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: var(--accent);
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-bg: transparent;
+  --bs-btn-active-color: var(--accent);
+  --bs-btn-active-border-color: transparent;
+  color: var(--text-secondary); /* scritto anche qui, per sicurezza sopra il grigio di Bootstrap */
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+
+  &:hover {
+    color: var(--accent);
+  }
+
+  &:focus:not(:focus-visible) {
+    box-shadow: none;
+  }
+}
+
+.track-row:hover .btn-outline-secondary,
+.tracklist .btn-outline-secondary:focus-visible {
+  opacity: 1;
+}
+
+/* Schermi touch (niente hover): il + resta sempre visibile */
+@media (hover: none) {
+  .tracklist .btn-outline-secondary {
+    opacity: 1;
+  }
+}
+
 /* X per togliere un brano dalla playlist (pagina playlist): è un btn-outline-danger di Bootstrap,
    lo rendiamo come la X delle playlist nella sidebar: niente bordo rosso, grigia,
    compare solo passando sulla riga e diventa rossa passandoci sopra */
@@ -1566,6 +1607,149 @@ article.row,
   font-style: italic;
 }
 
+/* --- Brani preferiti della Libreria: lista a tendina ---
+   library.js crea una lista di Bootstrap (list-group) dentro #library-favs-wrap,
+   che si apre e si chiude con il pulsante #library-favs-toggle accanto al titolo.
+   Togliamo l'aspetto di Bootstrap e la rendiamo come la tracklist degli album:
+   righe senza riquadri, separate da una linea sottile, evidenziate al passaggio del mouse. */
+
+/* Pulsante accanto al titolo: cerchietto in ottone con la freccetta,
+   che punta in giù da chiuso e in su da aperto (Bootstrap aggiorna aria-expanded) */
+#library-favs-toggle {
+  width: 28px;
+  aspect-ratio: 1;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  transition: background-color 0.15s;
+
+  /* la freccetta di Bootstrap (dropdown-toggle), centrata e senza margine */
+  &::after {
+    margin: 0;
+    transition: rotate 0.25s;
+  }
+
+  &[aria-expanded="true"]::after {
+    rotate: 180deg;
+  }
+
+  &:hover {
+    background: rgb(201 162 39 / 0.15); /* ottone al 15%, come play e cuore grandi */
+  }
+
+  &:focus:not(:focus-visible) {
+    box-shadow: none;
+  }
+}
+
+#library-favs-wrap .list-group {
+  --bs-list-group-bg: transparent;
+  --bs-list-group-color: var(--text-primary);
+  --bs-list-group-border-color: var(--bg-elev-hover);
+  --bs-list-group-border-radius: 0;
+  --bs-list-group-action-hover-bg: var(--bg-elev);
+  --bs-list-group-action-hover-color: var(--text-primary);
+  --bs-list-group-action-active-bg: var(--bg-elev-hover);
+  --bs-list-group-action-active-color: var(--text-primary);
+}
+
+/* Riga: copertina | titolo e artista | pulsanti */
+#library-favs-wrap .list-group-item {
+  padding: 8px 12px;
+  border-width: 0 0 1px; /* solo la linea sotto */
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  /* copertina piccola con l'ombra, come quella del player */
+  & img {
+    flex: none;
+    box-shadow: var(--shadow);
+  }
+
+  /* titolo come nella tracklist; l'artista è già in beige (card-sub) */
+  & .fw-semibold {
+    font-weight: 700 !important;
+  }
+
+  & .card-sub {
+    font-size: 12px;
+  }
+}
+
+/* --- Pulsanti della riga: play, + e cuore ---
+   Cerchietti con il bordo sottile come i pulsanti del player, al posto di quelli di Bootstrap.
+   Play e + compaiono solo passando sulla riga; il cuore resta sempre (rosso se è tra i preferiti) */
+#library-favs-wrap .list-group-item .btn {
+  --bs-btn-padding-x: 0;
+  --bs-btn-padding-y: 0;
+  --bs-btn-font-size: 14px;
+  --bs-btn-bg: transparent;
+  --bs-btn-color: var(--text-secondary);
+  --bs-btn-border-color: var(--border);
+  --bs-btn-hover-bg: rgb(201 162 39 / 0.15);
+  --bs-btn-hover-color: var(--accent);
+  --bs-btn-hover-border-color: var(--accent);
+  --bs-btn-active-bg: rgb(201 162 39 / 0.25);
+  --bs-btn-active-color: var(--accent);
+  --bs-btn-active-border-color: var(--accent);
+  width: 32px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background-image: none; /* nessuna sfumatura: solo il bordo */
+  line-height: 1;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s, background-color 0.15s;
+
+  &:focus:not(:focus-visible) {
+    box-shadow: none;
+  }
+}
+
+/* il + nel font è sottile: lo ingrandiamo un po' */
+#library-favs-wrap .list-group-item .btn[aria-label="Aggiungi a una playlist"] {
+  font-size: 18px;
+}
+
+/* play e + nascosti finché non si passa sulla riga (o ci si arriva con Tab) */
+#library-favs-wrap .list-group-item .btn-outline-secondary {
+  opacity: 0;
+}
+
+#library-favs-wrap .list-group-item:hover .btn-outline-secondary,
+#library-favs-wrap .list-group-item .btn-outline-secondary:focus-visible {
+  opacity: 1;
+}
+
+/* cuore: niente riempimento rosso di Bootstrap, solo cuore e bordo rosso mattone */
+#library-favs-wrap .list-group-item .btn-danger,
+#library-favs-wrap .list-group-item .btn-outline-danger {
+  --bs-btn-color: var(--danger);
+  --bs-btn-border-color: var(--danger);
+  --bs-btn-hover-color: var(--danger);
+  --bs-btn-hover-border-color: var(--danger);
+  --bs-btn-hover-bg: rgb(181 67 47 / 0.15);
+  --bs-btn-active-color: var(--danger);
+  --bs-btn-active-border-color: var(--danger);
+  --bs-btn-active-bg: rgb(181 67 47 / 0.25);
+  font-size: 18px; /* il cuore nel font è piccolo */
+}
+
+/* Schermi touch (niente hover): play e + sempre visibili */
+@media (hover: none) {
+  #library-favs-wrap .list-group-item .btn-outline-secondary {
+    opacity: 1;
+  }
+}
+
 /* ============================ Caricamento / nessun risultato ============================ */
 
 /* Messaggi "Caricamento..." e "Nessun risultato", centrati */
@@ -1947,6 +2131,31 @@ article.row h2,
   }
 }
 
+/* X grande (elimina la playlist, pagina playlist): cerchio uguale a play e cuore.
+   Resta tenue (bordo legno, X beige) perché è un'azione da non premere per sbaglio:
+   diventa rosso mattone solo passandoci sopra */
+.btn-delete-big {
+  width: 44px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: Arial, sans-serif; /* la X del font con grazie sembra una lettera, non un'icona */
+  font-size: 16px;
+  line-height: 1;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: rgb(181 67 47 / 0.15); /* rosso mattone al 15% */
+  }
+}
+
 /* + grande (aggiungi l'album a una playlist): cerchio uguale a play e cuore, accanto al cuore */
 .btn-plus-big {
   border: 1px solid var(--accent);
@@ -2134,6 +2343,59 @@ a.topbar-search {
   &:hover {
     color: var(--accent);
   }
+}
+
+/* --- Ripeti acceso ---
+   Quando è attivo l'icona diventa ottone e sotto compare un puntino, come nelle app musicali.
+   Il JS segna il pulsante acceso con aria-pressed="true" (e la classe is-active) */
+#btn-repeat {
+  position: relative; /* il puntino si posiziona rispetto al pulsante */
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -3px;
+    width: 4px;
+    aspect-ratio: 1;
+    translate: -50% 0;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0; /* spento: il puntino non si vede */
+    transition: opacity 0.15s;
+  }
+
+  &:is(.is-active, [aria-pressed="true"]) {
+    color: var(--accent);
+
+    &::after {
+      opacity: 1;
+    }
+  }
+}
+
+/* Al clic (anche con il mouse) il comando si "schiaccia" e attorno all'icona si accende
+   un cerchio d'ottone, come un tasto vero: si vede bene che il clic è arrivato.
+   Torna normale appena si lascia il tasto */
+.btn-ctrl {
+  border-radius: 50%; /* così sfondo e contorni sono tondi */
+  transition: color 0.15s, scale 0.1s, background-color 0.15s, box-shadow 0.15s;
+
+  &:active {
+    color: var(--accent);
+    background: rgb(201 162 39 / 0.22); /* ottone al 22% */
+    box-shadow: 0 0 0 3px rgb(201 162 39 / 0.35);
+    scale: 0.85;
+  }
+}
+
+/* Con la tastiera (Tab) si vede quale comando del player ha il focus:
+   anello d'ottone con un alone, ben visibile sul legno */
+.btn-ctrl:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 10px 2px rgb(201 162 39 / 0.45);
+  color: var(--accent);
 }
 
 /* --- Copertina del player come la busta di un vinile consumata ---
@@ -2734,6 +2996,399 @@ a.topbar-search {
   }
 }
 
+/* ============================ Modale "Impostazioni" ============================
+   Usa la struttura delle altre modali (welcome-overlay, welcome-box, is-open).
+   Tre riquadri: tema (tendina di Bootstrap), accessibilità, contenuti espliciti.
+   Gli interruttori sono checkbox vere: il JS legge se sono spuntate e mette le classi
+   a11y-... e hide-explicit su <html> (vedi la sezione "Accessibilità" qui sotto). */
+
+.settings-box {
+  width: min(460px, 100%);
+}
+
+/* Riquadro: bordo legno, sfondo appena più scuro */
+.settings-card {
+  margin-top: 12px;
+  padding: 2px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgb(0 0 0 / 0.18);
+}
+
+/* Riga: testo a sinistra, comando a destra, linea sottile tra una riga e l'altra.
+   Con gli interruttori la riga è una <label>: si può cliccare tutta */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  cursor: pointer;
+
+  & + & {
+    border-top: 1px solid var(--bg-elev-hover);
+  }
+
+  /* spiegazione sotto il nome (es. "Mostra i brani con l'etichetta E") */
+  & small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+}
+
+/* --- Interruttore ---
+   È una checkbox vera (si usa anche da tastiera con Tab e spazio):
+   appearance: none toglie il quadratino del browser e la disegniamo noi.
+   La checkbox è la "pista", il ::before è il pallino che scorre. */
+.settings-switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 38px;
+  height: 20px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-elev-hover);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    transition: translate 0.2s, background-color 0.2s;
+  }
+
+  /* acceso: pista in ottone, pallino a destra */
+  &:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+
+    &::before {
+      translate: 18px 0;
+      background: var(--text-input);
+    }
+  }
+
+  /* con la tastiera si vede quale interruttore ha il focus */
+  &:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 3px;
+  }
+}
+
+/* --- Tendina del tema: dropdown di Bootstrap ---
+   Pulsante con bordo in ottone e freccetta, menu in legno scuro */
+.settings-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 170px;
+  padding: 6px 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+
+  /* la freccetta di Bootstrap, in ottone */
+  &::after {
+    color: var(--accent);
+  }
+}
+
+.settings-menu {
+  --bs-dropdown-bg: var(--bg-elev);
+  --bs-dropdown-border-color: var(--border);
+  --bs-dropdown-link-color: var(--text-primary);
+  --bs-dropdown-link-hover-bg: var(--bg-elev-hover);
+  --bs-dropdown-link-hover-color: var(--text-primary);
+  --bs-dropdown-link-active-bg: rgb(201 162 39 / 0.14);
+  --bs-dropdown-link-active-color: var(--accent);
+  --bs-dropdown-link-disabled-color: #7d6a55;
+  min-width: 220px;
+  padding: 5px;
+  border-top: 2px solid var(--accent);
+
+  & .dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-radius: 5px;
+  }
+
+  /* ✓ accanto al tema in uso */
+  & .dropdown-item.active::after {
+    content: "✓";
+    font-family: Arial, sans-serif;
+  }
+}
+
+/* Etichetta "Coming soon" dei temi non ancora disponibili */
+.badge-soon {
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* "Le modifiche si applicano subito" */
+.settings-note {
+  margin: 14px 0 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* ============================ Accessibilità (dalle Impostazioni) ============================
+   Il JS mette queste classi su <html> quando gli interruttori sono accesi:
+   - a11y-contrast      alto contrasto: nero, bianco e giallo
+   - a11y-large-text    testo più grande (+15%)
+   - a11y-reduce-motion niente animazioni
+   - hide-explicit      nasconde i brani espliciti (contenuti espliciti spento) */
+
+/* --- Alto contrasto ---
+   Cambiamo le variabili del tema: tutto ciò che le usa diventa nero, bianco e giallo.
+   Legno, venature e luci di sidebar, player e main sono disegnati a parte: li sostituiamo con colori pieni. */
+:root.a11y-contrast {
+  --bg-base: #000;
+  --bg-elev: #111;
+  --bg-elev-hover: #262626;
+  --bg-sidebar: #000;
+  --bg-player: #000;
+  --text-primary: #fff;
+  --text-secondary: #e6e6e6;
+  --accent: #ffd400;
+  --success: #ffd400;
+  --danger: #ff6b5a;
+  --border: #fff;
+  --bs-body-bg: #000;
+  --bs-body-color: #fff;
+
+  & .sidebar {
+    background: #000;
+    box-shadow: none;
+    border-right: 2px solid #fff;
+  }
+
+  & .player {
+    background: #000;
+    border-top-color: #ffd400;
+  }
+
+  & .main {
+    background: #000;
+  }
+
+  /* niente grana sulla copertina del player e sulla foto della home */
+  & .player-cover::before,
+  & .home-hero-bg::after {
+    display: none;
+  }
+
+  /* link e testi secondari sottolineati al passaggio, così si distinguono anche senza colore */
+  & a:hover {
+    text-decoration: underline;
+  }
+}
+
+/* --- Testo più grande (+15%) ---
+   Le pagine (tutto ciò che sta sotto la topbar) vengono ingrandite del 15% con zoom:
+   testi, card e pulsanti crescono insieme e restano in proporzione.
+   Sidebar e player hanno una larghezza fissa: lì ingrandiamo solo i testi. */
+:root.a11y-large-text {
+  --bs-body-font-size: 0.9375rem; /* 15px invece di 13px */
+
+  & .page {
+    zoom: 1.15;
+  }
+
+  & .sidebar-nav,
+  & .sidebar-list,
+  & .btn-new-playlist {
+    font-size: 1.15em;
+  }
+
+  & .player-title {
+    font-size: 15px;
+  }
+
+  & .player-artist {
+    font-size: 13px;
+  }
+}
+
+/* --- Niente animazioni ---
+   Durate quasi a zero invece di "none": così gli eventi di fine animazione partono lo stesso
+   (la chiusura del player aspetta "animationend" per svuotarsi) */
+:root.a11y-reduce-motion {
+  scroll-behavior: auto;
+
+  & *,
+  & *::before,
+  & *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Contenuti espliciti spenti ---
+   Il JS segna card e righe dei brani espliciti con data-explicit="true": qui spariscono */
+/* (il titolo del player è escluso: il brano che sta già suonando resta visibile) */
+:root.hide-explicit [data-explicit="true"]:not(.player-title) {
+  display: none;
+}
+
+/* --- Etichetta "E" dei brani espliciti ---
+   Quadratino con il bordo in ottone e la E, prima del titolo di card e righe.
+   Sta prima e non dopo: i titoli lunghi vengono tagliati con i puntini e una E in fondo sparirebbe.
+   Non serve HTML: la disegna il ::before, solo sugli elementi con data-explicit="true".
+   Vale per card, righe di album/artista, titolo del player, brani delle playlist nella sidebar
+   e lista dei preferiti in Libreria */
+.card[data-explicit="true"] .card-title::before,
+.track-row[data-explicit="true"] .track-title::before,
+.player-title[data-explicit="true"]::before,
+#sidebar-playlists .dropdown-item[data-explicit="true"]::before,
+#library-favs-wrap .list-group-item[data-explicit="true"] .fw-semibold::before {
+  content: "E";
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: 0.2em; /* alza il quadratino: così il suo centro è all'altezza del centro delle lettere */
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  color: var(--accent);
+  font-family: Arial, sans-serif; /* la E senza grazie si legge meglio così piccola */
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ============================ Modale "Condividi EpiTunes" ============================
+   Si apre cliccando il logo EpiTunes nella sidebar. Funziona senza JavaScript:
+   il logo è un <button> con popovertarget="share-modal" e la modale ha l'attributo popover.
+   Il browser la apre e la chiude da solo (anche con Esc o cliccando fuori).
+   L'aspetto è quello delle altre modali (classi welcome-box, welcome-title...). */
+
+/* Il logo ora è un pulsante: togliamo l'aspetto da pulsante del browser */
+button.brand {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* La modale: il browser mette i popover al centro (inset: 0 + margin: auto);
+   qui annulliamo il resto dei suoi stili (bordo, sfondo bianco, testo nero, padding) */
+.share-box[popover] {
+  inset: 0;
+  margin: auto;
+  width: min(480px, calc(100% - 32px));
+  height: fit-content;
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  color: var(--text-primary);
+  padding-top: 170px; /* i testi partono più in basso: sopra c'è la foto */
+  isolation: isolate; /* la foto con z-index -1 resta dentro il riquadro */
+
+  /* Uscita: sfuma e scende di 12px; allow-discrete aspetta la fine prima di nasconderla */
+  opacity: 0;
+  translate: 0 12px;
+  transition:
+    opacity 0.2s ease-in,
+    translate 0.2s ease-in,
+    display 0.2s allow-discrete,
+    overlay 0.2s allow-discrete;
+
+  /* Entrata: compare in dissolvenza e sale al suo posto */
+  &:popover-open {
+    opacity: 1;
+    translate: 0 0;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-out;
+  }
+
+  /* Foto in alto (Pexels: mani di una coppia che sfogliano il telefono), che sfuma verso il basso */
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 250px;
+    background: url("https://images.pexels.com/photos/11942864/pexels-photo-11942864.jpeg?auto=compress&cs=tinysrgb&w=1000")
+        center 45% / cover no-repeat,
+      #4a3324; /* marrone mentre la foto si carica */
+    filter: sepia(0.35) saturate(0.85) contrast(1.05); /* tono d'epoca come le altre foto */
+    -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent);
+    mask-image: linear-gradient(to bottom, #000 35%, transparent);
+  }
+
+  /* kicker e titolo sopra la parte che sfuma: un'ombra per leggerli bene */
+  & .welcome-kicker,
+  & .welcome-title {
+    text-shadow: 0 2px 10px rgb(0 0 0 / 0.7);
+  }
+
+  /* il messaggio un po' più grande e arioso, in corsivo: è una dedica */
+  & .welcome-text {
+    font-size: 15px;
+    font-style: italic;
+    line-height: 1.7;
+  }
+
+  /* sfondo scuro dietro la modale, come le altre (qui lo disegna il browser: ::backdrop) */
+  &::backdrop {
+    background: rgb(10 6 4 / 0.72);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition:
+      opacity 0.25s,
+      display 0.25s allow-discrete,
+      overlay 0.25s allow-discrete;
+  }
+
+  &:popover-open::backdrop {
+    opacity: 1;
+  }
+}
+
+@starting-style {
+  .share-box[popover]:popover-open {
+    opacity: 0;
+    translate: 0 12px;
+  }
+
+  .share-box[popover]:popover-open::backdrop {
+    opacity: 0;
+  }
+}
+
+/* Pulsanti in fondo, a destra */
+.share-actions {
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
 /* ============================ Player solo quando serve ============================
    Il player compare solo dopo che è stato scelto un brano, e da lì resta visibile
    (anche in pausa, altrimenti non ci sarebbe il tasto per farlo ripartire).
@@ -3007,6 +3662,291 @@ a.topbar-search {
   }
 }
 
+/* ============================ Giradischi (player espanso) ============================
+   Si apre dalla linguetta sopra il player (#btn-expand-player): il JS aggiunge is-open a #expandPlayer.
+   Occupa lo spazio sopra il player, che resta visibile e usabile sotto.
+   Mentre il brano suona il JS aggiunge is-playing: il vinile gira e il braccio si appoggia sul disco;
+   in pausa il disco si ferma e il braccio torna fuori, accanto al piatto. */
+
+/* Overlay: copre la pagina tranne la riga del player (alta 90px) */
+.turntable-overlay {
+  position: fixed;
+  inset: 0 0 90px 0;
+  z-index: 1040; /* sopra la pagina, sotto il player (vedi più in basso) */
+  display: none;
+  padding: 24px 3vw;
+  background: rgb(10 6 4 / 0.6);
+  backdrop-filter: blur(3px);
+
+  /* entrata e uscita come le altre modali: dissolvenza, e il riquadro sale dal player */
+  opacity: 0;
+  transition:
+    opacity 0.25s ease-in,
+    display 0.25s allow-discrete;
+
+  & .turntable-box {
+    translate: 0 40px;
+    transition: translate 0.25s ease-in;
+  }
+
+  &.is-open {
+    display: block;
+    opacity: 1;
+    transition:
+      opacity 0.3s ease-out,
+      display 0.3s allow-discrete;
+
+    & .turntable-box {
+      translate: 0 0;
+      transition: translate 0.35s ease-out;
+    }
+  }
+}
+
+@starting-style {
+  .turntable-overlay.is-open {
+    opacity: 0;
+  }
+
+  .turntable-overlay.is-open .turntable-box {
+    translate: 0 40px;
+  }
+}
+
+/* Riquadro: legno scuro con la luce calda, il profilo in ottone in alto e il giradischi al centro */
+.turntable-box {
+  position: relative;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse 55% 70% at 50% 45%, rgb(255 190 110 / 0.12), transparent 70%),
+    radial-gradient(ellipse 120% 100% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.55)),
+    linear-gradient(180deg, var(--bg-elev), var(--bg-base));
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.7);
+}
+
+/* Freccia giù in alto a destra: chiude */
+.turntable-close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  width: 40px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 20px;
+  transition: color 0.15s, border-color 0.15s, translate 0.15s;
+
+  &:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    translate: 0 2px;
+  }
+}
+
+/* Il player resta sopra l'overlay e la linguetta resta visibile, con la freccia girata in giù:
+   lo stesso tasto che apre il giradischi lo chiude */
+.app:has(#expandPlayer.is-open) {
+  & .player {
+    z-index: 1045;
+  }
+
+  & .btn-expand-player {
+    clip-path: inset(-10px -10px 0 -10px);
+
+    & .icon {
+      rotate: 180deg;
+    }
+  }
+}
+
+/* --- Il giradischi ---
+   Tutte le misure interne sono in percentuale: il giradischi si rimpicciolisce
+   con la finestra e resta in proporzione. Largo al massimo 640px,
+   e mai più alto dello spazio disponibile sopra il player. */
+.turntable {
+  position: relative;
+  width: min(640px, 100%, calc((100dvh - 230px) * 1.14));
+  aspect-ratio: 1.14;
+  border: 1px solid #2a170c;
+  border-radius: 18px;
+  /* legno: venature sottili (le prime due righe) sopra una sfumatura di noce */
+  background:
+    repeating-linear-gradient(92deg, rgb(0 0 0 / 0.1) 0 2px, transparent 2px 9px),
+    repeating-linear-gradient(88deg, rgb(255 220 170 / 0.05) 0 1px, transparent 1px 13px),
+    linear-gradient(160deg, #6b3f22, #4a2a16 55%, #3a200f);
+  box-shadow:
+    inset 0 2px 0 rgb(255 220 170 / 0.15),
+    inset 0 -8px 18px rgb(0 0 0 / 0.45),
+    0 24px 50px rgb(0 0 0 / 0.6);
+}
+
+/* Piatto: il cerchio grigio con il bordo metallico su cui appoggia il vinile */
+.turntable-platter {
+  position: absolute;
+  left: 5.6%;
+  top: 50%;
+  width: 73.4%;
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2a2a2a 0 60%, #9a9a9a 60.5% 61.5%, #1a1a1a 62%);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.6), inset 0 0 0 3px #555;
+
+  /* Riflessi della luce sui solchi: stanno sul piatto e non sul vinile,
+     così restano fermi mentre il disco gira sotto (come una luce vera) */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 2%;
+    z-index: 1;
+    border-radius: 50%;
+    pointer-events: none;
+    background: conic-gradient(from 20deg,
+        transparent 0 8%, rgb(255 255 255 / 0.1) 12%, transparent 18% 50%,
+        rgb(255 255 255 / 0.08) 58%, transparent 66%);
+  }
+}
+
+/* Vinile: solchi fatti con cerchi ripetuti, un anello più chiaro attorno all'etichetta.
+   Gira come il logo: un giro ogni 1,8 secondi (33 giri al minuto), in pausa finché non suona */
+.turntable-vinyl {
+  position: absolute;
+  inset: 2%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 33%, rgb(255 255 255 / 0.05) 33.4%, transparent 34%),
+    repeating-radial-gradient(circle, #121212 0 1.4px, #1d1d1d 1.4px 2.6px),
+    #111;
+  box-shadow: inset 0 0 0 6px #0c0c0c;
+  animation: spin-record 1.8s linear infinite paused;
+}
+
+/* Etichetta al centro: la copertina del brano, ritagliata tonda.
+   Senza copertina resta un'etichetta in ottone */
+.turntable-label {
+  position: absolute;
+  inset: 31%;
+  width: 38%;
+  height: 38%;
+  object-fit: cover;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f3dd8a, #c9a227 45%, #7a5c12);
+  box-shadow: 0 0 0 3px #0b0b0b, 0 0 0 5px rgb(201 162 39 / 0.5);
+}
+
+/* Foro centrale, sopra la copertina */
+.turntable-vinyl::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ddd 0 35%, #777 40%, #333);
+  box-shadow: 0 0 0 2px #0b0b0b;
+}
+
+/* Base del braccio: perno in ottone */
+.turntable-arm-base {
+  position: absolute;
+  right: 6.6%;
+  top: 8.2%;
+  width: 13.4%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f3dd8a, #c9a227 45%, #7a5c12);
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.5);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 30%;
+    border-radius: 50%;
+    background: #2a1a10;
+  }
+}
+
+/* Braccio: un'asta in ottone che ruota attorno al perno (transform-origin in alto, al centro).
+   In pausa è quasi verticale, fuori dal disco; quando suona ruota e appoggia la puntina sul vinile.
+   La transizione lo fa muovere piano, come un braccio vero */
+.turntable-arm {
+  position: absolute;
+  left: 86.7%; /* centro del perno */
+  top: 15.9%;
+  width: 1.6%;
+  height: 53.5%;
+  translate: -50% 0;
+  transform-origin: 50% 0;
+  rotate: 3deg;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #8a6a1c, #f3dd8a 45%, #9b7a22);
+  transition: rotate 0.7s ease-in-out;
+}
+
+/* Testina con la puntina, in fondo al braccio: si muove con lui perché ne è figlia */
+.turntable-head {
+  position: absolute;
+  left: 50%;
+  bottom: -14%;
+  width: 340%;
+  height: 17%;
+  translate: -50% 0;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: linear-gradient(90deg, #2a1a10, #4a2f1d);
+}
+
+/* Spia (accesa solo mentre suona) e manopola in basso a destra */
+.turntable-led {
+  position: absolute;
+  right: 18.8%;
+  bottom: 10.7%;
+  width: 1.4%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #5a3d28;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.turntable-knob {
+  position: absolute;
+  right: 8.8%;
+  bottom: 7.8%;
+  width: 6.9%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f3dd8a, #c9a227 45%, #7a5c12);
+}
+
+/* --- In riproduzione (classe is-playing messa dal JS) --- */
+.turntable-overlay.is-playing {
+  & .turntable-vinyl {
+    animation-play-state: running;
+  }
+
+  & .turntable-arm {
+    rotate: 24deg;
+  }
+
+  & .turntable-led {
+    background: #ffb347;
+    box-shadow: 0 0 10px #ffb347;
+  }
+}
+
 /* ============================ Responsive ============================ */
 
 /* Container queries: guardano la larghezza del main, non quella della finestra.
@@ -3068,6 +4008,103 @@ a.topbar-search {
   /* anche la lista delle playlist (la sua regola usa l'id, quindi va nascosta con l'id) */
   #sidebar-playlists {
     display: none;
+  }
+}
+
+/* Tablet: dei titoli "Le tue playlist" e "I tuoi preferiti" resta solo l'icona, cliccabile
+   (porta alla sezione della Libreria), centrata e grande come le icone dei link sopra.
+   Solo tra 576 e 768px: sotto i 576px la sidebar è il pannello, dove i titoli tornano interi */
+@media (576px <= width < 768px) {
+  .sidebar .sidebar-section-title {
+    display: flex;
+    justify-content: center;
+    margin: 4px 0;
+
+    & a {
+      justify-content: center;
+      width: 100%;
+      padding: 10px 0;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+
+      &:hover {
+        color: var(--text-primary);
+        background: var(--bg-elev-hover);
+      }
+    }
+
+    & .ico {
+      font-size: 18px;
+    }
+
+    /* il testo non si vede, ma resta per i lettori di schermo: è il nome del link */
+    & a span:not(.ico) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+}
+
+/* --- Testata di playlist, album e artista su mobile e tablet (fino a 956px) ---
+   Copertina grande al centro; sotto, a sinistra "PLAYLIST", titolo e brani,
+   a destra i pulsanti, con il play all'estremità (vicino al pollice, come nelle app musicali) */
+@media (width <= 956px) {
+  .playlist-hero,
+  .album-hero,
+  .artist-hero {
+    flex-direction: column;
+    align-items: center; /* copertina al centro */
+
+    & .album-cover {
+      width: min(240px, 65vw);
+    }
+
+    /* foto rotonda dell'artista: un po' più piccola, perché intorno ha gli anelli del vinile */
+    & > img {
+      width: min(200px, 55vw);
+    }
+
+    /* testi e pulsanti: griglia a due colonne, testi a sinistra e pulsanti a destra */
+    & .hero-meta {
+      align-self: stretch; /* larga quanto la pagina, non solo quanto i testi */
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: 12px;
+      row-gap: 6px;
+
+      & > :not(.hero-actions) {
+        grid-column: 1; /* kicker, titolo e sottotitolo uno sotto l'altro, a sinistra */
+      }
+    }
+
+    /* pulsanti nella colonna di destra, allineati in basso con i testi.
+       row-reverse li mostra al contrario: il play finisce a destra (playlist: X e play; album: +, cuore e play) */
+    & .hero-actions {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      align-self: end;
+      flex-direction: row-reverse;
+      padding: 0;
+    }
+
+    /* pulsanti un po' più piccoli: con i tre dell'album resta più spazio al titolo */
+    & :is(.btn-play-big, .btn-fav-big, .btn-plus-big, .btn-delete-big) {
+      width: 38px;
+    }
+
+    & .hero-actions {
+      gap: 10px;
+    }
+
+    /* album: cuore prima del + (con row-reverse l'ordine è al contrario:
+       order: 1 manda il cuore in fondo alla fila, cioè a sinistra) */
+    & .btn-fav-big {
+      order: 1;
+    }
   }
 }
 

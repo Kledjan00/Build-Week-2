@@ -17,13 +17,62 @@
    6) Costruisci #top-tracks come tracklist (uguale a album).
 */
 
-import { initPage, formatTime, renderSidebarFavs } from "./common.js";
-import { API_BASE, el, isFavourite, toggleFavourite, getArtistPicture } from "./helper.js";
+import { initPage, formatTime, renderSidebarFavs, renderSidebarPlaylists } from "./common.js";
+import {
+  API_BASE,
+  el,
+  isFavourite,
+  toggleFavourite,
+  getArtistPicture,
+  addTrackToPlaylist,
+  showPlaylistModal,
+} from "./helper.js";
 
 const player = initPage("home");
 
 const artistHero = document.querySelector("#artist-hero");
 const topTracks = document.querySelector("#top-tracks");
+
+const getFacebookUrl = async (artistName) => {
+  try {
+    const res = await fetch(
+      `https://www.theaudiodb.com/api/v1/json/123/search.php?s=${encodeURIComponent(artistName)}`
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const raw = data.artists?.[0]?.strFacebook;
+    if (!raw) return null;
+
+    // aggiunge https:// 
+    return `https://${raw}`;
+  } catch (err) {
+    console.error("Errore link Facebook:", err);
+    return null;
+  }
+};
+
+const getBio = async (artistName) => {
+  try {
+    const res = await fetch(
+      `https://www.theaudiodb.com/api/v1/json/123/search.php?s=${encodeURIComponent(artistName)}`
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const artist = data.artists?.[0];
+
+    let bio = artist?.strBiographyIT;
+    if (!bio) bio = artist?.strBiography; // fallback: biografia in inglese
+
+    return bio || null;
+  } catch (err) {
+    console.error("Errore biografia:", err);
+    return null;
+  }
+};
+
+
 
 const loadArtist = async () => {
   const id = new URLSearchParams(window.location.search).get("id");
@@ -38,12 +87,16 @@ const loadArtist = async () => {
     const data = await res.json();
 
     const artist = data.results[0];
-    const tracks = data.results.slice(1);
+    const tracks = data.results.slice(1).filter((item) => item.wrapperType === "track");
     const firstTrack = tracks[0];
 
     const listeners = Math.floor(Math.random() * 5_000_000);
     const genre = artist.primaryGenreName ?? "Musica";
-    const pic = await getArtistPicture(artist.artistName);
+    const [pic, facebookUrl, bio] = await Promise.all([
+      getArtistPicture(artist.artistName),
+      getFacebookUrl(artist.artistName),
+      getBio(artist.artistName),
+    ]);
 
     const playBtn = el("button", {
       className: "btn-play-big",
@@ -51,8 +104,33 @@ const loadArtist = async () => {
       attrs: { "aria-label": "Riproduci", type: "button" },
     });
 
-    // passa anche la lista: avanti/indietro scorrono i brani popolari dell'artista
-    playBtn.addEventListener("click", () => player.play(firstTrack, tracks));
+
+    const socialBtn = el("button", {
+      className: "btn-social-big",
+      text: "F",
+      attrs: { "aria-label": "Facebook", type: "button" },
+    });
+
+    const bioAside = el("aside", {
+      className: "bio-aside",
+      text: bio,
+      attrs: { "aria-label": "biografia" },
+    });
+    
+
+
+    if (facebookUrl) {
+      socialBtn.addEventListener("click", () => {
+        window.open(facebookUrl, "_blank", "noopener,noreferrer");
+      });
+    } else {
+      socialBtn.disabled = true;
+      socialBtn.title = "Pagina Facebook non disponibile";
+    }
+
+    playBtn.addEventListener("click", () => {
+      if (firstTrack) player.play(firstTrack, tracks);
+    });
 
     artistHero.replaceChildren(
       el("img", {
@@ -71,8 +149,9 @@ const loadArtist = async () => {
           className: "hero-sub",
           text: `${genre} · ${listeners.toLocaleString("it-IT")} ascoltatori`,
         }),
-        el("div", { className: "hero-actions" }, playBtn)
-      )
+        el("div", { className: "hero-actions" }, playBtn, socialBtn)
+      ),
+      bioAside
     );
 
     const heading = el("h2", { className: "section-title fs-4", text: "Popolari" });
@@ -84,19 +163,27 @@ const loadArtist = async () => {
         attrs: { "aria-label": "Preferito", type: "button" },
       });
 
+      const plusBtn = el("button", {
+        className: "btn btn-sm btn-outline-secondary py-0",
+        text: "+",
+        attrs: {
+          type: "button",
+          "aria-label": `Aggiungi ${track.trackName} a una playlist`,
+        },
+      });
+
       const row = el(
         "div",
         {
           className: "track-row",
-          attrs: { "data-track-id": track.trackId },
+          attrs: { "data-track-id": track.trackId, "data-explicit": track.trackExplicitness === "explicit" },
         },
         el("span", { className: "track-num", text: i + 1 }),
         el("span", { className: "track-title", text: track.trackName ?? "Sconosciuto" }),
         el("span", { className: "track-time", text: formatTime(track.trackTimeMillis) }),
-        rowHeart
+        el("span", { className: "d-flex align-items-center gap-2" }, rowHeart, plusBtn)
       );
 
-      // passa anche la lista: avanti/indietro scorrono i brani popolari dell'artista
       row.addEventListener("click", () => player.play(track, tracks));
 
       rowHeart.addEventListener("click", (e) => {
@@ -105,6 +192,17 @@ const loadArtist = async () => {
         renderSidebarFavs();
         rowHeart.textContent = isFavourite(track) ? "♥" : "♡";
         rowHeart.classList.toggle("is-fav", isFavourite(track));
+      });
+
+      plusBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showPlaylistModal(track, (playlistId) => {
+          const added = addTrackToPlaylist(playlistId, track);
+          if (added) {
+            document.dispatchEvent(new Event("playlists:changed"));
+          }
+          renderSidebarPlaylists();
+        });
       });
 
       return row;

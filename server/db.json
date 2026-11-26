@@ -1,3 +1,10 @@
 {
-  "users": []
+  "users": [
+    {
+      "email": "lleshi.kledjan02@gmail.com",
+      "password": "$2a$10$dl0MJiRR9XWvpj47AapNfuse.xttzA227f7lQ81hlZGyfVkneahRy",
+      "userName": "lleshi.kledjan",
+      "id": 1
+    }
+  ]
 }

@@ -1,6 +1,7 @@
 
 
 import { el } from "./helper.js"
+import { signUp } from "./auth.js" // importo registrazione
 
 /*------Dati--------*/
 
@@ -18,20 +19,21 @@ const MIN_CHOICES = 3;
 const btnNewUser = document.querySelector('#btn-new-user');
 
 // modale 1 registrazione
-const registerModal = document.querySelector("#register-modal")
-const registerForm = document.querySelector("#register-form")
-const btnRegisterClose = document.querySelector("#register-close")
-const btnRegisterCancel = document.querySelector("#register-cancel")
+const registerModal = document.querySelector("#register-modal");
+const registerForm = document.querySelector("#register-form");
+const btnRegisterClose = document.querySelector("#register-close");
+const btnRegisterCancel = document.querySelector("#register-cancel");
 
-const usernameInput = document.querySelector("#register-username")
-const emailInput = document.querySelector("#register-email")
-const passwordInput = document.querySelector("#register-password")
-const repeatInput = document.querySelector("#register-repeat")
-const birthInput = document.querySelector("#register-birth")
-const consentInput = document.querySelector("#register-consent")
+const usernameInput = document.querySelector("#register-username");
+const emailInput = document.querySelector("#register-email");
+const passwordInput = document.querySelector("#register-password");
+const repeatInput = document.querySelector("#register-repeat");
+const birthInput = document.querySelector("#register-birth");
+const consentInput = document.querySelector("#register-consent");
 
-const repeatError = document.querySelector("#register-repeat-error")
-const birthError = document.querySelector("#register-birth-error")
+const repeatError = document.querySelector("#register-repeat-error");
+const birthError = document.querySelector("#register-birth-error");
+const emailError = document.querySelector('#register-email-error');
 
 // modale 2 scelta musica
 const welcomeModal = document.querySelector('#welcome-modal');
@@ -95,7 +97,7 @@ const clearErrors = () => {
 };
 
 /*Invio del Form*/
-registerForm.addEventListener("submit", (event) => {
+registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     clearErrors(); //toglie errori della volta prima
 
@@ -115,15 +117,16 @@ registerForm.addEventListener("submit", (event) => {
         return;
     }
 
-    newUser = {
-        username: usernameInput.value.trim(),
-        email: emailInput.value.trim(), // trim toglie gli spazi all'inizio e alla fine 
-        birthDate: birthInput.value
-    };
-
-    console.log("Nuovo utente registrato:", newUser);
-    closeRegister();
-    openWelcome();
+    try {
+        // registro l'utente sul server e aspetto la risposta
+        await signUp(usernameInput.value.trim(), emailInput.value.trim(), passwordInput.value);
+        // solo se è andata bene passo alla seconda modale
+        closeRegister();
+        openWelcome();
+    } catch (error) {
+        // altrimenti scrivo l'errore sotto l'email
+        showError(emailError, `Registrazione non riuscita: ${error.message}`, emailInput);
+    }
 
 });
 // listener per uscire dalla modale con esc
@@ -207,5 +210,9 @@ btnSkip.addEventListener("click", closeWelcome);
 
 btnContinue.addEventListener("click", () => {
     userTastes = { genres: selectedGenres, artists: selectedArtists};
-    
-})
+    closeWelcome(); // chiude la seconda modale
+});
+
+// creo bottoni genere e artisti
+renderGenres();
+renderArtists();

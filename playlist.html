@@ -97,10 +97,11 @@
       <!-- × per chiudere il pannello (si vede solo su mobile) -->
       <button type="button" class="drawer-close" popovertarget="sidebar-drawer" popovertargetaction="hide"
         aria-label="Chiudi il menu">×</button>
-      <a href="index.html" class="brand">
+      <!-- Logo: apre la modale "Condividi EpiTunes" (popovertarget, senza JavaScript) -->
+      <button type="button" class="brand" popovertarget="share-modal" aria-haspopup="dialog">
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-text">EpiTunes</span>
-      </a>
+      </button>
 
       <nav class="sidebar-nav" aria-label="Navigazione principale">
         <a href="index.html"><span class="ico" aria-hidden="true"><svg class="icon">
@@ -123,8 +124,7 @@
       <!-- Playlist: titolo, pulsante per crearne una nuova (id btn-new-playlist, lo collega il JS)
            e lista delle playlist dell'utente, riempita via JS da localStorage -->
       <!-- Il titolo porta alla relativa sezione della Libreria -->
-      <h2 class="sidebar-section-title"><a href="library.html#row-library-playlist"><span class="ico"
-            aria-hidden="true"><svg class="icon">
+      <h2 class="sidebar-section-title"><a href="library.html#row-library-playlist"><span class="ico" aria-hidden="true"><svg class="icon">
               <use href="#ico-playlist"></use>
             </svg></span><span>Le tue playlist</span></a></h2>
       <button type="button" class="btn-new-playlist" id="btn-new-playlist">
@@ -136,8 +136,7 @@
       <div class="sidebar-list" id="sidebar-playlists"></div>
 
       <!-- Il titolo porta alla relativa sezione della Libreria -->
-      <h2 class="sidebar-section-title"><a href="library.html#row-library-favourites"><span class="ico"
-            aria-hidden="true"><svg class="icon">
+      <h2 class="sidebar-section-title"><a href="library.html#row-library-favourites"><span class="ico" aria-hidden="true"><svg class="icon">
               <use href="#ico-heart"></use>
             </svg></span><span>I tuoi preferiti</span></a></h2>
       <!-- Unica parte dinamica: la lista viene riempita via JS dai preferiti in localStorage -->
@@ -191,6 +190,32 @@
 
     </footer>
     <audio id="audio-element"></audio>
+
+    <!--Modale "Giradischi" (player espanso): si apre dalla linguetta sopra il player (#btn-expand-player).
+        Il player resta visibile sotto. La copertina (#expand-cover) e lo stato is-playing li imposta il JS -->
+    <div class="turntable-overlay" id="expandPlayer" role="dialog" aria-label="Giradischi">
+      <div class="turntable-box">
+        <button type="button" class="turntable-close" id="expand-close" aria-label="Chiudi il giradischi">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+
+        <!-- Il giradischi è solo decorativo: aria-hidden lo nasconde ai lettori di schermo -->
+        <div class="turntable" aria-hidden="true">
+          <div class="turntable-platter">
+            <div class="turntable-vinyl">
+              <img class="turntable-label" id="expand-cover" alt="">
+            </div>
+          </div>
+          <span class="turntable-arm-base"></span>
+          <span class="turntable-arm"><span class="turntable-head"></span></span>
+          <span class="turntable-led"></span>
+          <span class="turntable-knob"></span>
+        </div>
+      </div>
+    </div>
 
     <!--Modale "New user"-->
     <div class="welcome-overlay" id="register-modal">
@@ -275,6 +300,76 @@
             <button type="button" class="btn-continue" id="btn-continue" disabled>Continua</button>
           </div>
         </div>
+      </div>
+    </div>
+    <!--Modale "Condividi EpiTunes": si apre cliccando il logo EpiTunes nella sidebar.
+        Attributo popover: il browser la apre e la chiude da solo, senza JavaScript (anche con Esc o cliccando fuori) -->
+    <div class="welcome-box share-box" id="share-modal" popover role="dialog" aria-labelledby="share-title">
+      <button type="button" class="welcome-close" popovertarget="share-modal" popovertargetaction="hide"
+        aria-label="Chiudi">×</button>
+      <p class="welcome-kicker">Condividi EpiTunes</p>
+      <h2 class="welcome-title" id="share-title">La musica unisce</h2>
+      <p class="welcome-text">La musica è un forte strumento di comunicazione che unisce i cuori.
+        Condividi la musica con i tuoi amici e invitali a usare EpiTunes.</p>
+      <div class="welcome-actions share-actions">
+        <button type="button" class="btn-skip" popovertarget="share-modal" popovertargetaction="hide">Più tardi</button>
+        <!-- Per ora non fa nulla: è un segnaposto -->
+        <button type="button" class="btn-continue" id="btn-share">Invita i tuoi amici</button>
+      </div>
+    </div>
+
+    <!--Modale "Impostazioni": tema, accessibilità e contenuti espliciti.
+        Si apre dal pulsante Impostazioni della sidebar (#btn-settings); le modifiche si applicano subito -->
+    <div class="welcome-overlay" id="settings-modal">
+      <div class="welcome-box settings-box" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <button type="button" class="welcome-close" id="settings-close" aria-label="Chiudi">×</button>
+        <p class="welcome-kicker">Impostazioni</p>
+        <h2 class="welcome-title" id="settings-title">Preferenze</h2>
+
+        <!-- Tema: tendina di Bootstrap (si apre da sola con data-bs-toggle, senza JS nostro).
+             Per ora c'è solo Vintage: Disco e Stagionale sono disattivati (disabled) -->
+        <div class="settings-card">
+          <div class="settings-row">
+            <span id="theme-label">Tema</span>
+            <div class="dropdown">
+              <button type="button" class="settings-select dropdown-toggle" id="theme-toggle"
+                data-bs-toggle="dropdown" aria-expanded="false" aria-labelledby="theme-label theme-toggle">Vintage</button>
+              <ul class="dropdown-menu dropdown-menu-end settings-menu">
+                <li><button type="button" class="dropdown-item active" aria-current="true">Vintage</button></li>
+                <li><span class="dropdown-item disabled" aria-disabled="true">Disco <span
+                      class="badge-soon">Coming soon</span></span></li>
+                <li><span class="dropdown-item disabled" aria-disabled="true">Stagionale <span
+                      class="badge-soon">Coming soon</span></span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accessibilità: ogni riga è una label, quindi si può cliccare tutta per accendere l'interruttore -->
+        <div class="settings-card">
+          <label class="settings-row" for="setting-contrast">
+            <span>Alto contrasto</span>
+            <input type="checkbox" class="settings-switch" id="setting-contrast" role="switch">
+          </label>
+          <label class="settings-row" for="setting-large-text">
+            <span>Testo più grande</span>
+            <input type="checkbox" class="settings-switch" id="setting-large-text" role="switch">
+          </label>
+          <label class="settings-row" for="setting-reduce-motion">
+            <span>Riduci animazioni</span>
+            <input type="checkbox" class="settings-switch" id="setting-reduce-motion" role="switch">
+          </label>
+        </div>
+
+        <!-- Contenuti espliciti: acceso di default (checked) -->
+        <div class="settings-card">
+          <label class="settings-row" for="setting-explicit">
+            <span>Contenuti espliciti<small>Mostra i brani con l'etichetta E</small></span>
+            <input type="checkbox" class="settings-switch" id="setting-explicit" role="switch" checked>
+          </label>
+        </div>
+
+        <p class="settings-note">Le modifiche si applicano subito</p>
       </div>
     </div>
   </div>

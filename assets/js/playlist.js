@@ -1,5 +1,5 @@
 import { initPage, bigArt, formatTime, renderSidebarFavs, renderSidebarPlaylists } from "./common.js";
-import { el, isFavourite, toggleFavourite, getPlaylist, removeTrackFromPlaylist, setCurrentTrackList } from "./helper.js";
+import { $, el, isFavourite, toggleFavourite, getPlaylist, removeTrackFromPlaylist, killPLaylist, renamePlaylist } from "./helper.js";
 
 const player = initPage("playlist");
 
@@ -7,6 +7,8 @@ const playlistHero = document.querySelector("#playlist-hero");
 const tracklist = document.querySelector("#tracklist");
 
 const id = new URLSearchParams(window.location.search).get("id");
+
+
 
 const loadPlaylist = () => {
     const playlist = getPlaylist().find((p) => p.id === id);
@@ -19,7 +21,6 @@ const loadPlaylist = () => {
 
     const tracks = playlist.trackList;
     const firstTrack = tracks[0];
-    player.getTracklist(tracks);
     const totalMs = tracks.reduce((sum, t) => sum + (t.trackTimeMillis || 0), 0);
 
     // Play grande: parte dal primo brano (disabilitato se la playlist è vuota)
@@ -29,7 +30,61 @@ const loadPlaylist = () => {
         attrs: { "aria-label": "Riproduci", type: "button" },
     });
     if (!firstTrack) playBtn.disabled = true;
-    playBtn.addEventListener("click", () => player.play(firstTrack));
+    playBtn.addEventListener("click", () => player.play(firstTrack, tracks));
+
+    const renameBtn = el("button", {
+        className: "btn-play-big",
+        id: "rename-btn",
+        text: "✍️",
+        attrs: { "aria-label": "Rinomina", type: "button" },
+    });
+
+    renameBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+
+        const input = el("input", {
+            className: "form-control playList-title-change",
+            attrs: { type: "text", placeholder: "Titolo playlist", "aria-label": "Titolo playlist" },
+        });
+        input.value = playlist.title;
+        $(".hero-title").replaceChildren(input);
+        input.focus();
+        input.select();
+
+        let closed = false;
+        const cancel = () => {
+            if (closed) return;
+            closed = true;
+            loadPlaylist(); // ripristina il titolo
+        };
+
+        input.addEventListener("keydown", (ev) => {
+            if (ev.key === "Escape") return cancel();
+            if (ev.key !== "Enter") return;
+
+            const title = input.value.trim();
+            if (!title) return cancel();
+
+            closed = true; // evita che il blur causato dal ridisegno richiami cancel()
+            renamePlaylist(playlist.id, title);
+            document.dispatchEvent(new Event("playlists:changed"));
+        });
+
+        input.addEventListener("blur", cancel); // click fuori dall'input
+    });
+
+    const delBtn = el("button", {
+        className: "btn-delete-big",
+        text: "X",
+        attrs: { "aria-label": "Elimina", type: "button" },
+    });
+
+    delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        killPLaylist(playlist.id);
+        document.dispatchEvent(new Event("playlists:changed"));
+        window.location.replace("library.html");
+    });
 
     // Copertina: quella del primo brano, oppure un riquadro vuoto
     const cover = el("div", { className: "album-cover" });
@@ -48,7 +103,7 @@ const loadPlaylist = () => {
                 className: "hero-sub",
                 text: `${tracks.length} brani · ${formatTime(totalMs)}`,
             }),
-            el("div", { className: "hero-actions" }, playBtn)
+            el("div", { className: "hero-actions" }, playBtn, renameBtn, delBtn)
         )
     );
 
@@ -79,7 +134,10 @@ const loadPlaylist = () => {
             // Riga a 4 colonne: numero | titolo | durata | azioni (cuore + X)
             const row = el("div", {
                 className: "track-row",
-                attrs: { "data-track-id": track.trackId },
+                attrs: {
+                    "data-track-id": track.trackId,
+                    "data-explicit": track.trackExplicitness === "explicit",
+                },
             },
                 el("span", { className: "track-num", text: i + 1 }),
                 el("span", {
@@ -90,7 +148,7 @@ const loadPlaylist = () => {
                 el("span", { className: "d-flex align-items-center gap-2" }, rowHeart, removeBtn)
             );
 
-            row.addEventListener("click", () => player.play(track));
+            row.addEventListener("click", () => player.play(track, tracks));
 
             rowHeart.addEventListener("click", (e) => {
                 e.stopPropagation();
@@ -103,16 +161,24 @@ const loadPlaylist = () => {
             removeBtn.addEventListener("click", (e) => {
                 e.stopPropagation(); // non deve far partire il brano
                 removeTrackFromPlaylist(playlist.id, track.trackId);
-                loadPlaylist();         // aggiorna hero (conteggio, durata) e righe
+                loadPlaylist();           // aggiorna hero (conteggio, durata) e righe
                 renderSidebarPlaylists(); // aggiorna il menu nella sidebar
             });
 
             return row;
         })
     );
+
+    // Dopo il ridisegno, rimetti l'evidenziazione sul brano in riproduzione
+    if (player.currentTrack) {
+        tracklist
+            .querySelector(`.track-row[data-track-id="${player.currentTrack.trackId}"]`)
+            ?.classList.add("is-playing");
+    }
 };
 
 loadPlaylist();
 
-// Se la playlist cambia altrove ridisegna la pagina
+// Se la playlist cambia altrove (es. dalla sidebar) ridisegna la pagina
 document.addEventListener("playlists:changed", loadPlaylist);
+document.addEventListener("playlist:track-removed", loadPlaylist);

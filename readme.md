@@ -216,6 +216,7 @@ L'applicazione ha un tema **vintage ispirato ai giradischi**, con un layout a 3 
 | **ver. 2.2** | **HTML e CSS:** barra di ricerca nell'header, nuovo sfondo, modali "New user" anche in search.html; **JavaScript:** player con barre trascinabili, home con suggerimenti per genere, registrazione con controllo password. **In corso:** scelta di generi e artisti |
 | **ver. 3.2** | **HTML e CSS:** pagina Libreria, hero "Suggerito per te" in home con carosello di artisti, modali di registrazione con foto e di scelta musica con stile; **JavaScript:** playlist (crea, aggiungi con +, elimina), suggerimenti artisti in home, scelta di generi e artisti funzionante |
 | **ver. 3.3** | libreria e playlist, player avanti/indietro, sidebar mobile, grafica artista, setup server login
+| **ver. 4.3** | **HTML e CSS:** vista giradischi, modali "Log in", "Impostazioni" e "Condividi"; **JavaScript:** registrazione e login con json-server-auth, casuale e ripeti nel player, finestra per scegliere la playlist col "+", rinomina playlist, biografia e Facebook dell'artista, opzioni di accessibilità |
 
 ## Realizzato da
 

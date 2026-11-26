@@ -88,19 +88,73 @@ export const formatTime = (ms) => {
   return `${min}:${String(sec).padStart(2, "0")}`;
 };
 
+/* ============================ Impostazioni ============================ */
+
 /*
-  debounce(fn, ms)
-  - Restituisce una nuova funzione che chiama fn solo dopo "ms" millisecondi
-    di pausa rispetto all'ultima chiamata. Usata per la ricerca al type.
+  Impostazioni salvate in localStorage (un solo oggetto):
+  - contrast, largeText, reduceMotion: interruttori di accessibilitÃ (spenti di default)
+  - explicit: contenuti espliciti visibili (acceso di default)
+  applySettings() le traduce in classi su <html>: tutto il resto lo fa il CSS.
 */
-const debounce = (fn, ms) => {
-  let timerId = null;
-  return (...args) => {
-    clearTimeout(timerId);
-    timerId = setTimeout(() => fn(...args), ms);
-  };
+const STORAGE_KEY_SETTINGS = "epitunes_settings";
+const DEFAULT_SETTINGS = { contrast: false, largeText: false, reduceMotion: false, explicit: true };
+
+// interruttore della modale collegato a ogni impostazione
+const SETTING_SWITCHES = {
+  contrast: "#setting-contrast",
+  largeText: "#setting-large-text",
+  reduceMotion: "#setting-reduce-motion",
+  explicit: "#setting-explicit",
 };
 
+const getSettings = () => {
+  try {
+    // i valori salvati sostituiscono quelli di default (se manca qualcosa resta il default)
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(STORAGE_KEY_SETTINGS)) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+};
+
+const applySettings = (settings) => {
+  const root = document.documentElement; // <html>
+  root.classList.toggle("a11y-contrast", settings.contrast);
+  root.classList.toggle("a11y-large-text", settings.largeText);
+  root.classList.toggle("a11y-reduce-motion", settings.reduceMotion);
+  root.classList.toggle("hide-explicit", !settings.explicit);
+};
+
+const initSettings = () => {
+  const settings = getSettings();
+  applySettings(settings); // ad ogni pagina, appena caricata
+
+  const modal = $("#settings-modal");
+  if (!modal) return;
+
+  // interruttori: mostrano lo stato salvato; quando cambiano salvano e applicano subito
+  for (const [key, selector] of Object.entries(SETTING_SWITCHES)) {
+    const input = $(selector);
+    input.checked = settings[key];
+    input.addEventListener("change", () => {
+      settings[key] = input.checked;
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+      applySettings(settings);
+    });
+  }
+
+  // apertura e chiusura, come le altre modali (la classe is-open la mostra, il CSS anima)
+  const open = () => modal.classList.add("is-open");
+  const close = () => modal.classList.remove("is-open");
+
+  $("#btn-settings")?.addEventListener("click", open);
+  $("#settings-close").addEventListener("click", close);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close(); // click sullo sfondo scuro, fuori dal riquadro
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("is-open")) close();
+  });
+};
 /* ============================ 3. Classi modello ============================ */
 
 /*
@@ -220,9 +274,9 @@ class Player {
     this.currentTrack = null;
     this.isPlaying = false;
     this.isSeeking = false; // true mentre si trascina la barra di avanzamento
+    this.repeat = false;    // true: a fine lista riparte dal primo brano
     this.ui = null; // i riferimenti agli elementi vengono salvati in mount()
     this.trackList = getCurrentTrackList() || [];
-
 
     this.audio.addEventListener("timeupdate", () => this.updateProgress());
     this.audio.addEventListener("loadedmetadata", () => {
@@ -231,11 +285,14 @@ class Player {
     });
     this.audio.addEventListener("play", () => this.setPlayingState(true));
     this.audio.addEventListener("pause", () => this.setPlayingState(false));
-    // A fine brano parte il successivo della lista; se era l'ultimo, il player si ferma e torna all'inizio
+    // A fine brano parte il successivo; se era l'ultimo: con la ripetizione attiva
+    // riparte dal primo, altrimenti il player si ferma e torna all'inizio
     this.audio.addEventListener("ended", () => {
       const i = this.currentIndex();
       if (i !== -1 && this.trackList[i + 1]) {
         this.next();
+      } else if (this.repeat && this.trackList.length) {
+        this.play(this.trackList[0]);
       } else {
         this.setPlayingState(false);
         this.audio.currentTime = 0;
@@ -266,7 +323,6 @@ class Player {
     );
 
     // --- Colonna centrale: controlli + progress ---
-    // I pulsanti secondari usano le icone SVG dello sprite (stile del tema vintage)
     const ctrlButton = (id, label, iconName) =>
       el("button", { className: "btn-ctrl", id, attrs: { type: "button", "aria-label": label } },
         icon(iconName)
@@ -303,8 +359,6 @@ class Player {
     );
 
     // --- Icone a linea per i tasti nascondi / espandi ---
-    // Disegnate qui con una linea SVG, così non serve aggiungere icone allo sprite in ogni pagina.
-    // d = il percorso della linea (coordinate in un quadrato 24x24)
     const lineIcon = (d) => {
       const svg = document.createElementNS(SVG_NS, "svg");
       svg.setAttribute("class", "icon");
@@ -326,25 +380,25 @@ class Player {
       className: "btn-ctrl btn-close-player",
       id: "btn-close-player",
       attrs: { type: "button", "aria-label": "Nascondi il player" },
-    }, lineIcon("M6 9l6 6 6-6")); // "V": da sinistra scende al centro e risale a destra
+    }, lineIcon("M6 9l6 6 6-6"));
 
-    // Freccia su (linguetta al centro del bordo superiore): aprirà la modale #expandPlayer
+    // Freccia su (linguetta al centro del bordo superiore): apre #expandPlayer
     const btnExpand = el("button", {
       className: "btn-expand-player",
       id: "btn-expand-player",
       attrs: { type: "button", "aria-label": "Espandi il player", "aria-haspopup": "dialog" },
-    }, lineIcon("M6 15l6-6 6 6")); // "V" capovolta: sale al centro e riscende
+    }, lineIcon("M6 15l6-6 6 6"));
 
     // --- Montaggio finale ---
-    // replaceChildren sostituisce l'eventuale contenuto statico del footer: il player non si duplica
     footer.replaceChildren(playerTrack, playerCenter, playerRight, btnClose, btnExpand);
 
     // --- Riferimenti agli elementi ---
     this.ui = {
       cover: coverImg,
       title: footer.querySelector("#player-title"),
-      artist: footer.querySelector("#player-artist-link"), // il link dentro #player-artist
+      artist: footer.querySelector("#player-artist-link"),
       btnToggle: footer.querySelector("#btn-play"),
+      btnRepeat: footer.querySelector("#btn-repeat"),
       progressBar: footer.querySelector("#progress-bar"),
       progressFill: footer.querySelector("#progress-fill"),
       timeCurrent: footer.querySelector("#time-current"),
@@ -354,12 +408,31 @@ class Player {
     };
 
     // --- Eventi ---
-    // --- Eventi ---
     this.ui.btnToggle.addEventListener("click", () => this.togglePlay());
     footer.querySelector("#btn-prev").addEventListener("click", () => this.prev());
     footer.querySelector("#btn-next").addEventListener("click", () => this.next());
+    footer.querySelector("#btn-shuffle").addEventListener("click", () => this.shuffle());
+
+    // Ripeti: interruttore acceso/spento
+    const btnRepeat = this.ui.btnRepeat;
+    btnRepeat?.addEventListener("click", () => {
+      this.repeat = !this.repeat;
+      btnRepeat.classList.toggle("is-active", this.repeat);
+      btnRepeat.setAttribute("aria-pressed", String(this.repeat));
+      this.saveState();
+    });
+
     btnClose.addEventListener("click", () => this.close());
     btnExpand.addEventListener("click", () => this.expand());
+
+    // giradischi: si chiude con la freccia in alto a destra o con Esc
+    const expandModal = $("#expandPlayer");
+    $("#expand-close")?.addEventListener("click", () => expandModal.classList.remove("is-open"));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") expandModal?.classList.remove("is-open");
+    });
+
+
     // Barra di avanzamento: mentre si trascina si sposta solo la barra (e il tempo),
     // il brano salta al punto scelto quando si lascia il mouse
     this.makeDraggable(
@@ -383,7 +456,6 @@ class Player {
     setTrackList(trackList)
     - Imposta la lista su cui lavorano avanti/indietro (e il passaggio automatico a fine brano)
     - La salva in localStorage, così cambiando pagina avanti/indietro continuano a funzionare
-    - Non serve chiamarla a mano: la chiama play(track, trackList) quando riceve una lista
   */
   setTrackList(trackList) {
     this.trackList = trackList;
@@ -403,13 +475,14 @@ class Player {
 
   next() {
     const i = this.currentIndex();
-    const track = this.trackList[i + 1];
-    if (i === -1 || !track) return; // nessuna lista, brano fuori lista o ultimo brano
-    this.play(track);               // play() imposta già currentTrack
+    if (i === -1) return; // nessuna lista o brano fuori lista
+    const track = this.trackList[i + 1] ?? (this.repeat ? this.trackList[0] : null);
+    if (!track) return; // ultimo brano e ripetizione spenta
+    this.play(track);
   }
 
   prev() {
-    // come nei player veri: se il brano è avanti più di 3 secondi, "indietro" lo fa ripartire dall'inizio
+    // se il brano è avanti più di 3 secondi, "indietro" lo fa ripartire dall'inizio
     if (this.audio.currentTime > 3) {
       this.audio.currentTime = 0;
       return;
@@ -420,12 +493,19 @@ class Player {
     this.play(track);
   }
 
+  // Casuale: un brano a caso della lista corrente (diverso da quello in riproduzione, se possibile)
+  shuffle() {
+    if (!this.trackList.length) return;
+    const others = this.trackList.filter((t) => t.trackId !== this.currentTrack?.trackId);
+    const pool = others.length ? others : this.trackList;
+    const random = pool[Math.floor(Math.random() * pool.length)];
+    this.play(random); // senza lista: avanti/indietro restano sulla stessa lista
+  }
 
   /*
     play(track, trackList)
-    - trackList (facoltativa): la lista da cui parte il brano (la riga della home, l'album, i preferiti...).
-      Se c'è, diventa la lista di avanti/indietro. next() e prev() chiamano play(track) senza lista,
-      così mentre si va avanti e indietro la lista resta la stessa.
+    - trackList (facoltativa): la lista da cui parte il brano (riga della home, album, preferiti...).
+      Se c'è, diventa la lista di avanti/indietro.
   */
   play(track, trackList) {
     if (trackList) this.setTrackList(trackList);
@@ -439,12 +519,14 @@ class Player {
 
     // Aggiorna UI
     if (this.ui) {
-      // artworkUrl100 -> versione più grande per il player
       this.ui.cover.src = (track.artworkUrl100 || "").replace("100x100", "300x300");
       this.ui.title.textContent = track.trackName ?? "Titolo brano";
+      this.ui.title.dataset.explicit = track.trackExplicitness === "explicit";
       this.showArtist(track);
       this.ui.timeTotal.textContent = "0:00"; // si aggiorna su loadedmetadata
       this.ui.progressFill.style.width = "0%";
+
+
     }
 
     // Evidenzia la riga nella tracklist
@@ -487,16 +569,13 @@ class Player {
   /*
     makeDraggable(bar, onMove, onEnd, onStart)
     - Rende una barra trascinabile con mouse e dito (eventi pointer)
-    - onMove(percent): chiamata alla pressione e a ogni movimento, con la posizione da 0 a 1
-    - onEnd(percent): chiamata quando si lascia (facoltativa)
-    - onStart(): chiamata quando si preme (facoltativa)
-    I movimenti si ascoltano sulla finestra (window), così il trascinamento continua
-    anche se il mouse esce dalla barra mentre il tasto è ancora premuto.
+    - onMove(percent): alla pressione e a ogni movimento, con la posizione da 0 a 1
+    - onEnd(percent): quando si lascia (facoltativa)
+    - onStart(): quando si preme (facoltativa)
   */
   makeDraggable(bar, onMove, onEnd, onStart) {
     let dragging = false;
 
-    // posizione del mouse sulla barra, da 0 (inizio) a 1 (fine)
     const percentFrom = (e) => {
       const rect = bar.getBoundingClientRect();
       return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
@@ -504,10 +583,10 @@ class Player {
 
     bar.addEventListener("pointerdown", (e) => {
       dragging = true;
-      bar.classList.add("is-dragging"); // nel CSS toglie la transizione: la barra segue il mouse senza ritardo
+      bar.classList.add("is-dragging");
       if (onStart) onStart();
       onMove(percentFrom(e));
-      e.preventDefault(); // evita di selezionare il testo trascinando
+      e.preventDefault();
     });
 
     window.addEventListener("pointermove", (e) => {
@@ -532,7 +611,6 @@ class Player {
   }
 
   updateProgress() {
-    // mentre si trascina la barra, non la aggiorniamo con il tempo reale (andrebbe "a scatti" all'indietro)
     if (!this.ui || !this.audio.duration || this.isSeeking) return;
     const percent = (this.audio.currentTime / this.audio.duration) * 100;
     this.ui.progressFill.style.width = `${percent}%`;
@@ -548,7 +626,7 @@ class Player {
 
   /*
     showArtist(track)
-    - Scrive il nome dell'artista nel player e lo collega alla sua pagina (artist.html?id=...)
+    - Scrive il nome dell'artista nel player e lo collega alla sua pagina
     - Se il brano non ha artistId (o track è null), il nome resta testo senza link
   */
   showArtist(track) {
@@ -558,47 +636,65 @@ class Player {
     if (track?.artistId) {
       link.href = "artist.html?id=" + track.artistId;
     } else {
-      link.removeAttribute("href"); // un <a> senza href non è cliccabile
+      link.removeAttribute("href");
     }
   }
 
   /*
     expand()
-    - Aprirà la modale #expandPlayer con il player a schermo intero
-    - La modale non esiste ancora: finché non c'è, il click non fa nulla
+    - Apre il giradischi (#expandPlayer); se è già aperto lo chiude
   */
   expand() {
-    const modal = document.querySelector("#expandPlayer");
-    if (!modal) return; // modale non ancora scritta
+    const modal = $("#expandPlayer");
+    if (!modal) return;
 
-    // TODO: aprire la modale (es. modal.classList.add("is-open")) e riempirla con this.currentTrack
+    if (modal.classList.contains("is-open")) {
+      modal.classList.remove("is-open");
+      return;
+    }
+
+    this.showExpandCover(this.currentTrack);
+    modal.classList.toggle("is-playing", this.isPlaying);
+    modal.classList.add("is-open");
+  }
+
+  // Copertina grande al centro del vinile
+  showExpandCover(track) {
+    const cover = $("#expand-cover");
+    if (!cover) return;
+    if (track?.artworkUrl100) {
+      cover.src = bigArt(track.artworkUrl100);
+    } else {
+      cover.removeAttribute("src");
+    }
   }
 
   /*
     close()
-    - Fa uscire il player con l'animazione (classe .is-closing nel CSS)
-    - Alla fine dell'animazione ferma la musica e svuota il player:
-      senza immagine di copertina, il CSS nasconde la riga del player
+    - Fa uscire il player con l'animazione (.is-closing), poi ferma la musica e lo svuota
     - Cancella lo stato salvato, così cambiando pagina il player non ricompare
   */
   close() {
+    $("#expandPlayer")?.classList.remove("is-open");
     const footer = document.querySelector(".player");
     if (!footer || footer.classList.contains("is-closing")) return; // evita doppi click
 
     footer.classList.add("is-closing");
 
     footer.addEventListener("animationend", () => {
-      // Prima togliamo il brano corrente: la pausa qui sotto fa scattare saveState()
-      // (evento "pause"), che così non trova niente da salvare
       this.currentTrack = null;
       this.audio.pause();
-      this.audio.removeAttribute("src"); // nessun brano caricato
-      this.audio.load();                  // fa "dimenticare" all'audio il brano precedente
-      localStorage.removeItem(STORAGE_KEY_PLAYER);
+      this.audio.removeAttribute("src");
+      this.audio.load();
+      localStorage.setItem(
+        STORAGE_KEY_PLAYER,
+        JSON.stringify({ repeat: Boolean(this.repeat) })
+      );
 
-      this.ui.cover.removeAttribute("src"); // senza src il CSS nasconde il player
+      this.ui.cover.removeAttribute("src");
       this.ui.title.textContent = "Seleziona un brano";
-      this.showArtist(null); // nessun artista: "—" senza link
+      delete this.ui.title.dataset.explicit;
+      this.showArtist(null);
       this.ui.progressFill.style.width = "0%";
       this.ui.timeCurrent.textContent = "0:00";
       this.ui.timeTotal.textContent = "0:00";
@@ -609,13 +705,21 @@ class Player {
   }
 
   saveState() {
-    if (!this.currentTrack) return;
+    let existing = {};
+    try {
+      existing = JSON.parse(localStorage.getItem(STORAGE_KEY_PLAYER)) || {};
+    } catch {
+      existing = {};
+    }
+
     localStorage.setItem(
       STORAGE_KEY_PLAYER,
       JSON.stringify({
-        track: this.currentTrack,
-        time: this.audio.currentTime,
-        playing: !this.audio.paused,
+        ...existing,
+        track: this.currentTrack ?? null,
+        time: this.currentTrack ? this.audio.currentTime : 0,
+        playing: this.currentTrack ? !this.audio.paused : false,
+        repeat: Boolean(this.repeat),
       })
     );
   }
@@ -627,6 +731,16 @@ class Player {
     } catch {
       return;
     }
+
+    if (typeof state?.repeat === "boolean") {
+      this.repeat = state.repeat;
+      const btnRepeat = this.ui?.btnRepeat;
+      if (btnRepeat) {
+        btnRepeat.classList.toggle("is-active", this.repeat);
+        btnRepeat.setAttribute("aria-pressed", String(this.repeat));
+      }
+    }
+
     if (!state?.track) return;
 
     const { track, time, playing } = state;
@@ -637,13 +751,13 @@ class Player {
     if (this.ui) {
       this.ui.cover.src = (track.artworkUrl100 || "").replace("100x100", "300x300");
       this.ui.title.textContent = track.trackName ?? "Titolo brano";
+      this.ui.title.dataset.explicit = track.trackExplicitness === "explicit";
       this.showArtist(track);
     }
 
     if (playing) this.audio.play().catch(() => { });
   }
 }
-
 
 /* ============================ 6. Render sidebar ============================ */
 
@@ -745,8 +859,7 @@ const renderPlaylistDropdown = (playlist) => {
       attrs: { "data-playlist-id": playlist.id },
     },
     toggle,
-    list,
-    deleteBtn
+    list
   );
 };
 
@@ -788,13 +901,7 @@ export const renderSidebarPlaylists = () => {
   [...playlists].reverse().slice(0, 5).forEach((playlist) => {
     const dropdownList = renderPlaylistDropdown(playlist);
     const menu = dropdownList.querySelector(".dropdown-menu");
-    const deleteBtn = dropdownList.querySelector(".btn-outline-danger");
 
-    deleteBtn.addEventListener("click", (e) => {
-      const id =
-        e.currentTarget.closest("[data-playlist-id]").dataset.playlistId;
-      killPLaylist(id);
-    });
 
     const tracks = playlist.trackList;
     if (!tracks.length) menu.append(emptyItem());
@@ -803,33 +910,18 @@ export const renderSidebarPlaylists = () => {
       const playBtn = el("button", {
         className: "dropdown-item w-auto flex-grow-1 text-truncate",
         text: `${track.trackName} — ${track.artistName}`,
-        attrs: { type: "button" },
+        attrs: { type: "button", "data-explicit": track.trackExplicitness === "explicit" },
       });
       // la lista di avanti/indietro è la playlist
       playBtn.addEventListener("click", () => window.player?.play(track, tracks));
 
-      const removeBtn = el("button", {
-        className: "btn btn-sm btn-outline-danger me-2 py-0",
-        text: "X",
-        attrs: {
-          type: "button",
-          "aria-label": `Rimuovi ${track.trackName} dalla playlist`,
-        },
-      });
 
       const li = el(
         "li",
         { className: "d-flex align-items-center" },
         playBtn,
-        removeBtn,
       );
 
-      removeBtn.addEventListener("click", () => {
-        removeTrackFromPlaylist(playlist.id, track.trackId);
-        li.remove();
-        if (!menu.children.length) menu.append(emptyItem());
-        document.dispatchEvent(new Event("playlist:track-removed"));
-      });
 
       menu.append(li);
     });
@@ -838,7 +930,8 @@ export const renderSidebarPlaylists = () => {
   });
 };
 
-$("#btn-new-playlist")?.addEventListener("click", () => {
+$("#btn-new-playlist")?.addEventListener("click", (e) => {
+  e.stopPropagation();
   if ($(".playList-title-input")) return;
 
   const input = el("input", {
@@ -849,16 +942,33 @@ $("#btn-new-playlist")?.addEventListener("click", () => {
   $("#sidebar-playlists").append(input);
   input.focus();
 
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") return input.remove();
-    if (e.key !== "Enter") return;
+  const closeInput = (ev) => {
+    if (!input.isConnected) {
+      document.removeEventListener("click", closeInput, true);
+      return;
+    }
+    if (ev.target === input || $("#btn-new-playlist")?.contains(ev.target)) return;
+    input.remove();
+    document.removeEventListener("click", closeInput, true);
+  };
+
+  document.addEventListener("click", closeInput, true);
+
+  input.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") {
+      input.remove();
+      document.removeEventListener("click", closeInput, true);
+      return;
+    }
+    if (ev.key !== "Enter") return;
 
     const title = input.value.trim();
+    document.removeEventListener("click", closeInput, true);
     if (!title) return input.remove();
 
     const playlist = playListBuilder([], title);
     setPlaylist(playlist);
-    renderSidebarPlaylists();
+    document.dispatchEvent(new Event("playlists:changed"));
   });
 });
 
@@ -873,5 +983,6 @@ export const initPage = (activePage) => {
   initNavButtons();
   renderSidebarPlaylists();
   window.player = player;
+  initSettings();
   return player;
 };

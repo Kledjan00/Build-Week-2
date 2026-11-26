@@ -1,30 +1,5 @@
-/* ============================================================
-   album.js — pagina dettaglio album
-   ============================================================
-
-   COSA DEVI FARE
-   1) initPage("home")
-   2) Leggi l'id dell'album dalla query string:
-        const id = new URLSearchParams(window.location.search).get("id");
-   3) Se manca l'id -> messaggio "Album non trovato" e stop.
-   4) fetch /lookup?id=ID&entity=song
-      - results[0] è la collection (album)
-      - results[1..] sono le track
-   5) Costruisci #album-hero con:
-      - cover grande (bigArt)
-      - kicker "ALBUM"
-      - titolo album
-      - sotto-riga: artista · anno · numero brani · durata totale
-      - button "Play" che chiama player.play sulla prima track
-      - button "Cuore" (favourite) sulla prima track
-   6) Costruisci #tracklist:
-      - una riga per track: numero, titolo, durata, cuore
-      - click sulla riga -> player.play(track)
-      - click sul cuore -> toggleFavourite(track)
-*/
-
-import { initPage, bigArt, formatTime, renderSidebarFavs } from "./common.js";
-import { API_BASE, el, isFavourite, toggleFavourite } from "./helper.js";
+import { initPage, bigArt, formatTime, renderSidebarFavs, renderSidebarPlaylists } from "./common.js";
+import { API_BASE, el, isFavourite, toggleFavourite, addTrackToPlaylist, showPlaylistModal } from "./helper.js";
 
 const player = initPage("album");
 
@@ -44,18 +19,48 @@ const loadAlbum = async () => {
       const data = await res.json();
 
       const album = data.results[0];
-      const tracks = data.results.slice(1);
+      if (!album) {
+         albumHero.textContent = "Album non trovato";
+         return;
+      }
+
+      const tracks = data.results.slice(1).filter((item) => item.wrapperType === "track");
       const firstTrack = tracks[0];
-      // player.getTracklist(tracks);
 
       const year = new Date(album.releaseDate).getFullYear();
       const totalMs = tracks.reduce((sum, t) => sum + (t.trackTimeMillis || 0), 0);
 
-      // Cuore grande: .is-fav lo colora di rosso mattone
+      const syncHearts = () => {
+         const allFavs = tracks.length > 0 && tracks.every((t) => isFavourite(t));
+         heartBtn.textContent = allFavs ? "♥" : "♡";
+         heartBtn.classList.toggle("is-fav", allFavs);
+
+         tracklist.querySelectorAll(".track-row").forEach((row) => {
+            const trackId = Number(row.dataset.trackId);
+            const t = tracks.find((item) => item.trackId === trackId);
+            const btn = row.querySelector(".track-fav");
+            if (!t || !btn) return;
+            const fav = isFavourite(t);
+            btn.textContent = fav ? "♥" : "♡";
+            btn.classList.toggle("is-fav", fav);
+
+         });
+      };
+
+      const allFavsInitial = tracks.length > 0 && tracks.every((t) => isFavourite(t));
+
+      // Cuore album: .is-fav lo colora di rosso mattone
       const heartBtn = el("button", {
-         className: isFavourite(firstTrack) ? "btn-fav-big is-fav" : "btn-fav-big",
-         text: isFavourite(firstTrack) ? "♥" : "♡",
-         attrs: { "aria-label": "Preferito", type: "button" },
+         className: allFavsInitial ? "btn-fav-big is-fav" : "btn-fav-big",
+         text: allFavsInitial ? "♥" : "♡",
+         attrs: { "aria-label": "Album preferito", type: "button" },
+      });
+
+      // Bottone +: aggiunge tutti i brani dell'album a una playlist
+      const plusBtn = el("button", {
+         className: "btn-plus-big",
+         text: "+",
+         attrs: { "aria-label": "Aggiungi album a una playlist", type: "button" },
       });
 
       // Play grande in ottone
@@ -65,13 +70,38 @@ const loadAlbum = async () => {
          attrs: { "aria-label": "Riproduci", type: "button" },
       });
 
-       playBtn.addEventListener("click", () => player.play(firstTrack, tracks));
+      playBtn.addEventListener("click", () => {
+         if (firstTrack) player.play(firstTrack, tracks);
+      });
 
       heartBtn.addEventListener("click", () => {
-         toggleFavourite(firstTrack);
+         if (!tracks.length) return;
+         const allFavs = tracks.every((t) => isFavourite(t));
+         for (const track of tracks) {
+            if (allFavs) {
+               if (isFavourite(track)) toggleFavourite(track);
+            } else {
+               if (!isFavourite(track)) toggleFavourite(track);
+            }
+         }
          renderSidebarFavs();
-         heartBtn.textContent = isFavourite(firstTrack) ? "♥" : "♡";
-         heartBtn.classList.toggle("is-fav", isFavourite(firstTrack));
+         syncHearts();
+      });
+
+      plusBtn.addEventListener("click", () => {
+         if (!tracks.length) return;
+         showPlaylistModal(album, (playlistId) => {
+            let anyAdded = false;
+            for (const track of tracks) {
+               if (addTrackToPlaylist(playlistId, track)) {
+                  anyAdded = true;
+               }
+            }
+            if (anyAdded) {
+               document.dispatchEvent(new Event("playlists:changed"));
+            }
+            renderSidebarPlaylists();
+         }, tracks);
       });
 
       // #album-hero ha già la classe album-hero nell'HTML: copertina a sinistra, testi a destra
@@ -86,38 +116,55 @@ const loadAlbum = async () => {
                className: "hero-sub",
                text: `${album.artistName} · ${year} · ${tracks.length} brani · ${formatTime(totalMs)}`,
             }),
-            el("div", { className: "hero-actions" }, playBtn, heartBtn)
+            el("div", { className: "hero-actions" }, playBtn, heartBtn, plusBtn)
          )
       );
 
       tracklist.replaceChildren(
          ...tracks.map((track, i) => {
-            // Cuore della riga: senza sfondo, rosso mattone se è tra i preferiti
             const rowHeart = el("button", {
                className: isFavourite(track) ? "track-fav is-fav" : "track-fav",
                text: isFavourite(track) ? "♥" : "♡",
                attrs: { "aria-label": "Preferito", type: "button" },
             });
 
-            // Riga a 4 colonne: numero | titolo | durata | cuore
+            const plusBtn = el("button", {
+               className: "btn btn-sm btn-outline-secondary py-0",
+               text: "+",
+               attrs: {
+                  type: "button",
+                  "aria-label": `Aggiungi ${track.trackName} a una playlist`,
+               },
+            });
+
             const row = el("div", {
                className: "track-row",
-               attrs: { "data-track-id": track.trackId },
+               attrs: { "data-track-id": track.trackId, "data-explicit": track.trackExplicitness === "explicit" },
             },
                el("span", { className: "track-num", text: i + 1 }),
                el("span", { className: "track-title", text: track.trackName ?? "Sconosciuto" }),
                el("span", { className: "track-time", text: formatTime(track.trackTimeMillis) }),
-               rowHeart
+               el("span", { className: "d-flex align-items-center gap-2" }, rowHeart, plusBtn)
             );
 
-             row.addEventListener("click", () => player.play(track, tracks));
+            row.addEventListener("click", () => player.play(track, tracks));
 
             rowHeart.addEventListener("click", (e) => {
                e.stopPropagation();
                toggleFavourite(track);
                renderSidebarFavs();
-               rowHeart.textContent = isFavourite(track) ? "♥" : "♡";
-               rowHeart.classList.toggle("is-fav", isFavourite(track));
+               syncHearts();
+            });
+
+            plusBtn.addEventListener("click", (e) => {
+               e.stopPropagation();
+               showPlaylistModal(track, (playlistId) => {
+                  const added = addTrackToPlaylist(playlistId, track);
+                  if (added) {
+                     document.dispatchEvent(new Event("playlists:changed"));
+                  }
+                  renderSidebarPlaylists();
+               });
             });
 
             return row;

@@ -72,12 +72,15 @@ const renderCard = (track, _index, rowTracks) => {
     },
   });
 
+
+
+
   // Stessa struttura delle card scritte nell'HTML: copertina, titolo, artista, play, cuore e +
   const card = el(
     "div",
     {
       className: "card",
-      attrs: { "data-track-id": track.trackId },
+      attrs: { "data-track-id": track.trackId, "data-explicit": track.trackExplicitness === "explicit" },
     },
     el("div", { className: "card-image-wrap" }, cover),
     el("h3", { className: "card-title", text: track.trackName ?? "Sconosciuto" }),
@@ -86,6 +89,9 @@ const renderCard = (track, _index, rowTracks) => {
     heartBtn,
     plusBtn
   );
+
+
+
 
   plusBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -196,23 +202,20 @@ const renderRow = (rowTitle, items, id = rowTitle, type = "track") => {
 function updateFavs() {
   renderSidebarFavs();
 
-  const favourites = getFavourites().filter((t) => t.previewUrl).reverse();
+  const favourites = [...getFavourites()].reverse().slice(0, 12);
   const existing = $('[data-row="Preferiti"]');
 
-  // nessun preferito: rimuovi l'intera riga
   if (!favourites.length) {
     existing?.remove();
     return;
   }
 
-  // riga già presente: svuota e ridisegna
   if (existing) {
     existing.querySelector(".grid").replaceChildren(...favourites.map(renderCard));
     return;
   }
 
-  // riga assente (primo preferito): creala e mettila in cima, dopo la history
-  const section = renderRow("Preferiti", [...favourites].reverse());
+  const section = renderRow("Preferiti", favourites);
   const history = $('[data-row="Riprodotti di recente"]');
   if (history) history.after(section);
   else home.prepend(section);
@@ -390,7 +393,34 @@ const renderHero = async (artists) => {
   }
 };
 
+const getAlbumTracks = async (collectionId) => {
+  if (!collectionId) return [];
+  try {
+    const res = await fetch(`${API_BASE}/lookup?id=${collectionId}&entity=song`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results || []).filter((item) => item.wrapperType === "track");
+  } catch {
+    return [];
+  }
+};
+
+
+// true solo se l'album ha tracce e sono tutte nei preferiti
+const allSaved = (tracks) => tracks.length > 0 && tracks.every((t) => isFavourite(t));
+
+const setHeart = (btn, filled) => {
+  btn.textContent = filled ? "♥" : "♡";
+  btn.classList.toggle("is-fav", filled);
+};
+
 const renderAlbumCard = (album) => {
+  const heartBtn = el("button", {
+    className: isFavourite(album) ? "card-fav is-fav" : "card-fav",
+    text: isFavourite(album) ? "♥" : "♡",
+    attrs: { "aria-label": "Preferito", type: "button" },
+  });
+
   const cover = el("img", {
     attrs: {
       src: (album.artworkUrl100 || "").replace("100x100", "300x300"),
@@ -407,26 +437,65 @@ const renderAlbumCard = (album) => {
 
   const card = el(
     "div",
-    { className: "card" },
+    {
+      className: "card",
+      attrs: { "data-collection-id": album.collectionId },
+    },
     el("div", { className: "card-image-wrap" }, cover),
     el("h3", {
       className: "card-title",
       text: album.collectionName ?? "Sconosciuto",
     }),
     artistLink(album.artistName, album.artistId),
+    heartBtn,
     plusBtn
   );
 
-  plusBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
 
-    showPlaylistModal(album, (playlistId) => {
-      const added = addTrackToPlaylist(playlistId, album);
-      if (added) {
+  getAlbumTracks(album.collectionId).then((tracks) => setHeart(heartBtn, allSaved(tracks)));
+
+  plusBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const tracks = await getAlbumTracks(album.collectionId);
+    if (!tracks.length) return;
+
+    showPlaylistModal(tracks[0], (playlistId) => {
+      let anyAdded = false;
+      for (const track of tracks) {
+        if (addTrackToPlaylist(playlistId, track)) {
+          anyAdded = true;
+        }
+      }
+      if (anyAdded) {
         document.dispatchEvent(new Event("playlists:changed"));
       }
       renderSidebarPlaylists();
-    });
+    }, tracks);
+  });
+
+  heartBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const tracks = await getAlbumTracks(album.collectionId);
+    if (!tracks.length) return;
+
+    const allFavs = tracks.every((t) => isFavourite(t));
+    for (const track of tracks) {
+      if (allFavs) {
+        if (isFavourite(track)) toggleFavourite(track);
+      } else {
+        if (!isFavourite(track)) toggleFavourite(track);
+      }
+    }
+
+    const nowAllFavs = tracks.every((t) => isFavourite(t));
+    document
+      .querySelectorAll(`.card[data-collection-id="${album.collectionId}"] .card-fav`)
+      .forEach((btn) => {
+        btn.textContent = nowAllFavs ? "♥" : "♡";
+        btn.classList.toggle("is-fav", nowAllFavs);
+      });
+
+    updateFavs();
   });
 
   card.addEventListener("click", () => {
@@ -440,7 +509,7 @@ const MAX_GENRES = 3;
 
 const loadHome = async () => {
   const history = getHistory().reverse().slice(0, 12);
-  const favourites = getFavourites();
+  const favourites = [...getFavourites()].reverse().slice(0, 12);
 
   // Estraiamo i generi dai brani ascoltati
   const genres = history.map((t) => t.primaryGenreName).filter(Boolean);
