@@ -56,7 +56,7 @@
      fetch("https://itunes.apple.com/lookup?id=909253&entity=song&limit=10")
 */
 
-import { $, el, historyDump, historyLog, getFavourites, getPlaylist, setPlaylist, killPLaylist } from "./helper.js"
+import { $, el, historyDump, historyLog, getFavourites, getPlaylist, setPlaylist, killPLaylist, removeTrackFromPlaylist, setCurrentTrackList, getCurrentTrackList } from "./helper.js"
 
 /* ============================ 1. Costanti ============================ */
 
@@ -186,7 +186,8 @@ class Playlist {
 
   Metodi pubblici:
     - mount()        -> rende la UI del player nel footer (.player)
-    - play(track)    -> imposta currentTrack, src audio, avvia, salva in history
+    - play(track, trackList) -> imposta currentTrack, src audio, avvia, salva in history;
+                                se riceve trackList la usa per avanti/indietro
     - togglePlay()   -> alterna play/pause sul brano corrente
     - setVolume(v)   -> v tra 0 e 1
     - seek(percent)  -> sposta currentTime a percent% della durata
@@ -220,9 +221,9 @@ class Player {
     this.isPlaying = false;
     this.isSeeking = false; // true mentre si trascina la barra di avanzamento
     this.ui = null; // i riferimenti agli elementi vengono salvati in mount()
+    this.trackList = getCurrentTrackList() || [];
 
-    // Gli elementi del footer non esistono ancora (li crea mount()),
-    // quindi qui agganciamo solo gli eventi dell'audio, che esiste già.
+
     this.audio.addEventListener("timeupdate", () => this.updateProgress());
     this.audio.addEventListener("loadedmetadata", () => {
       if (this.ui) this.ui.timeTotal.textContent = this.formatTime(this.audio.duration);
@@ -230,10 +231,16 @@ class Player {
     });
     this.audio.addEventListener("play", () => this.setPlayingState(true));
     this.audio.addEventListener("pause", () => this.setPlayingState(false));
+    // A fine brano parte il successivo della lista; se era l'ultimo, il player si ferma e torna all'inizio
     this.audio.addEventListener("ended", () => {
-      this.setPlayingState(false);
-      this.audio.currentTime = 0;
-      this.updateProgress();
+      const i = this.currentIndex();
+      if (i !== -1 && this.trackList[i + 1]) {
+        this.next();
+      } else {
+        this.setPlayingState(false);
+        this.audio.currentTime = 0;
+        this.updateProgress();
+      }
     });
     this.audio.addEventListener("timeupdate", () => this.saveState());
     this.audio.addEventListener("pause", () => this.saveState());
@@ -347,10 +354,12 @@ class Player {
     };
 
     // --- Eventi ---
+    // --- Eventi ---
     this.ui.btnToggle.addEventListener("click", () => this.togglePlay());
+    footer.querySelector("#btn-prev").addEventListener("click", () => this.prev());
+    footer.querySelector("#btn-next").addEventListener("click", () => this.next());
     btnClose.addEventListener("click", () => this.close());
     btnExpand.addEventListener("click", () => this.expand());
-
     // Barra di avanzamento: mentre si trascina si sposta solo la barra (e il tempo),
     // il brano salta al punto scelto quando si lascia il mouse
     this.makeDraggable(
@@ -366,11 +375,60 @@ class Player {
     // Barra del volume: il volume cambia subito mentre si trascina
     this.makeDraggable(this.ui.volumeBar, (percent) => this.setVolume(percent));
 
-    this.setVolume(0.8);
+    this.setVolume(0.5);
     this.restoreState();
   }
 
-  play(track) {
+  /*
+    setTrackList(trackList)
+    - Imposta la lista su cui lavorano avanti/indietro (e il passaggio automatico a fine brano)
+    - La salva in localStorage, così cambiando pagina avanti/indietro continuano a funzionare
+    - Non serve chiamarla a mano: la chiama play(track, trackList) quando riceve una lista
+  */
+  setTrackList(trackList) {
+    this.trackList = trackList;
+    setCurrentTrackList(trackList);
+  }
+
+  // Vecchio nome di setTrackList: resta solo perché qualche pagina potrebbe ancora usarlo
+  getTracklist(trackList) {
+    this.setTrackList(trackList);
+  }
+
+  // indice del brano corrente nella trackList (-1 se non c'è)
+  currentIndex() {
+    if (!this.currentTrack) return -1;
+    return this.trackList.findIndex((t) => t.trackId === this.currentTrack.trackId);
+  }
+
+  next() {
+    const i = this.currentIndex();
+    const track = this.trackList[i + 1];
+    if (i === -1 || !track) return; // nessuna lista, brano fuori lista o ultimo brano
+    this.play(track);               // play() imposta già currentTrack
+  }
+
+  prev() {
+    // come nei player veri: se il brano è avanti più di 3 secondi, "indietro" lo fa ripartire dall'inizio
+    if (this.audio.currentTime > 3) {
+      this.audio.currentTime = 0;
+      return;
+    }
+    const i = this.currentIndex();
+    const track = this.trackList[i - 1];
+    if (i === -1 || !track) return; // nessuna lista, brano fuori lista o primo brano
+    this.play(track);
+  }
+
+
+  /*
+    play(track, trackList)
+    - trackList (facoltativa): la lista da cui parte il brano (la riga della home, l'album, i preferiti...).
+      Se c'è, diventa la lista di avanti/indietro. next() e prev() chiamano play(track) senza lista,
+      così mentre si va avanti e indietro la lista resta la stessa.
+  */
+  play(track, trackList) {
+    if (trackList) this.setTrackList(trackList);
     historyLog(historyDump(), track);
     this.currentTrack = track;
     this.audio.src = track.previewUrl;
@@ -602,10 +660,14 @@ export const renderSidebarFavs = () => {
     return;
   }
 
+  // dal più recente al più vecchio, come vengono mostrati
+  const ordered = [...favs].reverse();
+
   list.replaceChildren(
-    ...favs.map((track) => {
+    ...ordered.slice(0, 5).map((track) => {
       const item = el("li", { text: `${track.trackName} - ${track.artistName}`, style: { cursor: "pointer" } });
-      item.addEventListener("click", () => window.player.play(track));
+      // la lista di avanti/indietro sono tutti i preferiti, nello stesso ordine della sidebar
+      item.addEventListener("click", () => window.player.play(track, ordered));
       return item;
     })
   );
@@ -688,34 +750,87 @@ const renderPlaylistDropdown = (playlist) => {
   );
 };
 
+// Chiude il menu dei brani di una playlist quando si clicca fuori da quella playlist.
+// Il "true" finale fa partire il controllo PRIMA degli altri clic della pagina:
+// così funziona anche sui pulsanti che usano stopPropagation (cuore, +, card...).
+document.addEventListener(
+  "click",
+  (e) => {
+    const openToggles = document.querySelectorAll("#sidebar-playlists .dropdown-toggle.show");
+    openToggles.forEach((toggle) => {
+      const playlistBox = toggle.closest(".dropdown"); // la riga della playlist: nome, menu e X
+      if (!playlistBox.contains(e.target)) {
+        bootstrap.Dropdown.getInstance(toggle)?.hide();
+      }
+    });
+  },
+  true
+);
+
+const emptyItem = () =>
+  el(
+    "li",
+    {},
+    el("span", {
+      className: "dropdown-item-text fst-italic",
+      text: "Nessun brano",
+    }),
+  );
+
+
 export const renderSidebarPlaylists = () => {
   const sidebarContainer = $("#sidebar-playlists");
   if (!sidebarContainer) return;
 
-  const playlists = getPlaylist();
+  const playlists = getPlaylist() ?? [];
   sidebarContainer.replaceChildren();
 
-  playlists.forEach((playlist) => {
+  [...playlists].reverse().slice(0, 5).forEach((playlist) => {
     const dropdownList = renderPlaylistDropdown(playlist);
     const menu = dropdownList.querySelector(".dropdown-menu");
     const deleteBtn = dropdownList.querySelector(".btn-outline-danger");
 
     deleteBtn.addEventListener("click", (e) => {
-      const id = e.currentTarget.closest("[data-playlist-id]").dataset.playlistId;
+      const id =
+        e.currentTarget.closest("[data-playlist-id]").dataset.playlistId;
       killPLaylist(id);
-    })
-    const tracks = playlist.tracks ?? playlist.trackList ?? [];
+    });
+
+    const tracks = playlist.trackList;
+    if (!tracks.length) menu.append(emptyItem());
 
     tracks.forEach((track) => {
+      const playBtn = el("button", {
+        className: "dropdown-item w-auto flex-grow-1 text-truncate",
+        text: `${track.trackName} — ${track.artistName}`,
+        attrs: { type: "button" },
+      });
+      // la lista di avanti/indietro è la playlist
+      playBtn.addEventListener("click", () => window.player?.play(track, tracks));
+
+      const removeBtn = el("button", {
+        className: "btn btn-sm btn-outline-danger me-2 py-0",
+        text: "X",
+        attrs: {
+          type: "button",
+          "aria-label": `Rimuovi ${track.trackName} dalla playlist`,
+        },
+      });
+
       const li = el(
         "li",
-        {
-          className: "dropdown-item text-truncate",
-          text: `${track.trackName} — ${track.artistName}`,
-          style: { cursor: "pointer" },
-        }
+        { className: "d-flex align-items-center" },
+        playBtn,
+        removeBtn,
       );
-      li.addEventListener("click", () => window.player?.play(track));
+
+      removeBtn.addEventListener("click", () => {
+        removeTrackFromPlaylist(playlist.id, track.trackId);
+        li.remove();
+        if (!menu.children.length) menu.append(emptyItem());
+        document.dispatchEvent(new Event("playlist:track-removed"));
+      });
+
       menu.append(li);
     });
 
@@ -760,4 +875,3 @@ export const initPage = (activePage) => {
   window.player = player;
   return player;
 };
-

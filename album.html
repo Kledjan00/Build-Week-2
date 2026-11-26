@@ -35,6 +35,21 @@
       <path d="M12 6v12" />
       <path d="M6 12h12" />
     </symbol>
+    <symbol id="ico-menu" viewBox="0 0 24 24">
+      <path d="M4 7h16" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
+    </symbol>
+    <symbol id="ico-playlist" viewBox="0 0 24 24">
+      <path d="M3.5 6.5h12" />
+      <path d="M3.5 11.5h12" />
+      <path d="M3.5 16.5h7" />
+      <circle cx="16.5" cy="17.5" r="2.5" />
+      <path d="M19 17.5V8.5l2.5-1" />
+    </symbol>
+    <symbol id="ico-heart" viewBox="0 0 24 24">
+      <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z" />
+    </symbol>
     <symbol id="ico-chevron-left" viewBox="0 0 24 24">
       <path d="M14.5 5.5 8 12l6.5 6.5" />
     </symbol>
@@ -76,8 +91,12 @@
   </svg>
 
   <div class="app">
-    <!-- Sidebar statica: nascosta sotto i 576px (d-none d-sm-block) -->
-    <aside class="sidebar d-none d-sm-block">
+    <!-- Sidebar statica. Sotto i 576px diventa un pannello che si apre dal pulsante ☰ della topbar:
+         l'attributo popover lo fa aprire e chiudere dall'HTML, senza JavaScript -->
+    <aside class="sidebar" id="sidebar-drawer" popover>
+      <!-- × per chiudere il pannello (si vede solo su mobile) -->
+      <button type="button" class="drawer-close" popovertarget="sidebar-drawer" popovertargetaction="hide"
+        aria-label="Chiudi il menu">×</button>
       <a href="index.html" class="brand">
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-text">EpiTunes</span>
@@ -103,16 +122,24 @@
 
       <!-- Playlist: titolo, pulsante per crearne una nuova (id btn-new-playlist, lo collega il JS)
            e lista delle playlist dell'utente, riempita via JS da localStorage -->
-      <h2 class="sidebar-section-title">Le tue playlist</h2>
+      <!-- Il titolo porta alla relativa sezione della Libreria -->
+      <h2 class="sidebar-section-title"><a href="library.html#row-library-playlist"><span class="ico"
+            aria-hidden="true"><svg class="icon">
+              <use href="#ico-playlist"></use>
+            </svg></span><span>Le tue playlist</span></a></h2>
       <button type="button" class="btn-new-playlist" id="btn-new-playlist">
         <span class="ico" aria-hidden="true"><svg class="icon">
             <use href="#ico-plus"></use>
           </svg></span>
         <span class="btn-new-playlist-text">Nuova playlist</span>
       </button>
-      <ul class="sidebar-list" id="sidebar-playlists"></ul>
+      <div class="sidebar-list" id="sidebar-playlists"></div>
 
-      <h2 class="sidebar-section-title">I tuoi preferiti</h2>
+      <!-- Il titolo porta alla relativa sezione della Libreria -->
+      <h2 class="sidebar-section-title"><a href="library.html#row-library-favourites"><span class="ico"
+            aria-hidden="true"><svg class="icon">
+              <use href="#ico-heart"></use>
+            </svg></span><span>I tuoi preferiti</span></a></h2>
       <!-- Unica parte dinamica: la lista viene riempita via JS dai preferiti in localStorage -->
       <ul class="sidebar-list" id="sidebar-favourites">
         <li class="fst-italic">Nessuno ancora</li>
@@ -122,6 +149,11 @@
     <main class="main">
       <header class="topbar sticky-top d-flex align-items-center justify-content-between px-4 py-3">
         <div class="d-flex gap-2">
+          <!-- ☰ Menu: apre la sidebar come pannello (si vede solo su mobile) -->
+          <button type="button" class="menu-btn" popovertarget="sidebar-drawer" aria-label="Apri il menu"><svg
+              class="icon">
+              <use href="#ico-menu"></use>
+            </svg></button>
           <button type="button" class="btn nav-btn rounded-circle p-0" aria-label="Indietro"><svg class="icon">
               <use href="#ico-chevron-left"></use>
             </svg></button>
@@ -251,6 +283,7 @@
       </div>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module" src="assets/js/new-user.js"></script>
   <script type="module" src="assets/js/common.js"></script>
   <script type="module" src="assets/js/album.js"></script>

@@ -35,7 +35,13 @@ import {
 const player = initPage("home");
 const home = document.querySelector(".home");
 
-const renderCard = (track) => {
+/*
+  renderCard(track, _index, rowTracks)
+  - Viene chiamata con .map(renderCard): map passa anche l'indice e l'array intero,
+    quindi rowTracks è la lista dei brani della riga in cui sta la card.
+  - Al click il brano parte con quella lista: avanti/indietro scorrono i brani della stessa riga.
+*/
+const renderCard = (track, _index, rowTracks) => {
   // Cuore: .card-fav lo posiziona e lo mostra con l'hover;
   // .is-fav lo colora di rosso mattone e lo lascia sempre visibile se il brano è tra i preferiti
   const heartBtn = el("button", {
@@ -93,7 +99,7 @@ const renderCard = (track) => {
   });
 
   card.addEventListener("click", () => {
-    player.play(track);
+    player.play(track, rowTracks);
     updateHistory();
   });
 
@@ -190,7 +196,7 @@ const renderRow = (rowTitle, items, id = rowTitle, type = "track") => {
 function updateFavs() {
   renderSidebarFavs();
 
-  const favourites = getFavourites().filter((t) => t.previewUrl);
+  const favourites = getFavourites().filter((t) => t.previewUrl).reverse();
   const existing = $('[data-row="Preferiti"]');
 
   // nessun preferito: rimuovi l'intera riga
@@ -206,7 +212,7 @@ function updateFavs() {
   }
 
   // riga assente (primo preferito): creala e mettila in cima, dopo la history
-  const section = renderRow("Preferiti", favourites);
+  const section = renderRow("Preferiti", [...favourites].reverse());
   const history = $('[data-row="Riprodotti di recente"]');
   if (history) history.after(section);
   else home.prepend(section);
@@ -321,7 +327,7 @@ const renderHero = async (artists) => {
     shuffleBtn.addEventListener("click", () => {
       if (!songs.length) return;
       const random = songs[Math.floor(Math.random() * songs.length)];
-      player.play(random);
+      player.play(random, songs); // avanti/indietro scorrono i brani dell'artista
       updateHistory();
     });
 
@@ -534,9 +540,6 @@ function genrePercentage(ranked) {
 
   return rows.map(({ genre, pct }) => [genre, pct]);
 }
-
-
-
 
 
 loadHome();

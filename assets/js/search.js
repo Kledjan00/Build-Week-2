@@ -21,7 +21,7 @@
       - artist -> click = window.location.href = "artist.html?id=" + artistId
 */
 
-import { initPage, renderSidebarFavs, artistLink } from "./common.js";
+import { initPage, renderSidebarFavs, renderSidebarPlaylists, artistLink } from "./common.js";
 import {
   el,
   $,
@@ -33,7 +33,9 @@ import {
   toggleFavourite,
   getFavourites,
   STORAGE_KEY_LAST_SEARCH,
-  getArtistPicture
+  getArtistPicture,
+  addTrackToPlaylist,
+  showPlaylistModal
 } from "./helper.js";
 
 const player = initPage("search");
@@ -46,7 +48,13 @@ const gridTracks = document.querySelector("#grid-tracks");
 const gridAlbums = document.querySelector("#grid-albums");
 const gridArtists = document.querySelector("#grid-artists");
 
-const renderCard = (track) => {
+/*
+  renderCard(track, _index, rowTracks)
+  - Viene chiamata con .map(renderCard): map passa anche l'indice e l'array intero,
+    quindi rowTracks sono tutti i brani trovati.
+  - Al click il brano parte con quella lista: avanti/indietro scorrono i risultati della ricerca.
+*/
+const renderCard = (track, _index, rowTracks) => {
   // Cuore: .card-fav lo mette a destra di titolo e artista;
   // .is-fav lo colora di rosso mattone e lo lascia sempre visibile
   const heartBtn = el("button", {
@@ -86,7 +94,7 @@ const renderCard = (track) => {
 
   // click sulla card (e sul play) -> riproduce
   card.addEventListener("click", () => {
-    player.play(track);
+    player.play(track, rowTracks);
   });
 
   // click sul cuore -> preferito, senza far partire il brano
@@ -102,6 +110,16 @@ const renderCard = (track) => {
     className: "card-plus",
     text: "+",
     attrs: { "aria-label": "Aggiungi a una playlist", type: "button" },
+  });
+
+  // click sul + -> sceglie la playlist in cui aggiungere il brano (come in home)
+  plusBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    showPlaylistModal(track, (playlistId) => {
+      const added = addTrackToPlaylist(playlistId, track);
+      if (added) document.dispatchEvent(new Event("playlists:changed"));
+      renderSidebarPlaylists();
+    });
   });
 
   card.append(plusBtn);
@@ -159,7 +177,8 @@ card.append(plusBtn, heartBtn);
 const renderArtistCard = (artist, pic) => {
   const frame = el("img", {
     attrs: {
-      src: pic || "/assets/img/placeholderArtist.png",
+      // percorso senza "/" iniziale: con la "/" su GitHub Pages l'immagine non si trova
+      src: pic || "assets/img/placeholderArtist.png",
       alt: artist.artistName ?? "Artista",
       loading: "lazy",
     },
@@ -248,6 +267,9 @@ const doSearch = async (term) => {
   const artistsList = artists.filter((a) => a.artistName && a.artistId);
 
   const artistCards = await buildArtistCards(artistsList);
+
+  // le foto degli artisti richiedono tempo: se intanto l'utente ha scritto altro, questi risultati sono vecchi
+  if (term !== lastTerm) return;
 
   gridTracks.replaceChildren(...tracks.map(renderCard));
   gridAlbums.replaceChildren(...albumList.map(renderAlbumCard));

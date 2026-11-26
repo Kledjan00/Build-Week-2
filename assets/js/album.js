@@ -46,6 +46,7 @@ const loadAlbum = async () => {
       const album = data.results[0];
       const tracks = data.results.slice(1);
       const firstTrack = tracks[0];
+      // player.getTracklist(tracks);
 
       const year = new Date(album.releaseDate).getFullYear();
       const totalMs = tracks.reduce((sum, t) => sum + (t.trackTimeMillis || 0), 0);
@@ -64,7 +65,7 @@ const loadAlbum = async () => {
          attrs: { "aria-label": "Riproduci", type: "button" },
       });
 
-      playBtn.addEventListener("click", () => player.play(firstTrack));
+       playBtn.addEventListener("click", () => player.play(firstTrack, tracks));
 
       heartBtn.addEventListener("click", () => {
          toggleFavourite(firstTrack);
@@ -109,7 +110,7 @@ const loadAlbum = async () => {
                rowHeart
             );
 
-            row.addEventListener("click", () => player.play(track));
+             row.addEventListener("click", () => player.play(track, tracks));
 
             rowHeart.addEventListener("click", (e) => {
                e.stopPropagation();

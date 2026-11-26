@@ -279,6 +279,191 @@ button {
   }
 }
 
+/* ============================ Playlist nella sidebar ============================
+   Le crea renderSidebarPlaylists() con i componenti dropdown di Bootstrap
+   (btn, dropdown-toggle, dropdown-menu, form-control). Qui li riportiamo allo stile
+   della sidebar: ogni playlist sembra una voce come quelle dei preferiti, il menu a tendina
+   è in legno scuro e la X compare solo passando con il mouse sulla riga.
+   Tutte le regole partono da #sidebar-playlists, così i componenti Bootstrap
+   usati altrove nel sito non cambiano. */
+#sidebar-playlists {
+  list-style: none;
+  margin: 4px 0 8px;
+  padding: 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  /* Riga di una playlist: titolo (che apre il menu) + X */
+  & .dropdown {
+    position: relative;
+    margin: 0 !important; /* annulla mb-1 di Bootstrap: lo spazio lo dà il gap della lista */
+    border-radius: 4px;
+
+    &:hover {
+      background: var(--bg-elev);
+    }
+  }
+
+  /* Titolo della playlist: niente bottone di Bootstrap, solo testo come le voci dei preferiti */
+  & .dropdown-toggle {
+    --bs-btn-padding-x: 8px;
+    --bs-btn-padding-y: 6px;
+    --bs-btn-font-size: 13px;
+    --bs-btn-color: var(--text-secondary);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--text-primary);
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--text-primary);
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-border-color: transparent;
+    min-width: 0; /* permette ai titoli lunghi di finire con i puntini */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    /* Freccetta del menu: Bootstrap la disegna con un triangolino nel ::after.
+       La trasformiamo in una freccetta sottile in ottone che punta a destra,
+       perché il menu si apre a destra della sidebar */
+    &::after {
+      flex-shrink: 0;
+      margin-left: auto;
+      width: 6px;
+      height: 6px;
+      border: none;
+      border-right: 1.5px solid var(--accent);
+      border-bottom: 1.5px solid var(--accent);
+      rotate: -45deg;
+      transition: translate 0.2s;
+    }
+
+    /* Menu aperto: il titolo diventa ottone e la freccetta si sposta un po' verso il menu */
+    &[aria-expanded="true"] {
+      color: var(--accent);
+
+      &::after {
+        translate: 3px 0;
+      }
+    }
+
+    &:focus-visible {
+      box-shadow: none;
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+  }
+
+  /* X per eliminare: piccola, senza bordo, compare solo con l'hover sulla riga */
+  & .btn-outline-danger {
+    --bs-btn-padding-x: 6px;
+    --bs-btn-padding-y: 2px;
+    --bs-btn-font-size: 11px;
+    --bs-btn-color: var(--text-secondary);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--danger);
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-color: var(--danger);
+    margin: 0 4px 0 0 !important; /* annulla ms-2 di Bootstrap */
+    flex-shrink: 0;
+    font-family: Arial, sans-serif; /* la X del font con grazie sembra una lettera, non un'icona */
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+  }
+
+  & .dropdown:hover .btn-outline-danger,
+  & .btn-outline-danger:focus-visible {
+    opacity: 1;
+  }
+
+  /* Menu a tendina con i brani: si apre A DESTRA della sidebar, accanto alla playlist.
+     Il problema: la sidebar scorre (overflow), quindi taglierebbe tutto quello che esce dai suoi bordi.
+     La soluzione: position: fixed (un elemento fixed non viene tagliato dall'overflow dei genitori)
+     senza top e left: così il browser lo lascia dove starebbe normalmente, cioè all'altezza della
+     playlist, e lo spostiamo solo in orizzontale con translate, fino a fuori dalla sidebar.
+     Gli !important servono a battere la posizione che il JavaScript di Bootstrap (Popper)
+     scrive direttamente nello style del menu quando lo apre. */
+  & .dropdown-menu.show {
+    position: fixed !important;
+    inset: auto !important;
+    transform: none !important;
+    /* la playlist parte 20px dentro la sidebar (16px di padding + 4px della lista):
+       240px (larghezza sidebar) - 20px + 8px di distacco = 228px */
+    translate: 228px 0;
+    width: 240px !important; /* annulla w-100: con fixed sarebbe largo come la finestra */
+    max-height: 60vh; /* playlist lunghe: il menu scorre invece di uscire dallo schermo */
+    overflow-y: auto;
+    /* ...ma senza barra di scorrimento visibile: si scorre con la rotellina o il trackpad */
+    scrollbar-width: none; /* Firefox */
+
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Edge, Safari */
+    }
+    margin: 0 !important;
+    /* la riga della playlist centra in verticale i suoi elementi (align-items: center):
+       senza questa riga anche il menu verrebbe centrato sulla riga, e partirebbe più in alto */
+    align-self: flex-start;
+    z-index: 1060; /* sopra player e topbar */
+  }
+
+  /* Menu a tendina con i brani: legno scuro, bordo color legno, profilo in ottone in alto */
+  & .dropdown-menu {
+    --bs-dropdown-bg: var(--bg-elev);
+    --bs-dropdown-border-color: var(--border);
+    --bs-dropdown-border-radius: 6px;
+    --bs-dropdown-link-color: var(--text-secondary);
+    --bs-dropdown-link-hover-color: var(--text-primary);
+    --bs-dropdown-link-hover-bg: var(--bg-elev-hover);
+    --bs-dropdown-link-active-color: #2a1a10;
+    --bs-dropdown-link-active-bg: var(--accent);
+    --bs-dropdown-font-size: 12px;
+    --bs-dropdown-item-padding-y: 6px;
+    --bs-dropdown-padding-y: 4px;
+    border-top: 2px solid var(--accent);
+    box-shadow: 0 10px 24px rgb(0 0 0 / 0.5);
+
+    /* playlist vuota: un messaggio al posto della lista */
+    &:empty::before {
+      content: "Nessun brano: usa il + sulle card";
+      display: block;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-style: italic;
+      color: var(--text-secondary);
+    }
+  }
+
+  /* Campo per il titolo della nuova playlist (compare cliccando "Nuova playlist") */
+  & .playList-title-input {
+    margin-top: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    background: rgb(0 0 0 / 0.25);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+
+    &::placeholder {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    &:focus {
+      background: rgb(0 0 0 / 0.25);
+      border-color: var(--accent);
+      color: var(--text-primary);
+      box-shadow: 0 0 0 3px rgb(201 162 39 / 0.25);
+    }
+  }
+}
+
 /* Titolo della sezione "I tuoi preferiti": piccolo, maiuscolo e spaziato */
 .sidebar-section-title {
   text-transform: uppercase;
@@ -595,9 +780,10 @@ article.row,
 
 /* ============================ Hero album / artista ============================ */
 
-/* Parte alta delle pagine album e artista: copertina a sinistra, testi a destra,
+/* Parte alta delle pagine album, playlist e artista: copertina a sinistra, testi a destra,
    centrati in verticale rispetto alla copertina */
 .album-hero,
+.playlist-hero,
 .artist-hero {
   display: flex;
   gap: 24px;
@@ -782,6 +968,43 @@ article.row,
 
   &.is-fav {
     color: var(--danger);
+  }
+}
+
+/* X per togliere un brano dalla playlist (pagina playlist): è un btn-outline-danger di Bootstrap,
+   lo rendiamo come la X delle playlist nella sidebar: niente bordo rosso, grigia,
+   compare solo passando sulla riga e diventa rossa passandoci sopra */
+.tracklist .btn-outline-danger {
+  --bs-btn-padding-x: 6px;
+  --bs-btn-padding-y: 2px;
+  --bs-btn-font-size: 13px;
+  --bs-btn-color: var(--text-secondary);
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: var(--danger);
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-bg: transparent;
+  --bs-btn-active-color: var(--danger);
+  --bs-btn-active-border-color: transparent;
+  font-family: Arial, sans-serif; /* la X del font con grazie sembra una lettera, non un'icona */
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+
+  /* niente contorno quando la si clicca; con la tastiera (Tab) il contorno resta */
+  &:focus:not(:focus-visible) {
+    box-shadow: none;
+  }
+}
+
+.track-row:hover .btn-outline-danger,
+.tracklist .btn-outline-danger:focus-visible {
+  opacity: 1;
+}
+
+/* Schermi touch (niente hover): la X resta sempre visibile */
+@media (hover: none) {
+  .tracklist .btn-outline-danger {
+    opacity: 1;
   }
 }
 
@@ -1493,6 +1716,39 @@ article.row,
 /* Titolo "I tuoi preferiti" in ottone */
 .sidebar-section-title {
   color: var(--accent);
+}
+
+/* Titoli "Le tue playlist" e "I tuoi preferiti" con la loro iconcina a sinistra */
+.sidebar-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  & .ico {
+    display: grid;
+    place-items: center;
+    font-size: 15px; /* grandezza dell'icona (è larga 1em) */
+  }
+}
+
+/* Il titolo è un link alla relativa sezione della Libreria:
+   resta in ottone come prima, al passaggio del mouse si schiarisce */
+.sidebar-section-title a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+/* Arrivando da un link (#row-library-...), la sezione si ferma sotto la topbar invece di finirci sotto */
+.library .row {
+  scroll-margin-top: 80px;
 }
 
 /* Titoli delle sezioni e titolo grande di album/artista in Italiana (art déco) */
@@ -2655,6 +2911,102 @@ a.topbar-search {
   }
 }
 
+/* ============================ Pagina artista: social, biografia e album ============================
+   L'hero dell'artista ha tre parti: foto | testi e pulsanti | biografia (a destra).
+   Se non c'è spazio per tutte e tre sulla stessa riga, la biografia va sotto (flex-wrap). */
+.artist-hero {
+  flex-wrap: wrap;
+}
+
+/* Trattino verticale tra il play e le icone di sito e social */
+.hero-divider {
+  width: 1px;
+  height: 24px;
+  margin: 0 4px;
+  background: var(--border);
+}
+
+/* Icone di sito e social: cerchi più piccoli del play, con bordo e colore tenui.
+   Al passaggio del mouse diventano ottone, come il play */
+.btn-social {
+  width: 36px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: 18px; /* grandezza dell'icona (è larga 1em) */
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+}
+
+/* Biografia: a destra, senza riquadro, testo allineato a destra */
+.artist-bio {
+  flex: 1 1 320px;
+  max-width: 440px;
+  min-width: 0;
+  margin-left: auto; /* la spinge fino al bordo destro */
+  text-align: right;
+}
+
+.artist-bio-title {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 24px;
+  letter-spacing: 1px;
+}
+
+/* Testo della biografia: al massimo 5 righe, poi i puntini (...) */
+.artist-bio-text {
+  margin: 0;
+  line-height: 1.7;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-line; /* tiene gli a capo della biografia di TheAudioDB */
+}
+
+/* "Leggi tutto" (classe is-open aggiunta dal JS): il testo si vede intero */
+.artist-bio.is-open .artist-bio-text {
+  display: block;
+}
+
+/* Pulsante "Leggi tutto" / "Mostra meno": solo testo in ottone, maiuscolo e spaziato */
+.artist-bio-more {
+  margin-top: 14px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+}
+
+/* Main stretto: la biografia va sotto, larga quanto la pagina e allineata a sinistra */
+@container main (width < 1000px) {
+  .artist-bio {
+    flex-basis: 100%;
+    max-width: none;
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
 /* ============================ Responsive ============================ */
 
 /* Container queries: guardano la larghezza del main, non quella della finestra.
@@ -2664,6 +3016,7 @@ a.topbar-search {
    e la copertina si rimpicciolisce */
 @container main (width < 720px) {
   .album-hero,
+  .playlist-hero,
   .artist-hero {
     flex-direction: column;
     align-items: flex-start;
@@ -2711,11 +3064,200 @@ a.topbar-search {
       padding: 10px 0;
     }
   }
+
+  /* anche la lista delle playlist (la sua regola usa l'id, quindi va nascosta con l'id) */
+  #sidebar-playlists {
+    display: none;
+  }
 }
 
-/* Mobile (sotto i 576px): la sidebar sparisce (lo fanno le classi d-none d-sm-block
-   nell'HTML), la griglia ha una colonna sola e il player passa a due colonne
-   senza il volume */
+/* ============================ Sidebar a pannello (mobile) ============================
+   La sidebar ha l'attributo HTML popover: il pulsante ☰ (popovertarget="sidebar-drawer")
+   la apre e la chiude senza JavaScript. Tocca fuori dal pannello o premi Esc: si chiude da solo.
+
+   Il browser dà agli elementi popover alcuni stili suoi (position: fixed, bordo, margini,
+   sfondo bianco, testo nero) e li nasconde quando sono chiusi. Le regole qui sotto
+   riportano la sidebar al suo aspetto normale; i nostri stili vincono sempre su quelli
+   del browser, quindi su tablet e desktop la sidebar resta al suo posto nella griglia. */
+.sidebar[popover] {
+  position: static;
+  inset: auto;
+  width: auto;
+  height: auto;
+  margin: 0;
+  border: none;
+  color: inherit;
+}
+
+/* Il ☰ e la × del pannello esistono solo su mobile */
+.menu-btn,
+.drawer-close {
+  display: none;
+}
+
+@media (width >= 576px) {
+  /* su tablet e desktop la sidebar è sempre visibile, anche se come popover è "chiusa" */
+  .sidebar[popover] {
+    display: block;
+  }
+}
+
+@media (width < 576px) {
+  /* ☰ nella topbar, a sinistra delle frecce: stesso cerchio di Indietro/Avanti */
+  .menu-btn {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    background: #2a1a10;
+    color: var(--accent);
+    font-size: 18px;
+
+    /* niente contorno quando lo si tocca; con la tastiera (Tab) il contorno resta */
+    &:focus:not(:focus-visible) {
+      outline: none;
+    }
+  }
+
+  /* Pannello: fisso a sinistra, alto quanto lo schermo.
+     Posizione e misure stanno sul pannello anche da chiuso (non solo con :popover-open):
+     così mentre si chiude resta al suo posto e scivola via a sinistra, invece di
+     tornare per un attimo nella pagina (era quello il lampo strano) */
+  .sidebar[popover] {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(280px, 85vw);
+    height: 100dvh;
+    box-shadow: 8px 0 24px rgb(0 0 0 / 0.6);
+
+    /* Uscita: scivola a sinistra in 0.4s, parte piano, accelera e rallenta alla fine.
+       allow-discrete: come per le modali, il pannello sparisce solo a fine animazione */
+    translate: -100% 0;
+    transition:
+      translate 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      display 0.4s allow-discrete,
+      overlay 0.4s allow-discrete;
+
+    /* Entrata: entra veloce e rallenta mentre arriva */
+    &:popover-open {
+      translate: 0 0;
+      transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+  }
+
+  /* Punto di partenza dell'entrata: fuori dallo schermo a sinistra */
+  @starting-style {
+    .sidebar[popover]:popover-open {
+      translate: -100% 0;
+    }
+  }
+
+  /* Sfondo dietro il pannello: solo scurito, senza sfocatura.
+     Si scurisce e si schiarisce insieme al pannello, invece di sparire di colpo */
+  .sidebar[popover]::backdrop {
+    background-color: rgb(10 6 4 / 0);
+    transition:
+      background-color 0.4s ease,
+      display 0.4s allow-discrete,
+      overlay 0.4s allow-discrete;
+  }
+
+  .sidebar[popover]:popover-open::backdrop {
+    background-color: rgb(10 6 4 / 0.6);
+  }
+
+  @starting-style {
+    .sidebar[popover]:popover-open::backdrop {
+      background-color: rgb(10 6 4 / 0);
+    }
+  }
+
+  /* × in alto a destra del pannello */
+  .drawer-close {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 18px;
+    right: 14px;
+    width: 32px;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 20px;
+    line-height: 1;
+
+    &:focus:not(:focus-visible) {
+      outline: none;
+    }
+  }
+
+  /* Dentro il pannello c'è spazio: la sidebar torna completa
+     (annulla la sidebar "a icone" del tablet: testi, titoli, preferiti e playlist di nuovo visibili) */
+  .sidebar {
+    & .brand-text,
+    & .sidebar-section-title,
+    & .sidebar-list,
+    & .sidebar-nav a span:not(.ico),
+    & .sidebar-nav button span:not(.ico),
+    & .btn-new-playlist-text {
+      display: revert;
+    }
+
+    & .sidebar-list,
+    & .sidebar-section-title {
+      display: flex;
+    }
+
+    & .sidebar-nav a,
+    & .sidebar-nav button,
+    & .btn-new-playlist {
+      justify-content: flex-start;
+      padding: 8px 12px;
+    }
+  }
+
+  /* Playlist: sul telefono a destra del pannello non c'è spazio,
+     quindi il menu dei brani si apre SOTTO la playlist, dentro il pannello */
+  #sidebar-playlists {
+    display: flex; /* di nuovo visibile nel pannello (sul tablet è nascosta) */
+
+    & .dropdown {
+      flex-wrap: wrap; /* il menu va a capo, sotto titolo e X */
+    }
+
+    & .dropdown-menu.show {
+      position: static !important;
+      translate: none;
+      width: 100% !important;
+      max-height: none;
+      box-shadow: none;
+      order: 3; /* dopo il titolo e la X */
+    }
+
+    & .dropdown-toggle::after {
+      rotate: 45deg; /* la freccetta punta in basso */
+    }
+
+    & .dropdown-toggle[aria-expanded="true"]::after {
+      rotate: 225deg; /* menu aperto: punta in alto */
+      translate: 0 2px;
+    }
+
+    /* niente hover sul telefono: la X resta sempre visibile */
+    & .btn-outline-danger {
+      opacity: 1;
+    }
+  }
+}
+
+/* Mobile (sotto i 576px): la sidebar diventa il pannello qui sopra,
+   la griglia ha una colonna sola e il player passa a due colonne senza il volume */
 @media (width < 576px) {
   .app {
     grid-template-columns: 1fr;

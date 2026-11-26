@@ -5,6 +5,7 @@ const STORAGE_KEY_HISTORY = "epitunes_history";
 const STORAGE_KEY_FAVOURITES = "epitunes_favourites";
 const STORAGE_KEY_PLAYLISTS = "epitunes_playlists";
 export const STORAGE_KEY_LAST_SEARCH = "epitunes_last_search";
+const STORAGE_KEY_TRACKLIST = "epitunes_tracklist";
 const MAX_HISTORY = 12;
 
 export function el(tag, { className, id, text, attrs, style } = {}, ...children) {
@@ -151,16 +152,15 @@ export function setPlaylist(playlist) {
 
 export function getPlaylist() {
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY_PLAYLISTS)) || [];
+        const playlists = JSON.parse(localStorage.getItem(STORAGE_KEY_PLAYLISTS)) || [];
+        // le playlist vecchie possono avere i brani in "tracks": li unisco in "trackList"
+        return playlists.map(({ tracks, ...playlist }) => ({
+            ...playlist,
+            trackList: [...(playlist.trackList ?? []), ...(tracks ?? [])],
+        }));
     } catch {
         return [];
     }
-}
-
-export function killPLaylist(id) {
-  const filtered = getPlaylist().filter((p) => p.id !== id);
-  localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(filtered));
-  document.dispatchEvent(new Event("playlists:changed"));
 }
 
 export function addTrackToPlaylist(playlistId, track) {
@@ -168,13 +168,29 @@ export function addTrackToPlaylist(playlistId, track) {
     const playlist = playlists.find((p) => p.id === playlistId);
     if (!playlist) return false;
 
-    playlist.tracks ??= [];
-    if (playlist.tracks.some((t) => t.trackId === track.trackId)) return false;
+    if (playlist.trackList.some((t) => t.trackId === track.trackId)) return false;
 
-    playlist.tracks.push(track);
+    playlist.trackList.push(track);
     localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(playlists));
     return true;
 }
+
+export function removeTrackFromPlaylist(playlistId, trackId) {
+    const playlists = getPlaylist();
+    const playlist = playlists.find((p) => p.id === playlistId);
+    if (!playlist) return false;
+
+    playlist.trackList = playlist.trackList.filter((t) => t.trackId !== trackId);
+    localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(playlists));
+    return true;
+}
+
+export function killPLaylist(id) {
+    const filtered = getPlaylist().filter((p) => p.id !== id);
+    localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(filtered));
+    document.dispatchEvent(new Event("playlists:changed"));
+}
+
 
 export const getArtistPicture = async (term) => {
     try {
@@ -193,37 +209,51 @@ export const getArtistPicture = async (term) => {
     }
 };
 
+
+
+
+export function setCurrentTrackList(tracklist) {
+    localStorage.setItem(STORAGE_KEY_TRACKLIST, JSON.stringify(tracklist));
+}
+
+export function getCurrentTrackList() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY_TRACKLIST)) || [];
+}
+
+
+
 export const showPlaylistModal = (track, onSelect) => {
     document.querySelector(".playlist-modal-overlay")?.remove();
 
     const playlists = getPlaylist();
 
-    // 1. Filtra le playlist che non contengono già il brano
     const availablePlaylists = playlists.filter(pl => {
-        const tracks = pl.tracks ?? pl.trackList ?? [];
-        return !tracks.some(t => t.trackId === track.trackId);
+        return !pl.trackList.some(t => t.trackId === track.trackId);
     });
 
-    // 2. QUI VA IL CODICE: mappiamo le playlist filtrate creando gli <li> e aggiungendo l'evento click
-    const listItems = availablePlaylists.length > 0
-        ? availablePlaylists.map(pl => {
+    let listItems;
+
+    if (playlists.length === 0) {
+        listItems = [el("li", { className: "list-group-item text-muted fst-italic bg-dark border-secondary", text: "Nessuna playlist disponibile" })];
+    } else if (availablePlaylists.length === 0) {
+        listItems = [el("li", { className: "list-group-item text-muted fst-italic bg-dark border-secondary", text: "Il brano è già in tutte le playlist" })];
+    } else {
+        listItems = availablePlaylists.map(pl => {
             const li = el("li", {
                 className: "list-group-item list-group-item-action bg-dark text-white border-secondary",
                 text: pl.title,
                 style: { cursor: "pointer" }
             });
 
-            // Aggiungiamo l'evento click per selezionare la playlist
             li.addEventListener("click", () => {
                 onSelect(pl.id);
                 overlay.remove();
             });
 
             return li;
-        })
-        : [el("li", { className: "list-group-item text-muted fst-italic bg-dark border-secondary", text: "Il brano è già in tutte le playlist" })];
+        });
+    }
 
-    // 3. Creazione della struttura della modale
     const modalBody = el(
         "div",
         { className: "card bg-dark text-white p-3 shadow-lg border-secondary", style: { maxWidth: "400px", width: "100%" } },
@@ -251,3 +281,4 @@ export const showPlaylistModal = (track, onSelect) => {
 
     document.body.appendChild(overlay);
 };
+

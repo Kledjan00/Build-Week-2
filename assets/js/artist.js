@@ -51,7 +51,8 @@ const loadArtist = async () => {
       attrs: { "aria-label": "Riproduci", type: "button" },
     });
 
-    playBtn.addEventListener("click", () => player.play(firstTrack));
+    // passa anche la lista: avanti/indietro scorrono i brani popolari dell'artista
+    playBtn.addEventListener("click", () => player.play(firstTrack, tracks));
 
     artistHero.replaceChildren(
       el("img", {
@@ -95,7 +96,8 @@ const loadArtist = async () => {
         rowHeart
       );
 
-      row.addEventListener("click", () => player.play(track));
+      // passa anche la lista: avanti/indietro scorrono i brani popolari dell'artista
+      row.addEventListener("click", () => player.play(track, tracks));
 
       rowHeart.addEventListener("click", (e) => {
         e.stopPropagation();
