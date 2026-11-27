@@ -272,14 +272,14 @@ const buildArtistCards = async (artistsList) => {
 
   return withPics
     .filter(({ artist, pic }) => {
-      if (seenIds.has(artist.artistId)) return false; 
+      if (seenIds.has(artist.artistId)) return false;
       seenIds.add(artist.artistId);
 
       if (pic) {
-        if (seenPics.has(pic)) return false; 
+        if (seenPics.has(pic)) return false;
         seenPics.add(pic);
       }
-      return true; 
+      return true;
     })
     .map(({ artist, pic }) => renderArtistCard(artist, pic));
 };
@@ -303,9 +303,9 @@ const doSearch = async (term) => {
   }
 
   const [results, albums, artists] = await Promise.all([
-    fetchModular(term, { media: "music", entity: "song", limit: 12 }),
-    fetchModular(term, { media: "music", entity: "album", limit: 8 }),
-    fetchModular(term, {
+    fetchModular(term, { media: "music", entity: "song", limit: 12 }), 
+    fetchModular(term, { media: "music", entity: "album", limit: 8 }), 
+    fetchModular(term, {                                               
       media: "music",
       entity: "musicArtist",
       attribute: "artistTerm",

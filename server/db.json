@@ -101,6 +101,48 @@
       "password": "$2a$10$3kLOkdX/5ZaND0q1U6tJp.s6BiCOiEElMeuBXW/YhEAsbMQKL1M0m",
       "userName": "lleshi.kledjan",
       "id": 17
+    },
+    {
+      "email": "s02@gmail.com",
+      "password": "$2a$10$tI4scOVebXJ9JZ8Fkye34.B0GLeYvf.9FC.Ib7IcMoxzXCRcmYXv6",
+      "userName": "matta",
+      "id": 18
+    },
+    {
+      "email": "lleshi.kledi02@gmail.com",
+      "password": "$2a$10$XFa8CLh8jS50Bv9g5yulUuPfxVPX4wsnR92i2TxuxXARBjzZKowBa",
+      "userName": "lleshi.kledjan02@gmail.com",
+      "id": 19
+    },
+    {
+      "email": "lleshi.kledn02@gmail.com",
+      "password": "$2a$10$pgfovC4NByXdbkSMiJtRbOC/f9phau2etHV4YcYPQnvAww8RvbWqG",
+      "userName": "lleshi.kledjan02@gmail.com",
+      "id": 20
+    },
+    {
+      "email": "lleshi.kled02@gmail.com",
+      "password": "$2a$10$v5bcjzRGiWfqkpDGaux93eV2lfhoBOV9IzGwndh6Yzapk4dg.oSLu",
+      "userName": "lleshi.kledjan02@gmail.com",
+      "id": 21
+    },
+    {
+      "email": "lleshi02@gmail.com",
+      "password": "$2a$10$BIHOgfnZc.hjV1gE4vNWSeWKFCM4f76Xl.KaIu4uiLzNZProB/6JW",
+      "userName": "lleshi.kledjan",
+      "id": 22
+    },
+    {
+      "email": "lisasciacca95@gmail.com",
+      "password": "$2a$10$kvc2uAMXzkPevF.FYFhEHOVbNCBfcLMSa0goT7MYsWJTciZiVgvaa",
+      "userName": "lisa",
+      "id": 23
+    },
+    {
+      "email": "lleshi03@gmail.com",
+      "password": "$2a$10$BMaMDxuJuKwUits..SBvlO7Hv861GoKmtOSCydaa/0PI9ITcgm4WS",
+      "userName": "lleshi.kledjan",
+      "id": 24
     }
   ]
 }

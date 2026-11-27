@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Logo EpiTunes: lo stesso disco in vinile del sito (.brand-mark in app.css) -->
+  <defs>
+    <clipPath id="disco"><circle cx="50" cy="50" r="48"/></clipPath>
+  </defs>
+  <!-- solchi: anelli nero e grigio scuro alternati -->
+  <circle cx="50" cy="50" r="48.0" fill="#111111"/><circle cx="50" cy="50" r="46.0" fill="#262626"/><circle cx="50" cy="50" r="45.0" fill="#111111"/><circle cx="50" cy="50" r="43.0" fill="#262626"/><circle cx="50" cy="50" r="42.0" fill="#111111"/><circle cx="50" cy="50" r="40.0" fill="#262626"/><circle cx="50" cy="50" r="39.0" fill="#111111"/><circle cx="50" cy="50" r="37.0" fill="#262626"/><circle cx="50" cy="50" r="36.0" fill="#111111"/><circle cx="50" cy="50" r="34.0" fill="#262626"/><circle cx="50" cy="50" r="33.0" fill="#111111"/><circle cx="50" cy="50" r="31.0" fill="#262626"/><circle cx="50" cy="50" r="30.0" fill="#111111"/><circle cx="50" cy="50" r="28.0" fill="#262626"/><circle cx="50" cy="50" r="27.0" fill="#111111"/><circle cx="50" cy="50" r="25.0" fill="#262626"/><circle cx="50" cy="50" r="24.0" fill="#111111"/><circle cx="50" cy="50" r="22.0" fill="#262626"/><circle cx="50" cy="50" r="21.0" fill="#111111"/><circle cx="50" cy="50" r="19.0" fill="#262626"/><circle cx="50" cy="50" r="18.0" fill="#111111"/><circle cx="50" cy="50" r="16.0" fill="#262626"/><circle cx="50" cy="50" r="15.0" fill="#111111"/>
+  <!-- due riflessi di luce, come su un vero vinile -->
+  <g clip-path="url(#disco)">
+    <path d="M50 50 L78.21 11.17 A48 48 0 0 1 95.65 35.17 Z" fill="#ffffff" opacity="0.18"/>
+    <path d="M50 50 L21.79 88.83 A48 48 0 0 1 4.35 64.83 Z" fill="#ffffff" opacity="0.11"/>
+  </g>
+  <!-- etichetta in ottone al centro -->
+  <circle cx="50" cy="50" r="10" fill="#c9a227"/>
+</svg>

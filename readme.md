@@ -1,4 +1,8 @@
-# ![Logo EpiTunes](assets/img/logo-epitunes.svg) EPITUNES - Web app musicale
+# ![Logo EpiTunes](https://raw.githubusercontent.com/Kledjan00/Build-Week-2/main/assets/img/logo-epitunes.svg) EPITUNES - Web app musicale
+
+---
+
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS](https://img.shields.io/badge/CSS-1572B6?style=flat-square&logo=css&logoColor=white) ![JavaScript ES6+](https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E?style=flat-square&logo=javascript&logoColor=black) ![Bootstrap 5.3.8](https://img.shields.io/badge/Bootstrap-5.3.8-7952B3?style=flat-square&logo=bootstrap&logoColor=white) ![Google Fonts](https://img.shields.io/badge/Google_Fonts-4285F4?style=flat-square&logo=googlefonts&logoColor=white) ![iTunes Search API](https://img.shields.io/badge/iTunes_Search-API-FA243C?style=flat-square&logo=applemusic&logoColor=white) ![TheAudioDB API](https://img.shields.io/badge/TheAudioDB-API-2b1d15?style=flat-square) ![json-server-auth](https://img.shields.io/badge/json--server--auth-2.1-c9a227?style=flat-square&logo=npm&logoColor=white) ![Pexels](https://img.shields.io/badge/Pexels-05A081?style=flat-square&logo=pexels&logoColor=white)
 
 Questa repository contiene il codice sorgente di **EpiTunes**, una web app musicale ispirata a Spotify e realizzata come progetto di gruppo (Build Week 2) per il corso di sviluppo web front-end di Epicode. L'applicazione permette di esplorare brani, album e artisti tramite l'API di iTunes, ascoltare le anteprime dei brani, salvare i preferiti, creare playlist, registrarsi e accedere con un account, e personalizzare l'esperienza con temi e opzioni di accessibilità.
 
@@ -26,20 +30,13 @@ Questa repository contiene il codice sorgente di **EpiTunes**, una web app music
 
 ## 🖼️ Anteprime
 
-![Home con l'artista suggerito e il player](assets/img/home-desktop.png)\
-*Home: artista suggerito, carosello degli altri artisti e player*
-
-![Pagina di un album](assets/img/album-desktop.png)\
-*Pagina album*
-
-![Pagina di un artista](assets/img/artista-desktop.png)\
-*Pagina artista*
-
-![Giradischi aperto](assets/img/giradischi-desktop.png)\
-*Il giradischi: il vinile gira mentre il brano suona*
-
-![Pagina album su tablet](assets/img/album-tablet.png) ![Menu a pannello su mobile](assets/img/menu-mobile.png)\
-*Tablet e mobile: hero centrato e menu a pannello*
+| Home | Album |
+| :---: | :---: |
+| ![Home con l'artista suggerito e il player](https://raw.githubusercontent.com/Kledjan00/Build-Week-2/main/assets/img/home-desktop.png) | ![Pagina di un album](https://raw.githubusercontent.com/Kledjan00/Build-Week-2/main/assets/img/album-desktop.png) |
+| **Artista** | **Giradischi** |
+| ![Pagina di un artista](https://raw.githubusercontent.com/Kledjan00/Build-Week-2/main/assets/img/artista-desktop.png) | ![Giradischi aperto](https://raw.githubusercontent.com/Kledjan00/Build-Week-2/main/assets/img/giradischi-desktop.png) |
+| **Tablet** | **Mobile** |
+| ![Pagina album su tablet](https://raw.githubusercontent.com/Kledjan00/Build-Week-2/main/assets/img/album-tablet.png) | ![Menu a pannello su mobile](https://raw.githubusercontent.com/Kledjan00/Build-Week-2/main/assets/img/menu-mobile.png) |
 
 ### ✨ Funzionalità
 
@@ -48,17 +45,17 @@ L'applicazione offre un'interfaccia in stile Spotify, strutturata con Bootstrap 
 - **Layout a 3 zone**: Sidebar, main e player condivisi dalle sei pagine (`index.html`, `library.html`, `search.html`, `album.html`, `artist.html`, `playlist.html`), costruiti con CSS Grid e `grid-template-areas`.
 - **Sidebar con playlist e preferiti**: Navigazione (Home, Libreria, Impostazioni, Cerca) con il link della pagina corrente evidenziato, pulsante "Nuova playlist", le ultime 5 playlist (con i brani in un menu a tendina) e gli ultimi 5 preferiti. I titoli "Le tue playlist" e "I tuoi preferiti" portano alla relativa sezione della Libreria.
 - **Home personalizzata**: Hero con un artista suggerito e il carosello "Altri artisti per te", righe "Riprodotti di recente", "Preferiti" e suggerimenti di brani e album per genere. I generi si ricavano dagli ascolti dell'utente o, se non ce ne sono, dai gusti scelti alla registrazione.
-- **Ricerca**: Campo di ricerca con debounce di 400ms che interroga l'API di iTunes e mostra i risultati divisi in tre sezioni (brani, album, artisti) tramite `Promise.all`. Le sezioni senza risultati restano nascoste e l'ultima ricerca viene salvata in `localStorage`.
+- **Ricerca**: Campo di ricerca con debounce di 400ms che interroga l'API di iTunes e mostra i risultati divisi in tre sezioni (brani, album, artisti) tramite `Promise.all`. Anche le card degli album hanno il cuore (tutto l'album nei preferiti) e il + (tutto l'album in una playlist). Le sezioni senza risultati restano nascoste e l'ultima ricerca viene salvata in `localStorage`.
 - **Pagina Album**: Lettura dell'id dalla query string con `URLSearchParams`, hero con copertina, titolo, artista, anno, numero di brani e durata totale, pulsanti per riprodurre l'album, aggiungerlo ai preferiti o a una playlist, e tracklist numerata.
-- **Pagina Artista**: Hero con foto, nome, genere e ascoltatori, pulsante Facebook e anteprima della biografia (foto, biografia e Facebook da TheAudioDB), brani popolari e carosello degli album consigliati.
-- **Libreria**: Le playlist dell'utente, la lista a tendina dei brani preferiti e gli ascoltati di recente, con il conteggio dei brani salvati.
+- **Pagina Artista**: Hero con foto, nome, genere e ascoltatori (numero simulato, perché le API non lo forniscono), pulsante Facebook e anteprima della biografia (foto, biografia e Facebook da TheAudioDB), brani popolari e carosello degli album consigliati. "Leggi di più" compare solo quando la biografia supera i 300 caratteri.
+- **Libreria**: Le playlist dell'utente (con la × sulla card per eliminarle), la lista a tendina dei brani preferiti e gli ascoltati di recente, con il conteggio dei brani salvati.
 - **Playlist**: Creazione dalla sidebar o dalla modale "Aggiungi a playlist", aggiunta di singoli brani o di interi album, pagina dedicata con riproduzione, rinomina, eliminazione della playlist e rimozione dei brani.
 - **Riproduzione**: Anteprime audio con play/pausa, brano precedente e successivo, casuale e ripeti, barre di avanzamento e volume cliccabili e trascinabili. Il brano in ascolto viene evidenziato nella tracklist e il player riprende da dove era rimasto cambiando pagina.
 - **Giradischi**: La linguetta sopra il player apre un giradischi a tutto schermo: il vinile gira con la copertina del brano al centro e il braccio si appoggia sul disco mentre la musica suona.
 - **Preferiti**: Cuore su card, righe e hero per aggiungere o togliere un brano (o un intero album) dai preferiti, con la sidebar aggiornata subito.
 - **Registrazione e login**: Il pulsante "New user" apre il form di registrazione; dopo la registrazione una seconda modale chiede generi e artisti preferiti. "Log in" apre la modale di accesso (dalle altre pagine porta alla home e la apre subito); una volta collegati il pulsante diventa "Esci".
 - **Impostazioni**: Modale con la scelta del tema (Vintage o Stagionale), le opzioni di accessibilità (alto contrasto, testo più grande, riduci animazioni) e l'interruttore dei contenuti espliciti. Le scelte restano salvate in `localStorage`.
-- **Condividi EpiTunes**: Cliccando il logo si apre una modale che invita a condividere l'app con gli amici.
+- **Condividi EpiTunes**: Cliccando il logo si apre una modale che invita a condividere l'app con gli amici; "Invita i tuoi amici" apre la condivisione del telefono o del browser e, se non è disponibile, copia il link negli appunti.
 - **Responsive Design**: Sidebar a pannello su mobile e a sole icone su tablet, player su due colonne su schermi piccoli, hero e card che si adattano alla larghezza del main.
 
 ## 🛠️ Tecnologie Utilizzate
@@ -71,7 +68,8 @@ L'applicazione offre un'interfaccia in stile Spotify, strutturata con Bootstrap 
 - **JavaScript (ES6+)**: Moduli ES (`import`/`export`), chiamate `fetch` asincrone, classi OOP, manipolazione del DOM con `createElement`, gestione del player, del `localStorage` e degli eventi personalizzati.
 - **iTunes Search API**: Fonte dei dati di brani, album, artisti, copertine e anteprime audio.
 - **TheAudioDB API**: Foto, biografia e pagina Facebook degli artisti.
-- **Server locale (cartella `server/`)**: Gestisce registrazione e login, salvando gli utenti in `db.json`.
+- **json-server 0.17.4 + json-server-auth 2.1 (cartella `server/`)**: Server locale che gestisce registrazione e login, salvando gli utenti in `db.json`.
+- **Web Share API**: Condivisione dell'app dal pulsante "Invita i tuoi amici", con la copia del link negli appunti (Clipboard API) quando il browser non la supporta.
 
 ## 🚀 Come Eseguire il Progetto Locale
 
@@ -84,7 +82,12 @@ L'applicazione offre un'interfaccia in stile Spotify, strutturata con Bootstrap 
    Apri il progetto con un'estensione come **Live Server** su VS Code e avvia `index.html`. Il JavaScript è organizzato in moduli ES, che il browser blocca se la pagina viene aperta direttamente dal file (indirizzo `file://`).
 
 3. **Avvia il server per registrazione e login** (facoltativo):
-   Nella cartella `server/` installa le dipendenze con `npm install` e avvia il server con lo script indicato in `package.json`. Il sito lo cerca all'indirizzo `http://localhost:3001`. Senza il server tutto il resto dell'app funziona, ma registrazione e login danno errore.
+   Nella cartella `server/` installa le dipendenze e avvia il server:
+   ```bash
+   npm install
+   npm run server
+   ```
+   Lo script lancia `json-server-auth db.json --port 3001`: il sito cerca il server all'indirizzo `http://localhost:3001`. Senza il server tutto il resto dell'app funziona, ma registrazione e login danno errore. Il file `.vscode/settings.json` dice a Live Server di ignorare `db.json`, così la pagina non si ricarica a ogni nuova registrazione.
 
 ---
 
@@ -117,7 +120,8 @@ L'applicazione offre un'interfaccia in stile Spotify, strutturata con Bootstrap 
 ├── server/
 │   ├── db.json            utenti registrati
 │   ├── package.json       dipendenze e script del server
-│   └── ...                package-lock.json, settings.json, .gitignore
+│   ├── package-lock.json  versioni esatte delle dipendenze
+│   └── ...                settings.json, .gitignore
 ├── index.html             home
 ├── library.html           libreria
 ├── search.html            pagina di ricerca
@@ -254,7 +258,7 @@ Il codice JavaScript è organizzato in **moduli ES**: ogni pagina carica `new-us
 2. **Funzioni comuni (`common.js`)**:
    - `bigArt()` trasforma la copertina 100x100 dell'API in una 600x600; `formatTime()` converte i millisecondi in `m:ss`.
    - **Impostazioni**: `getSettings()` legge le scelte salvate, `applySettings()` le traduce in classi (`a11y-contrast`, `a11y-large-text`, `a11y-reduce-motion`, `hide-explicit`) e nell'attributo `data-theme` su `<html>`, e `initSettings()` collega interruttori e tendina del tema. Tutto il resto lo fa il CSS.
-   - La classe `Player` gestisce l'elemento `<audio>`. `mount()` costruisce il player; `play(track, trackList)` avvia un brano e imposta la lista per avanti e indietro; `next()`, `prev()`, `shuffle()` e il pulsante Ripeti gestiscono la coda; `makeDraggable()` rende trascinabili le barre con gli eventi pointer; `saveState()` e `restoreState()` salvano e ripristinano il brano, il punto di ascolto e la ripetizione; `expand()` apre il giradischi e `close()` nasconde il player con un'animazione.
+   - La classe `Player` gestisce l'elemento `<audio>`. `mount()` costruisce il player; `play(track, trackList)` avvia un brano e imposta la lista per avanti e indietro; `next()`, `prev()`, `shuffle()` e il pulsante Ripeti gestiscono la coda (Casuale mescola la lista con l'algoritmo Fisher-Yates tenendo in testa il brano in ascolto e resta acceso per tutta la sessione grazie a `sessionStorage`); `makeDraggable()` rende trascinabili le barre con gli eventi pointer; `saveState()` e `restoreState()` salvano e ripristinano il brano, il punto di ascolto e la ripetizione; `expand()` apre il giradischi e `close()` nasconde il player con un'animazione.
    - `renderSidebarFavs()` e `renderSidebarPlaylists()` riempiono la sidebar; l'evento personalizzato `playlists:changed` la aggiorna quando cambia una playlist.
    - `initPage()` monta il player, la sidebar e le impostazioni in ogni pagina e restituisce il player.
 3. **Registrazione e login (`auth.js` e `new-user.js`)**:
@@ -265,7 +269,7 @@ Il codice JavaScript è organizzato in **moduli ES**: ogni pagina carica `new-us
    - `loadHome()` ricava i generi più ascoltati (o quelli scelti alla registrazione) e cerca in parallelo con `Promise.all` brani e album di quei generi, escludendo quelli già ascoltati.
    - `renderRow()` crea una riga con il titolo e un carosello di card; `buildCarousel()` aggiunge le frecce, che scorrono 6 card alla volta e spariscono a inizio e fine fila.
    - `renderCard()` crea una card per brano (clic per riprodurre, cuore e +); `renderAlbumCard()` una card per album, che apre `album.html?id=...`.
-   - `renderHero()` mostra un artista suggerito con la foto di sfondo; cliccando un artista del carosello diventa lui l'artista dell'hero, "Casuale" fa partire un suo brano a caso e "Scopri di più" porta alla sua pagina.
+   - `renderHero()` mostra un artista suggerito con la foto di sfondo; cliccando un artista del carosello diventa lui l'artista dell'hero, "Casuale" fa partire un suo brano a caso e "Scopri di più" porta alla sua pagina. Ogni nuova chiamata di `renderHero()` annulla la precedente con un `AbortController`, così dopo il cambio dei gusti listener e richieste non si sommano.
    - Arrivando con il link `index.html#login` si apre subito la modale di login.
 5. **Libreria (`library.js`)**: Costruisce i caroselli delle playlist e degli ascoltati di recente e la lista a tendina dei preferiti (componente collapse di Bootstrap), e aggiorna il conteggio dei brani salvati.
 6. **Ricerca (`search.js`)**:
@@ -283,7 +287,7 @@ Il codice JavaScript è organizzato in **moduli ES**: ogni pagina carica `new-us
 
 ## 🎨 Aspetto grafico
 
-L'applicazione ha un tema **vintage ispirato ai giradischi**, con un layout a 3 zone che resta uguale in tutte le pagine. La palette si basa sui toni del legno: marrone quasi nero per lo sfondo (`#1e1410`), marrone scuro per card e tracklist (`#2b1d15`), sidebar in noce scuro liscio e player in legno di noce con le venature orizzontali, separato dal resto da un profilo in ottone. L'ottone (`#c9a227`) è il colore d'accento di link attivi, bordi, pulsanti e brano in riproduzione; l'avorio (`#f3e6c8`) è usato per il testo principale e il beige (`#bfa98a`) per le informazioni secondarie, mentre il rosso mattone (`#b5432f`) è riservato ai preferiti e agli errori. Il logo e i titoli usano il font art déco **Italiana**, il testo il serif **Libre Baskerville**. Le icone sono disegnate a linea sottile con estremità arrotondate e le copertine hanno una leggera tinta seppia; la copertina del player sembra la busta consumata di un vinile e la foto dell'hero della home ha la grana di una pellicola. Al passaggio del mouse le card si sollevano, la copertina si scurisce e compare al centro un pulsante play trasparente. Nelle pagine di album, artista e playlist i pulsanti dell'hero sono cerchi uguali in ottone e nella pagina artista la foto prende la forma di un vinile. Le modali riprendono lo stesso stile, con il riquadro in legno scuro, il profilo in ottone, il titolo in Italiana e, in alcune, una foto d'epoca che sfuma nel legno. Dalle Impostazioni si può scegliere il tema **Stagionale** (natalizio), che aggiunge neve sopra il player, una pallina di Natale al posto del logo, agrifoglio e lucine sul giradischi e una breve nevicata sulla home, e l'**alto contrasto**, che porta tutto su nero, bianco e giallo.
+L'applicazione ha un tema **vintage ispirato ai giradischi di vecchio stampo**, con un layout a 3 zone che resta uguale in tutte le pagine. La palette si basa sui toni del legno: marrone quasi nero per lo sfondo (`#1e1410`), marrone scuro per card e tracklist (`#2b1d15`), sidebar in noce scuro liscio e player in legno di noce con le venature orizzontali, separato dal resto da un profilo in ottone. L'ottone (`#c9a227`) è il colore d'accento di link attivi, bordi, pulsanti e brano in riproduzione; l'avorio (`#f3e6c8`) è usato per il testo principale e il beige (`#bfa98a`) per le informazioni secondarie, mentre il rosso mattone (`#b5432f`) è riservato ai preferiti e agli errori. Il logo e i titoli usano il font art déco **Italiana**, il testo il serif **Libre Baskerville**. Le icone sono disegnate a linea sottile con estremità arrotondate e le copertine hanno una leggera tinta seppia; la copertina del player sembra la busta consumata di un vinile e la foto dell'hero della home ha la grana di una pellicola. Al passaggio del mouse le card si sollevano, la copertina si scurisce e compare al centro un pulsante play trasparente. Nelle pagine di album, artista e playlist i pulsanti dell'hero sono cerchi uguali in ottone e nella pagina artista la foto prende la forma di un vinile. Le modali riprendono lo stesso stile, con il riquadro in legno scuro, il profilo in ottone, il titolo in Italiana e, in alcune, una foto d'epoca che sfuma nel legno. Dalle Impostazioni si può scegliere il tema **Stagionale**. Per adesso è disponibile solo in versione natalizia, che aggiunge neve sopra il player, una pallina di Natale al posto del logo, agrifoglio e lucine sul giradischi e una breve nevicata sulla home, e l'**alto contrasto**, che porta tutto su nero, bianco e giallo. In futuro contiamo di implementare una versione che cambia in base alla festività o la stagione in corso.
 
 ---
 
@@ -305,7 +309,7 @@ L'applicazione ha un tema **vintage ispirato ai giradischi**, con un layout a 3 
 - **Accessibilità** Alto contrasto, testo più grande e riduci animazioni dalle Impostazioni; il sito rispetta anche il "riduci movimento" del sistema. Link "Vai al contenuto", contorno di focus visibile con la tastiera, etichette per i lettori di schermo ed errori dei form letti ad alta voce. Gestito da html, css e js.
 - **Contenuti espliciti** I brani espliciti hanno l'etichetta "E" e, spegnendo l'interruttore nelle Impostazioni, spariscono da tutto il sito. Gestito da css e js.
 - **Pagina artista arricchita** Foto, biografia in modale e pulsante Facebook da TheAudioDB, con la nuvoletta quando la pagina non c'è, e carosello degli album consigliati. Gestito da html, css e js.
-- **Condividi EpiTunes** Modale che si apre dal logo, senza JavaScript grazie alla Popover API. Gestito da html e css.
+- **Condividi EpiTunes** Modale che si apre dal logo, senza JavaScript grazie alla Popover API; il pulsante "Invita i tuoi amici" condivide il link dell'app o lo copia negli appunti. Gestito da html, css e js.
 - **Menu a pannello su mobile** La sidebar si apre da ☰ e scivola da sinistra, anche questa con la Popover API. Gestito da html e css.
 
 ---
@@ -336,9 +340,9 @@ L'applicazione ha un tema **vintage ispirato ai giradischi**, con un layout a 3 
 
 ## 🗂️ Organizzazione del lavoro
 
-Il lavoro è stato diviso in ticket (codice `BW-…`) e pianificato su una timeline dal 21 al 27 novembre. Ogni ticket ha un assegnatario e alcune attività dipendono da altre: i suggerimenti partono dopo il render degli album, e la gestione dei preferiti dopo i suggerimenti. Nonostante i ticket fossero assegnati a una singola persona, il lavoro è stato svolto in gruppo.
+Il lavoro è stato diviso in ticket (codice `BW-…`) sulla piattaforma Jira e pianificato su una timeline dal 21 al 27 novembre. Ogni ticket ha un assegnatario e alcune attività dipendono da altre: i suggerimenti partono dopo il render degli album, e la gestione dei preferiti dopo i suggerimenti. Nonostante i ticket fossero assegnati a una singola persona, il lavoro è stato svolto in gruppo.
 
-![Diagramma di Gantt dell'organizzazione del lavoro](assets/img/Gant.png)
+![Diagramma di Gantt dell'organizzazione del lavoro](https://raw.githubusercontent.com/Kledjan00/Build-Week-2/main/assets/img/Gant.png)
 
 | Ticket | Attività | Assegnatario | Periodo |
 | :--- | :--- | :--- | :--- |
