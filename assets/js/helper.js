@@ -204,8 +204,29 @@ export function getCurrentTrackList() {
     return JSON.parse(localStorage.getItem(STORAGE_KEY_TRACKLIST)) || [];
 }
 
+
+export function getSelected(key) {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    try {
+        const value = JSON.parse(raw);
+        return Array.isArray(value) ? value : [];
+    } catch {
+        return raw.split(",").filter(Boolean);
+    }
+}
+
+/*
+  showPlaylistModal(item, onSelect, albumTracks)
+  - Modale "Aggiungi a playlist", stessa grafica delle altre modali (welcome-box)
+  - Elenca solo le playlist che non contengono già il brano (o l'album intero)
+  - Ogni playlist è un pulsante con copertina del primo brano, titolo e numero di brani
+  - In fondo "Nuova playlist": al clic diventa un campo; con Invio crea la playlist
+*/
 export const showPlaylistModal = (item, onSelect, albumTracks = null) => {
     document.querySelector(".playlist-modal-overlay")?.remove();
+
+    const isAlbum = Array.isArray(albumTracks) && albumTracks.length > 0;
 
     const createPlusIcon = () => {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -218,72 +239,77 @@ export const showPlaylistModal = (item, onSelect, albumTracks = null) => {
 
     const isAlreadyInPlaylist = (pl) => {
         const list = pl.trackList ?? [];
-        if (Array.isArray(albumTracks) && albumTracks.length > 0) {
+        if (isAlbum) {
             return albumTracks.every((t) => list.some((pt) => pt.trackId === t.trackId));
         }
         return list.some((t) => t.trackId === item.trackId);
     };
 
-    const listEl = el("ul", { className: "list-group list-group-flush bg-transparent" });
-    const createWrap = el("div", { className: "mb-2" });
+    // Esc chiude la modale, come le altre (ma se si sta scrivendo il nome di una nuova playlist,
+    // Esc chiude solo il campo: lì lo gestisce il keydown dell'input)
+    const onKeydown = (e) => {
+        if (e.key === "Escape" && !e.target.classList.contains("pl-modal-input")) close();
+    };
+    document.addEventListener("keydown", onKeydown);
+
+    // chiude la modale e toglie il listener di Esc, così non resta attivo dopo
+    const close = () => {
+        overlay.remove();
+        document.removeEventListener("keydown", onKeydown);
+    };
+
+    const listEl = el("ul", { className: "pl-modal-list" });
+
+    const renderRow = (pl) => {
+        const firstTrack = pl.trackList?.[0];
+        const cover = firstTrack?.artworkUrl100
+            ? el("img", { className: "pl-modal-cover", attrs: { src: firstTrack.artworkUrl100, alt: "" } })
+            : el("span", { className: "pl-modal-cover", attrs: { "aria-hidden": "true" } });
+
+        const count = pl.trackList?.length ?? 0;
+
+        const btn = el("button", { className: "pl-modal-item", attrs: { type: "button" } },
+            cover,
+            el("span", { className: "pl-modal-info" },
+                el("span", { className: "pl-modal-name", text: pl.title }),
+                el("span", { className: "pl-modal-count", text: count === 1 ? "1 brano" : `${count} brani` })
+            ),
+            createPlusIcon()
+        );
+
+        btn.addEventListener("click", () => {
+            onSelect(pl.id);
+            close();
+        });
+
+        return el("li", {}, btn);
+    };
 
     const renderList = () => {
         const playlists = getPlaylist();
         const availablePlaylists = playlists.filter((pl) => !isAlreadyInPlaylist(pl));
 
-        let listItems;
-
         if (playlists.length === 0) {
-            listItems = [
-                el("li", {
-                    className: "list-group-item text-muted fst-italic bg-dark border-secondary",
-                    text: "Nessuna playlist disponibile",
-                }),
-            ];
+            listEl.replaceChildren(el("li", { className: "pl-modal-empty", text: "Nessuna playlist disponibile" }));
         } else if (availablePlaylists.length === 0) {
-            listItems = [
-                el("li", {
-                    className: "list-group-item text-muted fst-italic bg-dark border-secondary",
-                    text: Array.isArray(albumTracks) && albumTracks.length > 0
-                        ? "L'album è già presente in tutte le playlist"
-                        : "Il brano è già in tutte le playlist",
-                }),
-            ];
+            listEl.replaceChildren(el("li", {
+                className: "pl-modal-empty",
+                text: isAlbum ? "L'album è già presente in tutte le playlist" : "Il brano è già in tutte le playlist",
+            }));
         } else {
-            listItems = availablePlaylists.map((pl) => {
-                const li = el("li", {
-                    className: "list-group-item list-group-item-action bg-dark text-white border-secondary",
-                    text: pl.title,
-                    style: { cursor: "pointer" },
-                });
-
-                li.addEventListener("click", () => {
-                    onSelect(pl.id);
-                    overlay.remove();
-                });
-
-                return li;
-            });
+            listEl.replaceChildren(...availablePlaylists.map(renderRow));
         }
-
-        listEl.replaceChildren(...listItems);
     };
 
-    const newPlaylistBtn = el(
-        "button",
-        {
-            className: "btn-new-playlist",
-            attrs: { type: "button" },
-        },
+    const newPlaylistBtn = el("button", { className: "pl-modal-new", attrs: { type: "button" } },
         createPlusIcon(),
-        el("span", { className: "btn-new-playlist-text", text: "Nuova playlist" })
+        el("span", { text: "Nuova playlist" })
     );
+    const createWrap = el("div", { className: "pl-modal-create" }, newPlaylistBtn);
 
     newPlaylistBtn.addEventListener("click", () => {
-        if (createWrap.querySelector(".modal-new-playlist-input")) return;
-
         const input = el("input", {
-            className: "form-control form-control-sm bg-dark text-white border-secondary modal-new-playlist-input",
+            className: "pl-modal-input",
             attrs: { type: "text", placeholder: "Titolo playlist", "aria-label": "Titolo playlist" },
         });
 
@@ -291,11 +317,11 @@ export const showPlaylistModal = (item, onSelect, albumTracks = null) => {
         input.focus();
 
         input.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") return createWrap.replaceChildren();
+            if (e.key === "Escape") return createWrap.replaceChildren(newPlaylistBtn);
             if (e.key !== "Enter") return;
 
             const title = input.value.trim();
-            createWrap.replaceChildren();
+            createWrap.replaceChildren(newPlaylistBtn);
             if (!title) return;
 
             const newPlaylist = {
@@ -313,40 +339,29 @@ export const showPlaylistModal = (item, onSelect, albumTracks = null) => {
 
     renderList();
 
-    const modalBody = el(
-        "div",
-        { className: "card bg-dark text-white p-3 shadow-lg border-secondary", style: { maxWidth: "400px", width: "100%" } },
-        el(
-            "div",
-            { className: "d-flex justify-content-between align-items-center gap-2 mb-3" },
-            el(
-                "div",
-                { className: "d-flex align-items-center gap-2" },
-                el("h5", { className: "m-0", text: "Aggiungi a playlist" }),
-                newPlaylistBtn
-            ),
-            el("button", { className: "btn-close btn-close-white", attrs: { type: "button", "aria-label": "Chiudi" } })
-        ),
-        createWrap,
-        listEl
+    const closeBtn = el("button", {
+        className: "welcome-close",
+        text: "×",
+        attrs: { type: "button", "aria-label": "Chiudi" },
+    });
+    closeBtn.addEventListener("click", close);
+
+    const modalBody = el("div", {
+        className: "welcome-box pl-modal-box",
+        attrs: { role: "dialog", "aria-modal": "true", "aria-labelledby": "pl-modal-title" },
+    },
+        closeBtn,
+        el("p", { className: "welcome-kicker", text: "Aggiungi a" }),
+        el("h2", { className: "welcome-title", id: "pl-modal-title", text: "Le tue playlist" }),
+        listEl,
+        createWrap
     );
 
-    const closeBtn = modalBody.querySelector(".btn-close");
-    if (closeBtn) {
-        closeBtn.addEventListener("click", () => overlay.remove());
-    }
-
-    const overlay = el(
-        "div",
-        {
-            className: "playlist-modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center",
-            style: { backgroundColor: "rgba(0,0,0,0.6)", zIndex: "1050" },
-        },
-        modalBody
-    );
+    // welcome-overlay is-open: stesso sfondo scuro e sfocato delle altre modali
+    const overlay = el("div", { className: "welcome-overlay is-open playlist-modal-overlay" }, modalBody);
 
     overlay.addEventListener("click", (e) => {
-        if (e.target === overlay) overlay.remove();
+        if (e.target === overlay) close();
     });
 
     document.body.appendChild(overlay);

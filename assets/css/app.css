@@ -186,7 +186,7 @@ button {
   font-weight: 900;
 }
 
-/* Menu di navigazione (Home, Cerca): link uno sotto l'altro */
+/* Menu di navigazione (Home, Libreria, Impostazioni, Cerca): voci una sotto l'altra */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -464,7 +464,7 @@ button {
   }
 }
 
-/* Titolo della sezione "I tuoi preferiti": piccolo, maiuscolo e spaziato */
+/* Titoli delle sezioni "Le tue playlist" e "I tuoi preferiti": piccoli, maiuscoli e spaziati */
 .sidebar-section-title {
   text-transform: uppercase;
   font-size: 11px;
@@ -529,7 +529,7 @@ button {
   aspect-ratio: 1;
 }
 
-/* Etichetta "Studente Epicode" in alto a destra */
+/* Pill "Log in" in alto a destra */
 .user-pill {
   background: rgb(0 0 0 / 0.6);
   padding: 6px 12px;
@@ -538,7 +538,7 @@ button {
 
 /* ============================ Pagine ============================ */
 
-/* Margini interni del contenuto di ogni pagina (home, ricerca, album, artista) */
+/* Margini interni del contenuto di ogni pagina (home, libreria, ricerca, album, artista, playlist) */
 .page {
   padding: 16px 24px 32px 24px;
 }
@@ -547,11 +547,9 @@ button {
    Nell'HTML e nel JS sono <section class="row"> o <article class="row">.
    Attenzione: in Bootstrap .row è la riga della sua griglia (flex, margini negativi,
    padding sui figli) e romperebbe il layout. Qui la "spegniamo":
-   azzeriamo i gutter (gli spazi della griglia di Bootstrap) e la rimettiamo a display: block.
-   Vale anche per il nome alternativo .music-row. */
+   azzeriamo i gutter (gli spazi della griglia di Bootstrap) e la rimettiamo a display: block. */
 section.row,
-article.row,
-.music-row {
+article.row {
   --bs-gutter-x: 0;
   --bs-gutter-y: 0;
   display: block;
@@ -631,7 +629,7 @@ article.row,
 
   /* Le card degli artisti sono sempre rotonde, in tutte le pagine, anche se il JS
      non aggiunge la classe .round. Le riconosciamo dall'immagine che contengono:
-     - foto da TheAudioDB (getArtistPicture in common.js), oppure
+     - foto da TheAudioDB (getArtistPicture in helper.js), oppure
      - il disco di riserva placeholderArtist.png (quando la foto non c'è)
      Le copertine degli album arrivano da iTunes, quindi restano quadrate.
      In più, nella ricerca, tutta la riga "Artisti" è rotonda. */
@@ -809,12 +807,7 @@ article.row,
   }
 }
 
-/* Nella pagina artista la foto è rotonda */
-.artist-hero .album-cover {
-  border-radius: 50%;
-}
-
-/* Foto dell'artista messa direttamente nell'hero, senza il contenitore .album-cover:
+/* Foto dell'artista nell'hero (un <img> creato da artist.js):
    stessa misura della copertina degli album, ma rotonda e con gli anelli del vinile */
 .artist-hero > img {
   width: 220px;
@@ -912,13 +905,13 @@ article.row,
 
 /* ============================ Tracklist ============================ */
 
-/* Lista dei brani di album e artista */
+/* Lista dei brani di album, artista e playlist */
 .tracklist {
   margin-top: 8px;
 }
 
 /* Ogni riga è una griglia a 4 colonne:
-   numero (32px) | titolo (tutto lo spazio rimasto) | durata (80px) | cuore (48px) */
+   numero (32px) | titolo (tutto lo spazio rimasto) | durata (80px) | pulsanti (cuore e + o X) */
 .track-row {
   display: grid;
   grid-template-columns: 32px 1fr 80px 48px;
@@ -1312,7 +1305,7 @@ article.row,
 /* ============================ Hero della home: artista suggerito ============================
    Grande banner in cima alla home, come la pagina artista di Apple Music:
    foto dell'artista sullo sfondo, nome grande in basso a sinistra, pulsanti
-   e, sotto, la fila delle sue uscite (album).
+   e, sotto, il carosello "Altri artisti per te".
    La sezione parte nascosta (hidden) e la mostra home.js quando ha i dati. */
 .home-hero {
   position: relative;
@@ -1325,7 +1318,7 @@ article.row,
   min-height: 460px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* nome, pulsanti e uscite stanno in basso */
+  justify-content: flex-end; /* nome, pulsanti e altri artisti stanno in basso */
 }
 
 /* Foto dell'artista: occupa la parte destra e sfuma verso sinistra e verso il basso.
@@ -1484,7 +1477,8 @@ article.row,
 }
 
 /* Carosello: la fila delle card con una freccia per lato, sovrapposta al bordo.
-   Lo stesso carosello è usato nell'hero (.hero-carousel) e nelle righe della home (.carousel). */
+   Lo stesso carosello è usato nell'hero (.hero-carousel), nelle righe della home
+   e negli album consigliati della pagina artista (.carousel). */
 .hero-carousel,
 .carousel {
   position: relative; /* le frecce si posizionano rispetto a questo */
@@ -1493,7 +1487,7 @@ article.row,
 /* Fila delle card: si vedono 6 card alla volta.
    Ogni colonna è larga (larghezza della fila - 5 spazi) / 6.
    grid-auto-flow: column = le card si mettono tutte su una riga sola, che scorre di lato.
-   Nelle righe della home la fila ha anche la classe .grid: grid-template-columns: none
+   Nelle righe della home e della pagina artista la fila ha anche la classe .grid: grid-template-columns: none
    annulla le colonne automatiche della .grid normale (quella che va a capo). */
 .hero-artists-track,
 .grid.carousel-track {
@@ -1750,10 +1744,9 @@ article.row,
   }
 }
 
-/* ============================ Caricamento / nessun risultato ============================ */
+/* ============================ Lista vuota ============================ */
 
-/* Messaggi "Caricamento..." e "Nessun risultato", centrati */
-.loader,
+/* Messaggi delle sezioni vuote (es. in Libreria), centrati */
 .empty {
   padding: 32px;
   text-align: center;
@@ -1897,7 +1890,7 @@ article.row,
   color: var(--accent);
 }
 
-/* Titolo "I tuoi preferiti" in ottone */
+/* Titoli "Le tue playlist" e "I tuoi preferiti" in ottone */
 .sidebar-section-title {
   color: var(--accent);
 }
@@ -1938,7 +1931,6 @@ article.row,
 /* Titoli delle sezioni e titolo grande di album/artista in Italiana (art déco) */
 section.row h2,
 article.row h2,
-.music-row h2,
 .hero-title {
   font-family: var(--font-display);
   font-weight: 400; /* Italiana ha un solo peso: niente grassetto finto */
@@ -1959,13 +1951,15 @@ article.row h2,
   color: var(--accent);
 }
 
-/* "Studente Epicode": stesso stile dei bottoni Indietro/Avanti.
-   È un <button>, quindi è cliccabile e si raggiunge anche con il tasto Tab */
+/* "Log in": stesso stile dei bottoni Indietro/Avanti.
+   Nella home è un <button> che apre la modale di login, nelle altre pagine un link a index.html#login */
 .user-pill {
   background: #2a1a10;
   border: 1px solid var(--accent);
   color: var(--accent);
   line-height: 1.5; /* i <button> hanno un'interlinea diversa dal testo: la uniformiamo alla pill "New user" */
+  text-decoration: none; /* fuori dalla home "Log in" è un link <a>: niente sottolineatura */
+  display: inline-block; /* il link prende il padding come il pulsante */
   transition: background-color 0.15s, color 0.15s, box-shadow 0.15s, scale 0.1s;
 
   /* Al passaggio del mouse: fondo in ottone tenue, testo più luminoso e un alone dorato */
@@ -2028,13 +2022,6 @@ article.row h2,
   filter: sepia(0.25) contrast(1.05);
 }
 
-/* Nella pagina artista la foto diventa un vinile: niente cornice,
-   e intorno tre anelli fatti con box-shadow (nero, grigio, nero) + l'ombra normale */
-.artist-hero .album-cover {
-  border: none;
-  box-shadow: 0 0 0 10px #111, 0 0 0 12px #3a3a3a, 0 0 0 20px #111, var(--shadow);
-}
-
 /* Play del player come una manopola in ottone lucido.
    Il play delle card resta trasparente (vedi .card-play) e quello grande
    di album/artista è uguale al cuore accanto (vedi sotto). */
@@ -2086,8 +2073,8 @@ article.row h2,
     0 1px 0 rgb(255 240 200 / 0.6);
 }
 
-/* Play e cuore grandi di album/artista: due cerchi uguali in ottone,
-   con il bordo sottile e senza riempimento. */
+/* Pulsanti grandi dell'hero (play, cuore, +) di album, artista e playlist:
+   cerchi uguali in ottone, con il bordo sottile e senza riempimento */
 .btn-play-big,
 .btn-fav-big,
 .btn-plus-big {
@@ -2110,6 +2097,13 @@ article.row h2,
   &:hover {
     background: rgb(201 162 39 / 0.15); /* ottone al 15% */
   }
+}
+
+/* Rinomina playlist (#rename-btn): ha la classe del play, ma dentro c'è la penna d'oca (#ico-edit).
+   Niente spostamento a destra (serve solo al triangolo) e icona un po' più grande */
+#rename-btn {
+  padding-left: 0;
+  font-size: 22px;
 }
 
 .btn-fav-big {
@@ -2218,7 +2212,7 @@ article.row h2,
 
 /* --- Barra di ricerca nell'header ---
    Sta tra le frecce Indietro/Avanti e i pulsanti utente.
-   Su home, album e artista è un link a search.html (a.topbar-search) disegnato come il campo;
+   In tutte le pagine tranne la ricerca è un link a search.html (a.topbar-search) disegnato come il campo;
    su search.html contiene il campo vero (#search-input). Le due versioni hanno lo stesso aspetto. */
 .topbar-search {
   flex: 1; /* prende lo spazio libero... */
@@ -2272,7 +2266,7 @@ a.topbar-search {
   gap: 8px;
 }
 
-/* Su schermi stretti nascondiamo l'etichetta "Studente Epicode" per lasciare spazio alla ricerca */
+/* Su schermi stretti nascondiamo "Log in" per lasciare spazio alla ricerca */
 @media (width < 768px) {
   .topbar .user-pill {
     display: none;
@@ -2285,14 +2279,13 @@ a.topbar-search {
 }
 
 /* --- Immagine di riserva per gli artisti ---
-   L'API di iTunes non ha foto degli artisti. Nelle card rotonde (.card-image-wrap.round)
-   e nella foto della pagina artista mettiamo come sfondo un disco in vinile come il logo
-   (file assets/img/placeholderArtist.png). Se c'è un'immagine vera la copre;
-   se l'immagine manca o ha il src vuoto, la nascondiamo e si vede il disco. */
+   L'API di iTunes non ha foto degli artisti. Nelle card rotonde degli artisti mettiamo come sfondo
+   un disco in vinile come il logo (file assets/img/placeholderArtist.png). Se c'è un'immagine vera la copre;
+   se l'immagine manca o ha il src vuoto, la nascondiamo e si vede il disco.
+   (La foto della pagina artista ha lo stesso sfondo nella sua regola, .artist-hero > img) */
 .card-image-wrap.round,
 .card-image-wrap:has(img[src*="theaudiodb"], img[src*="placeholderArtist"]),
-#row-artists .card-image-wrap,
-.artist-hero .album-cover {
+#row-artists .card-image-wrap {
   background: url("../img/placeholderArtist.png") center / cover no-repeat, #1e1410;
 
   & img:not([src]),
@@ -2345,9 +2338,10 @@ a.topbar-search {
   }
 }
 
-/* --- Ripeti acceso ---
-   Quando è attivo l'icona diventa ottone e sotto compare un puntino, come nelle app musicali.
+/* --- Casuale e Ripeti accesi ---
+   Quando sono attivi l'icona diventa ottone e sotto compare un puntino, come nelle app musicali.
    Il JS segna il pulsante acceso con aria-pressed="true" (e la classe is-active) */
+#btn-shuffle,
 #btn-repeat {
   position: relative; /* il puntino si posiziona rispetto al pulsante */
 
@@ -2467,10 +2461,10 @@ a.topbar-search {
   color: var(--text-secondary);
 }
 
-/* ============================ Modale "New user" ============================
-   Form di registrazione nello stile del tema vintage.
-   La modale è nascosta e si apre aggiungendo la classe is-open
-   all'overlay (#register-modal). */
+/* ============================ Modali (struttura comune) e modale "New user" ============================
+   Struttura usata da tutte le modali che si aprono con la classe is-open sull'overlay
+   (New user, Login, Benvenuto, Impostazioni, Aggiungi a playlist),
+   più gli stili del form di registrazione (#register-modal). */
 
 /* Overlay: copre tutta la finestra con uno sfondo scuro e sfocato */
 .welcome-overlay {
@@ -3114,32 +3108,55 @@ a.topbar-search {
   --bs-dropdown-link-active-bg: rgb(201 162 39 / 0.14);
   --bs-dropdown-link-active-color: var(--accent);
   --bs-dropdown-link-disabled-color: #7d6a55;
-  min-width: 220px;
+  min-width: 320px;
   padding: 5px;
   border-top: 2px solid var(--accent);
 
+  /* Ogni voce è una griglia a tre colonne: nome | etichetta | ✓
+     Le colonne sono uguali per tutte le voci, quindi le etichette finiscono incolonnate
+     a destra e il ✓ ha sempre il suo posto (vuoto nelle voci non scelte) */
   & .dropdown-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 14px;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    text-align: left; /* i <button> centrano il testo: il nome va a sinistra */
+    gap: 10px;
     border-radius: 5px;
   }
 
-  /* ✓ accanto al tema in uso */
+  /* l'etichetta sempre nella seconda colonna, attaccata a destra */
+  & :is(.badge-default, .badge-soon) {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  /* ✓ accanto al tema in uso, nella terza colonna */
   & .dropdown-item.active::after {
     content: "✓";
+    grid-column: 3;
     font-family: Arial, sans-serif;
+    text-align: center;
   }
 }
 
 /* Etichetta "Coming soon" dei temi non ancora disponibili */
 .badge-soon {
-  padding: 2px 7px;
+  padding: 1px 6px;
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Etichetta "Predefinito" del tema Vintage: stessa forma di "Coming soon", ma in ottone */
+.badge-default {
+  padding: 1px 6px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 8.5px;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -3247,8 +3264,8 @@ a.topbar-search {
 }
 
 /* --- Contenuti espliciti spenti ---
-   Il JS segna card e righe dei brani espliciti con data-explicit="true": qui spariscono */
-/* (il titolo del player è escluso: il brano che sta già suonando resta visibile) */
+   Il JS segna card e righe dei brani espliciti con data-explicit="true": qui spariscono.
+   Il titolo del player è escluso: il brano che sta già suonando resta visibile */
 :root.hide-explicit [data-explicit="true"]:not(.player-title) {
   display: none;
 }
@@ -3573,70 +3590,116 @@ button.brand {
   flex-wrap: wrap;
 }
 
-/* Trattino verticale tra il play e le icone di sito e social */
-.hero-divider {
-  width: 1px;
-  height: 24px;
-  margin: 0 4px;
-  background: var(--border);
-}
-
-/* Icone di sito e social: cerchi più piccoli del play, con bordo e colore tenui.
+/* Icone di sito e social: cerchi grandi come il play, con bordo e colore tenui.
    Al passaggio del mouse diventano ottone, come il play */
 .btn-social {
-  width: 36px;
+  width: 44px;
   aspect-ratio: 1;
   display: grid;
   place-items: center;
+  padding: 0;
   border: 1px solid var(--border);
   border-radius: 50%;
+  background: transparent;
   color: var(--text-secondary);
-  font-size: 18px; /* grandezza dell'icona (è larga 1em) */
+  font-family: Arial, sans-serif; /* se dentro c'è una lettera (es. "F"), senza grazie come un logo */
+  font-size: 15px;
+  font-weight: 700;
   text-decoration: none;
-  transition: color 0.15s, border-color 0.15s;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+
+  /* l'icona dello sprite (se c'è) un po' più grande della lettera */
+  & .icon {
+    font-size: 18px;
+  }
 
   &:hover {
     color: var(--accent);
     border-color: var(--accent);
+    background: rgb(201 162 39 / 0.12);
+  }
+
+  /* Facebook: al posto della lettera "F" scritta dal JS c'è una "f" disegnata a linea, come le altre icone.
+     font-size: 0 nasconde la lettera; il ::before è un quadratino colorato con currentColor
+     e ritagliato a forma di "f" dalla maschera (mask), quindi cambia colore insieme al bottone */
+  &[aria-label^="Facebook"] {
+    position: relative; /* il ::before si centra rispetto al bottone */
+    font-size: 0;
+
+    &::before {
+      content: "";
+      /* al centro esatto del cerchio: la "F" nascosta occupa comunque una riga della griglia
+         e spingerebbe l'icona in alto, quindi la togliamo dal flusso */
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 22px;
+      aspect-ratio: 1;
+      background: currentColor;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h-1.5A3.5 3.5 0 0 0 11 7.5V20'/%3E%3Cpath d='M8 10.5h7'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h-1.5A3.5 3.5 0 0 0 11 7.5V20'/%3E%3Cpath d='M8 10.5h7'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+  }
+
+  /* Social non disponibile (l'artista non ce l'ha): spento, tratteggiato, niente effetto al passaggio.
+     Il JS lo segna con aria-disabled="true" (oppure disabled, se è un <button>) */
+  &:is([aria-disabled="true"], :disabled) {
+    /* colori più tenui invece di opacity: con opacity anche la nuvoletta diventerebbe trasparente */
+    color: rgb(191 169 138 / 0.4);
+    border-color: rgb(191 169 138 / 0.3);
+    border-style: dashed;
+    cursor: not-allowed;
+
+    &:hover {
+      color: rgb(191 169 138 / 0.4);
+      border-color: rgb(191 169 138 / 0.3);
+      background: transparent;
+    }
   }
 }
 
-/* Biografia: a destra, senza riquadro, testo allineato a destra */
-.artist-bio {
-  flex: 1 1 320px;
-  max-width: 440px;
-  min-width: 0;
-  margin-left: auto; /* la spinge fino al bordo destro */
-  text-align: right;
+/* ============================ Tooltip (nuvoletta al passaggio del mouse) ============================
+   Solo CSS, per qualsiasi elemento con l'attributo data-tooltip="testo":
+   il testo lo prende il ::after con attr(data-tooltip) e lo mostra sopra l'elemento.
+   Si usa data-tooltip e non title: con title comparirebbe anche il tooltip grigio del browser.
+   Compare anche con la tastiera (Tab), non solo con il mouse. */
+[data-tooltip] {
+  position: relative; /* la nuvoletta si posiziona rispetto all'elemento */
+
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    z-index: 30;
+    left: 50%;
+    bottom: calc(100% + 10px); /* sopra l'elemento, con un po' di spazio */
+    translate: -50% 4px; /* parte 4px più in basso: entrando sale un po' */
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent); /* profilo in ottone, come le modali */
+    border-radius: var(--radius-sm);
+    background: var(--bg-elev);
+    box-shadow: 0 6px 16px rgb(0 0 0 / 0.5);
+    color: var(--text-primary);
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none; /* la nuvoletta non blocca i clic */
+    transition: opacity 0.15s, translate 0.15s;
+  }
+
+  &:is(:hover, :focus-visible)::after {
+    opacity: 1;
+    translate: -50% 0;
+  }
 }
 
-.artist-bio-title {
-  margin: 0 0 10px;
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 24px;
-  letter-spacing: 1px;
-}
-
-/* Testo della biografia: al massimo 5 righe, poi i puntini (...) */
-.artist-bio-text {
-  margin: 0;
-  line-height: 1.7;
-  color: var(--text-primary);
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  white-space: pre-line; /* tiene gli a capo della biografia di TheAudioDB */
-}
-
-/* "Leggi tutto" (classe is-open aggiunta dal JS): il testo si vede intero */
-.artist-bio.is-open .artist-bio-text {
-  display: block;
-}
-
-/* Pulsante "Leggi tutto" / "Mostra meno": solo testo in ottone, maiuscolo e spaziato */
-.artist-bio-more {
+/* Pulsante "Leggi di più" (apre la modale della biografia): solo testo in ottone, maiuscolo e spaziato */
+.bio-more {
   margin-top: 14px;
   padding: 0;
   border: none;
@@ -3652,9 +3715,143 @@ button.brand {
   }
 }
 
+/* --- Biografia creata da artist.js: <aside class="bio-aside"> con dentro
+   l'anteprima (<p class="bio-text">) e il pulsante "Leggi di più" (<button class="bio-more">) ---
+   A destra, senza riquadro, allineata a destra.
+   Il titolo "Biografia" lo aggiunge il CSS (::before), perché nell'HTML non c'è */
+.bio-aside {
+  flex: 1 1 320px;
+  max-width: 440px;
+  min-width: 0;
+  margin-left: auto; /* la spinge fino al bordo destro */
+  text-align: right;
+
+  &::before {
+    content: "Biografia";
+    display: block;
+    margin-bottom: 10px;
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: 1px;
+  }
+}
+
+/* Anteprima: al massimo 6 righe, poi i puntini (...); il testo intero è nella modale */
+.bio-text {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.7;
+  white-space: pre-line; /* tiene gli a capo della biografia di TheAudioDB */
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- Modale della biografia (#bio-modal in artist.html) ---
+   Si apre con "Leggi di più": il pulsante ha popovertarget="bio-modal", quindi la apre il browser
+   (e la chiude con la X, con Esc o cliccando fuori). Il JS mette solo foto, nome e testo.
+   Aspetto come la modale "Condividi": foto in alto che sfuma, poi kicker, titolo e testo */
+.bio-modal[popover] {
+  inset: 0;
+  margin: auto;
+  width: min(560px, calc(100% - 32px));
+  height: fit-content;
+  max-height: calc(100dvh - 32px);
+  overflow: auto; /* biografia lunga: scorre dentro la modale, non la pagina */
+  scrollbar-width: none; /* scorre ancora (rotellina, dito, tastiera), ma la barra non si vede */
+  color: var(--text-primary);
+  padding-top: 170px; /* i testi partono più in basso: sopra c'è la foto */
+  isolation: isolate; /* la foto con z-index -1 resta dentro il riquadro */
+
+  /* Uscita: sfuma e scende di 12px; allow-discrete aspetta la fine prima di nasconderla */
+  opacity: 0;
+  translate: 0 12px;
+  transition:
+    opacity 0.2s ease-in,
+    translate 0.2s ease-in,
+    display 0.2s allow-discrete,
+    overlay 0.2s allow-discrete;
+
+  /* Entrata: compare in dissolvenza e sale al suo posto */
+  &:popover-open {
+    opacity: 1;
+    translate: 0 0;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-out;
+  }
+
+  /* la barra nascosta anche su Safari e sui browser più vecchi */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* kicker e titolo sopra la parte che sfuma: un'ombra per leggerli bene */
+  & .welcome-kicker,
+  & .welcome-title {
+    text-shadow: 0 2px 10px rgb(0 0 0 / 0.7);
+  }
+
+  /* la X resta leggibile anche sopra la foto */
+  & .welcome-close {
+    background: rgb(0 0 0 / 0.45);
+  }
+
+  /* sfondo scuro dietro la modale, come le altre */
+  &::backdrop {
+    background: rgb(10 6 4 / 0.72);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition:
+      opacity 0.25s,
+      display 0.25s allow-discrete,
+      overlay 0.25s allow-discrete;
+  }
+
+  &:popover-open::backdrop {
+    opacity: 1;
+  }
+}
+
+@starting-style {
+  .bio-modal[popover]:popover-open {
+    opacity: 0;
+    translate: 0 12px;
+  }
+
+  .bio-modal[popover]:popover-open::backdrop {
+    opacity: 0;
+  }
+}
+
+/* Foto dell'artista in alto, che sfuma verso il basso (stesso tono d'epoca delle altre foto) */
+.bio-modal-img {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  object-position: center 25%; /* tiene in vista il viso */
+  background: #4a3324; /* marrone mentre la foto si carica */
+  filter: sepia(0.35) saturate(0.85) contrast(1.05);
+  -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent);
+  mask-image: linear-gradient(to bottom, #000 35%, transparent);
+}
+
+/* Testo intero della biografia, con i suoi a capo */
+.bio-modal-text {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
 /* Main stretto: la biografia va sotto, larga quanto la pagina e allineata a sinistra */
 @container main (width < 1000px) {
-  .artist-bio {
+  .bio-aside {
     flex-basis: 100%;
     max-width: none;
     margin-left: 0;
@@ -3947,6 +4144,59 @@ button.brand {
   }
 }
 
+/* ============================ Accessibilità generale ============================ */
+
+/* "Vai al contenuto": primo link della pagina, invisibile finché non ci si arriva con Tab.
+   Chi usa la tastiera salta sidebar e topbar e va dritto alla pagina (al <main id="contenuto">) */
+.skip-link {
+  position: fixed;
+  z-index: 2000;
+  top: 12px;
+  left: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+  color: var(--text-primary);
+  font-weight: 700;
+  text-decoration: none;
+  translate: 0 -200%; /* fuori dallo schermo, in alto */
+  transition: translate 0.15s;
+
+  &:focus {
+    translate: 0 0; /* con il focus scende e si vede */
+  }
+}
+
+/* il main riceve il focus dal link qui sopra: niente contorno, è un'area e non un pulsante */
+.main:focus {
+  outline: none;
+}
+
+/* Focus da tastiera per tutti i link, pulsanti e campi che non hanno già un loro stile:
+   anello in ottone. :where() ha "forza" zero, quindi gli stili più specifici restano */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Chi nel sistema operativo ha scelto "riduci movimento" ha le animazioni ridotte anche qui,
+   senza dover accendere l'interruttore nelle Impostazioni (stesse regole di a11y-reduce-motion) */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ============================ Responsive ============================ */
 
 /* Container queries: guardano la larghezza del main, non quella della finestra.
@@ -3977,7 +4227,7 @@ button.brand {
 }
 
 /* Media queries: guardano la larghezza della finestra.
-   Usano gli stessi breakpoint di Bootstrap (576px = sm, 768px = md). */
+   Usano i breakpoint di Bootstrap (576px = sm, 768px = md), più 956px per l'hero di album, artista e playlist. */
 
 /* Tablet (sotto i 768px): sidebar stretta (80px) con le sole icone */
 @media (width < 768px) {
@@ -3986,13 +4236,11 @@ button.brand {
   }
 
   .sidebar {
-    /* nascondiamo nome del logo, titolo e lista dei preferiti e i testi dei link */
-    & .brand-text,
+    /* nascondiamo titoli e liste (preferiti e playlist).
+       I testi di logo, link e "Nuova playlist" invece li nascondiamo solo alla vista
+       (regola qui sotto, tra 576 e 768px): così i lettori di schermo leggono ancora il nome del link */
     & .sidebar-section-title,
-    & .sidebar-list,
-    & .sidebar-nav a span:not(.ico),
-    & .sidebar-nav button span:not(.ico),
-    & .btn-new-playlist-text {
+    & .sidebar-list {
       display: none;
     }
 
@@ -4008,6 +4256,24 @@ button.brand {
   /* anche la lista delle playlist (la sua regola usa l'id, quindi va nascosta con l'id) */
   #sidebar-playlists {
     display: none;
+  }
+}
+
+/* Tablet: testi di logo, link e "Nuova playlist" invisibili ma presenti per i lettori di schermo
+   (con display: none sparirebbero anche per loro e la voce direbbe solo "link") */
+@media (576px <= width < 768px) {
+  .sidebar {
+    & .brand-text,
+    & .sidebar-nav a span:not(.ico),
+    & .sidebar-nav button span:not(.ico),
+    & .btn-new-playlist-text {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
   }
 }
 
@@ -4092,7 +4358,7 @@ button.brand {
     }
 
     /* pulsanti un po' più piccoli: con i tre dell'album resta più spazio al titolo */
-    & :is(.btn-play-big, .btn-fav-big, .btn-plus-big, .btn-delete-big) {
+    & :is(.btn-play-big, .btn-fav-big, .btn-plus-big, .btn-delete-big, .btn-social) {
       width: 38px;
     }
 
@@ -4311,4 +4577,351 @@ button.brand {
   .player-right {
     display: none;
   }
+}
+
+/* ============================ Modale "Aggiungi a playlist" ============================
+   La costruisce showPlaylistModal() in helper.js quando si clicca un "+".
+   Usa le classi delle altre modali (welcome-overlay, welcome-box, welcome-kicker, welcome-title,
+   welcome-close); qui ci sono solo le parti sue: larghezza, righe delle playlist e "Nuova playlist" */
+
+/* Viene creata già con is-open: @starting-style fa comunque l'entrata (sfuma e sale) */
+@starting-style {
+  .playlist-modal-overlay.is-open {
+    opacity: 0;
+
+    & .welcome-box {
+      opacity: 0;
+      translate: 0 12px;
+    }
+  }
+}
+
+/* Riquadro più stretto delle altre modali e titolo più piccolo */
+.pl-modal-box {
+  width: min(420px, 100%);
+  color: var(--text-primary);
+  padding: 28px 24px 20px;
+
+  & .welcome-title {
+    margin-bottom: 18px;
+    font-size: 30px;
+  }
+}
+
+/* Elenco delle playlist: se sono tante scorre dentro la modale */
+.pl-modal-list {
+  display: grid;
+  gap: 8px;
+  max-height: 300px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Una playlist: copertina | nome e numero di brani | + */
+.pl-modal-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  transition: border-color 0.15s, background-color 0.15s;
+
+  /* il + a destra, in ottone */
+  & .ico {
+    margin-left: auto;
+    color: var(--accent);
+    font-size: 18px;
+  }
+
+  &:hover {
+    border-color: var(--accent);
+    background: rgb(201 162 39 / 0.08);
+  }
+}
+
+/* Copertina del primo brano; se la playlist è vuota resta un riquadro scuro */
+.pl-modal-cover {
+  width: 40px;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: var(--bg-elev);
+  object-fit: cover;
+}
+
+.pl-modal-info {
+  display: grid;
+  min-width: 0; /* senza questo i nomi lunghi non si accorciano coi puntini */
+}
+
+.pl-modal-name {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-modal-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Messaggio quando non ci sono playlist da mostrare */
+.pl-modal-empty {
+  padding: 8px 0;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* "Nuova playlist": riga tratteggiata in ottone, alta come le altre righe */
+.pl-modal-new,
+.pl-modal-input {
+  width: 100%;
+  min-height: 50px;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.pl-modal-new {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px dashed var(--accent);
+  background: transparent;
+  color: var(--accent);
+  transition: background-color 0.15s;
+
+  & .ico {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: rgb(201 162 39 / 0.08);
+  }
+}
+
+/* Il campo per il titolo prende il posto della riga tratteggiata */
+.pl-modal-input {
+  border: 1px solid var(--accent);
+  background: rgb(0 0 0 / 0.25);
+  color: var(--text-primary);
+
+  &::placeholder {
+    color: var(--text-secondary);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(201 162 39 / 0.25);
+  }
+}
+
+/* ============================ Modale di login ============================
+   Ha solo due campi: la larghezza delle altre modali (640px) era troppa.
+   Il 30% in meno: 640px → 450px (e mai più dello schermo) */
+#login-modal .welcome-box {
+  width: min(450px, 100%);
+}
+
+/* Più spazio tra i campi Email e Password: nella modale di registrazione lo crea
+   il messaggio d'errore sotto ogni campo, qui quel messaggio non c'è */
+#login-modal .register-field + .register-field {
+  margin-top: 20px;
+}
+
+/* ============================ Tema stagionale (natalizio) ============================
+   Si attiva dalle Impostazioni (Tema → Stagionale): il JS mette data-theme="stagionale" su <html>.
+   Per ora il tema stagionale è quello di Natale.
+   I colori restano quelli vintage; si aggiungono solo le decorazioni:
+   1) neve accumulata sopra il player
+   2) il logo diventa una pallina di Natale rossa che gira sul suo asse
+   3) giradischi con agrifoglio nell'angolo e lucine lungo la base
+   4) neve che cade sulla home per 5 secondi, una volta sola (.xmas-snow in index.html)
+   Con "Riduci animazioni" (o il "riduci movimento" del sistema) pallina, lucine e neve restano ferme */
+
+/* --- 1. Neve sopra il player ---
+   Neve accumulata sul bordo in ottone del player: una fila di cumuli bassi appoggiati sopra il bordo,
+   di due misure diverse sovrapposte, così sembrano irregolari invece che tutti uguali.
+   Sta fuori dal player (bottom: 100%): si vede perché, a player visibile, l'overflow è visible */
+:root[data-theme="stagionale"] .player::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1; /* sopra il main, sotto la linguetta del giradischi (z-index 2) */
+  height: 6px;
+  pointer-events: none; /* non copre niente di cliccabile */
+  background:
+    /* strato continuo alla base, così tra un cumulo e l'altro non resta il vuoto */
+    linear-gradient(#f4f1ea, #f4f1ea) 0 100% / 100% 2px no-repeat,
+    /* cumuli schiacciati: ellissi larghe e basse invece di cerchi */
+    radial-gradient(16px 5px at 50% 100%, #f4f1ea 95%, transparent) 0 100% / 34px 6px repeat-x,
+    radial-gradient(10px 3.5px at 50% 100%, #f4f1ea 95%, transparent) 17px 100% / 22px 4px repeat-x;
+  filter: drop-shadow(0 -1px 2px rgb(0 0 0 / 0.3)); /* un'ombra leggera sopra i cumuli */
+}
+
+/* --- 2. Logo: pallina di Natale ---
+   Il vinile del logo è disegnato nel ::before di .brand-mark: qui lo ridisegniamo come pallina,
+   rossa con un'onda bianca a metà, come le palline decorate a mano.
+   Gira solo con il mouse sopra, e non come un disco (niente rotate): a scorrere è l'onda,
+   da destra a sinistra, così sembra che giri sul suo asse verticale.
+   Quando il mouse esce l'onda si ferma dove si trova (paused) */
+:root[data-theme="stagionale"] .brand-mark {
+  animation: none; /* niente rotazione del disco durante l'hover */
+
+  &::before {
+    background:
+      /* riflesso di luce in alto a sinistra */
+      radial-gradient(circle at 32% 28%, rgb(255 255 255 / 0.6) 0 9%, transparent 10%),
+      /* onda bianca: tanti archetti (anelli tagliati a metà) messi in fila, uno ogni 8px */
+      radial-gradient(circle at 50% 0, transparent 0 3px, #f4f1ea 3px 4.2px, transparent 4.8px) 0 12px / 8px 6px repeat-x,
+      /* la pallina rossa, più scura verso il bordo */
+      radial-gradient(circle at 40% 35%, #e0443f, #a3171c 70%, #6e0d10);
+    animation: bauble-spin 1.6s linear infinite paused;
+  }
+
+  /* gancio dorato in cima */
+  &::after {
+    content: "";
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    width: 8px;
+    height: 6px;
+    translate: -50% 0;
+    border-radius: 2px;
+    background: #c9a227;
+  }
+}
+
+/* Con il mouse sopra l'onda scorre (lo stile vintage lì spegne l'animazione: la riaccendiamo) */
+:root[data-theme="stagionale"] .brand:hover .brand-mark::before {
+  animation: bauble-spin 1.6s linear infinite running;
+}
+
+/* l'onda scorre di un archetto (8px): poi ricomincia uguale, senza scatti */
+@keyframes bauble-spin {
+  to {
+    background-position: 0 0, -8px 12px, 0 0;
+  }
+}
+
+/* --- 3. Giradischi decorato ---
+   Agrifoglio nell'angolo in alto a destra (due foglie e tre bacche, disegnati in SVG)
+   e un filo di lucine lungo la base che brillano piano */
+:root[data-theme="stagionale"] .turntable {
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    top: -3%;
+    right: -2%;
+    width: 16%;
+    aspect-ratio: 1.4;
+    pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 50'%3E%3Cpath d='M35 28C25 10 8 14 2 20c6 1 7 6 4 9 5-1 9 3 8 8 6-4 14-6 21-9z' fill='%232e6b3f'/%3E%3Cpath d='M35 28c10-18 27-14 33-8-6 1-7 6-4 9-5-1-9 3-8 8-6-4-14-6-21-9z' fill='%233a7d4c'/%3E%3Ccircle cx='31' cy='25' r='5' fill='%23c4262c'/%3E%3Ccircle cx='40' cy='23' r='5' fill='%23d6383a'/%3E%3Ccircle cx='36' cy='32' r='5' fill='%23b01e24'/%3E%3C/svg%3E") center / contain no-repeat;
+    filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.5));
+  }
+
+  /* lucine: un SVG con tre lampadine (oro, rosso, verde) ripetuto in orizzontale */
+  &::after {
+    content: "";
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    bottom: -7px;
+    height: 14px;
+    pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 14'%3E%3Cpath d='M0 4q10 6 20 0t20 0 20 0' fill='none' stroke='%23222' stroke-width='1.2'/%3E%3Ccircle cx='10' cy='8' r='4' fill='%23e8c35a'/%3E%3Ccircle cx='30' cy='8' r='4' fill='%23e0443f'/%3E%3Ccircle cx='50' cy='8' r='4' fill='%234caf6e'/%3E%3C/svg%3E") 0 0 / 60px 14px repeat-x;
+    filter: drop-shadow(0 0 4px rgb(255 200 120 / 0.6)); /* alone, come se fossero accese */
+    animation: lights-glow 1.6s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes lights-glow {
+  to {
+    opacity: 0.55;
+  }
+}
+
+/* --- 4. Neve sulla home: una volta sola, 5 secondi ---
+   Nascosta in tutti gli altri temi. I fiocchi partono appena la neve compare
+   (all'apertura della home, o quando si sceglie il tema stando nella home).
+   "forwards" li lascia fermi all'ultimo fotogramma, cioè invisibili: così non ricominciano */
+.xmas-snow {
+  display: none;
+}
+
+:root[data-theme="stagionale"] .xmas-snow {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 1040; /* sopra la pagina, sotto le modali (1050) */
+  overflow: hidden;
+  pointer-events: none; /* non blocca i clic */
+  /* dopo 5 secondi il contenitore sparisce del tutto, anche se un fiocco fosse in ritardo */
+  animation: snow-end 5s step-end forwards;
+
+  & span {
+    position: absolute;
+    top: -24px;
+    left: var(--x);
+    font-size: var(--size);
+    line-height: 1;
+    color: #fff;
+    opacity: 0;
+    text-shadow: 0 0 4px rgb(255 255 255 / 0.6);
+    animation: snow-fall var(--dur) linear var(--delay) forwards;
+  }
+}
+
+/* scende fino in fondo allo schermo, si sposta un po' di lato e gira mezzo giro;
+   compare all'inizio e sfuma alla fine */
+@keyframes snow-fall {
+  0% {
+    opacity: 0;
+  }
+
+  10%,
+  80% {
+    opacity: 0.85;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), 105vh) rotate(180deg);
+  }
+}
+
+@keyframes snow-end {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* Movimento ridotto: niente neve, pallina e lucine ferme */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="stagionale"] {
+    & .xmas-snow {
+      display: none;
+    }
+
+    & .brand-mark::before,
+    & .turntable::after {
+      animation: none;
+    }
+  }
+}
+
+:root[data-theme="stagionale"].a11y-reduce-motion .xmas-snow {
+  display: none;
 }

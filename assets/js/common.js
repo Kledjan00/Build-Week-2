@@ -1,61 +1,3 @@
-/* ============================================================
-   common.js — codice condiviso tra tutte le pagine
-   ============================================================
-
-   REGOLE GENERALI
-   - Solo const e let (mai var)
-   - DOM: querySelector / querySelectorAll
-   - Eventi: addEventListener (mai onclick inline)
-   - fetch + async/await + try/catch
-   - localStorage: setItem / getItem / removeItem (salva sempre stringhe)
-   - Pattern OOP: classi Track, Album, Artist, Player
-
-   COSA CONTIENE QUESTO FILE
-   1) Costanti (URL base API, chiavi localStorage)
-   2) Helpers (fetchJSON, formatTime, bigArt, debounce)
-   3) Classi modello: Track, Album, Artist
-   4) Classe Player (gestisce <audio>)
-   5) localStorage helpers (history, favourites)
-   6) Render sidebar e player footer
-   7) Inizializzazione al DOMContentLoaded
-
-   ESEMPIO USO DELL'ELEMENTO <audio>
-   --------------------------------
-     const audio = document.querySelector("#audio-element");
-     audio.src = "https://...preview.m4a"; // URL della preview MP3
-     audio.play();                         // avvia la riproduzione
-     audio.pause();                        // mette in pausa
-     audio.currentTime = 10;               // salta a 10 secondi
-     audio.duration;                       // durata in secondi
-     audio.volume = 0.5;                   // volume tra 0 e 1
-
-     audio.addEventListener("timeupdate", () => {
-       // chiamato continuamente durante la riproduzione
-       const percent = (audio.currentTime / audio.duration) * 100;
-     });
-
-     audio.addEventListener("ended", () => {
-       // brano finito
-     });
-
-   ESEMPIO USO DELL'API iTunes
-   ---------------------------
-     // Ricerca brani
-     fetch("https://itunes.apple.com/search?term=eminem&entity=song&limit=10")
-
-     // Ricerca album
-     fetch("https://itunes.apple.com/search?term=pink+floyd&entity=album&limit=10")
-
-     // Ricerca artisti
-     fetch("https://itunes.apple.com/search?term=jovanotti&entity=musicArtist&limit=5")
-
-     // Dettagli album (con tracce)
-     fetch("https://itunes.apple.com/lookup?id=1440831203&entity=song")
-
-     // Top tracks artista
-     fetch("https://itunes.apple.com/lookup?id=909253&entity=song&limit=10")
-*/
-
 import { $, el, historyDump, historyLog, getFavourites, getPlaylist, setPlaylist, killPLaylist, removeTrackFromPlaylist, setCurrentTrackList, getCurrentTrackList } from "./helper.js"
 
 /* ============================ 1. Costanti ============================ */
@@ -94,10 +36,11 @@ export const formatTime = (ms) => {
   Impostazioni salvate in localStorage (un solo oggetto):
   - contrast, largeText, reduceMotion: interruttori di accessibilitÃ (spenti di default)
   - explicit: contenuti espliciti visibili (acceso di default)
+  - theme: tema scelto nella tendina ("vintage" di default, "stagionale" = Natale)
   applySettings() le traduce in classi su <html>: tutto il resto lo fa il CSS.
 */
 const STORAGE_KEY_SETTINGS = "epitunes_settings";
-const DEFAULT_SETTINGS = { contrast: false, largeText: false, reduceMotion: false, explicit: true };
+const DEFAULT_SETTINGS = { contrast: false, largeText: false, reduceMotion: false, explicit: true, theme: "vintage" };
 
 // interruttore della modale collegato a ogni impostazione
 const SETTING_SWITCHES = {
@@ -117,21 +60,21 @@ const getSettings = () => {
 };
 
 const applySettings = (settings) => {
-  const root = document.documentElement; // <html>
+  const root = document.documentElement;
   root.classList.toggle("a11y-contrast", settings.contrast);
   root.classList.toggle("a11y-large-text", settings.largeText);
   root.classList.toggle("a11y-reduce-motion", settings.reduceMotion);
   root.classList.toggle("hide-explicit", !settings.explicit);
+  root.dataset.theme = settings.theme;
 };
 
 const initSettings = () => {
   const settings = getSettings();
-  applySettings(settings); // ad ogni pagina, appena caricata
+  applySettings(settings);
 
   const modal = $("#settings-modal");
   if (!modal) return;
 
-  // interruttori: mostrano lo stato salvato; quando cambiano salvano e applicano subito
   for (const [key, selector] of Object.entries(SETTING_SWITCHES)) {
     const input = $(selector);
     input.checked = settings[key];
@@ -141,6 +84,36 @@ const initSettings = () => {
       applySettings(settings);
     });
   }
+
+  // Tema: le voci della tendina con data-theme (Disco non ce l'ha, è ancora "Coming soon")
+  const themeToggle = $("#theme-toggle");
+  const themeItems = modal.querySelectorAll(".dropdown-item[data-theme]");
+
+  // segna come attiva la voce del tema scelto e ne scrive il nome sul pulsante
+  const showTheme = () => {
+    themeItems.forEach((item) => {
+      const active = item.dataset.theme === settings.theme;
+      item.classList.toggle("active", active);
+      if (active) {
+        item.setAttribute("aria-current", "true");
+        themeToggle.textContent = item.firstChild.textContent.trim(); // solo il nome, senza l'etichetta "Predefinito"
+      } else {
+        item.removeAttribute("aria-current");
+      }
+    });
+  };
+
+  // al clic su una voce: salva il tema, lo applica subito e aggiorna la tendina
+  themeItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      settings.theme = item.dataset.theme;
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+      applySettings(settings);
+      showTheme();
+    });
+  });
+
+  showTheme(); // all'apertura della pagina mostra il tema salvato
 
   // apertura e chiusura, come le altre modali (la classe is-open la mostra, il CSS anima)
   const open = () => modal.classList.add("is-open");
@@ -230,33 +203,6 @@ class Playlist {
 
 /* ============================ 4. Classe Player ============================ */
 
-/*
-  Classe Player
-  Gestisce la riproduzione audio e la UI del player footer.
-
-  Stato interno:
-    - currentTrack: Track corrente (null se nessun brano)
-    - isPlaying: true/false
-
-  Metodi pubblici:
-    - mount()        -> rende la UI del player nel footer (.player)
-    - play(track, trackList) -> imposta currentTrack, src audio, avvia, salva in history;
-                                se riceve trackList la usa per avanti/indietro
-    - togglePlay()   -> alterna play/pause sul brano corrente
-    - setVolume(v)   -> v tra 0 e 1
-    - seek(percent)  -> sposta currentTime a percent% della durata
-
-  Eventi audio da agganciare:
-    - "timeupdate" per aggiornare la progress bar
-    - "ended" per fermarsi a fine brano
-*/
-
-/*
-  icon(name)
-  - Crea un'icona SVG dello sprite: <svg class="icon"><use href="#ico-name"></use></svg>
-  - Gli elementi SVG vanno creati con createElementNS (createElement e el() non funzionano)
-  - Lo sprite con i <symbol id="ico-..."> deve essere presente all'inizio del <body>
-*/
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 const icon = (name) => {
@@ -268,15 +214,38 @@ const icon = (name) => {
   return svg;
 };
 
+
+const STORAGE_KEY_SHUFFLE = "epitunes_shuffle"; // sessionStorage: dura quanto la scheda
+
+// Fisher-Yates: restituisce una copia mescolata, l'originale non viene toccato.
+// Se passi "first", quel brano viene messo in testa (così il brano in corso non salta)
+const shuffleList = (list, first = null) => {
+  const arr = [...list];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  if (first) {
+    const idx = arr.findIndex((t) => t.trackId === first.trackId);
+    if (idx > 0) arr.unshift(arr.splice(idx, 1)[0]);
+  }
+  return arr;
+};
+
+
 class Player {
   constructor() {
     this.audio = $("#audio-element");
     this.currentTrack = null;
     this.isPlaying = false;
-    this.isSeeking = false; // true mentre si trascina la barra di avanzamento
-    this.repeat = false;    // true: a fine lista riparte dal primo brano
-    this.ui = null; // i riferimenti agli elementi vengono salvati in mount()
+    this.isSeeking = false;
+    this.repeat = false;
+    this.ui = null;
+
     this.trackList = getCurrentTrackList() || [];
+    this.originalList = this.trackList;
+    this.isShuffled = sessionStorage.getItem(STORAGE_KEY_SHUFFLE) === "1";
+    if (this.isShuffled) this.trackList = shuffleList(this.originalList);
 
     this.audio.addEventListener("timeupdate", () => this.updateProgress());
     this.audio.addEventListener("loadedmetadata", () => {
@@ -285,8 +254,6 @@ class Player {
     });
     this.audio.addEventListener("play", () => this.setPlayingState(true));
     this.audio.addEventListener("pause", () => this.setPlayingState(false));
-    // A fine brano parte il successivo; se era l'ultimo: con la ripetizione attiva
-    // riparte dal primo, altrimenti il player si ferma e torna all'inizio
     this.audio.addEventListener("ended", () => {
       const i = this.currentIndex();
       if (i !== -1 && this.trackList[i + 1]) {
@@ -308,21 +275,18 @@ class Player {
     const footer = document.querySelector(".player");
     if (!footer) return;
 
-    // --- Colonna sinistra: traccia corrente ---
     const coverImg = el("img", { id: "player-cover-img", attrs: { alt: "" } });
 
     const playerTrack = el("div", { className: "player-track" },
       el("div", { className: "player-cover", id: "player-cover" }, coverImg),
       el("div", { className: "player-meta" },
         el("p", { className: "player-title", id: "player-title", text: "Seleziona un brano" }),
-        // il nome dell'artista è un link alla sua pagina (l'href lo imposta showArtist())
         el("p", { className: "player-artist", id: "player-artist" },
           el("a", { className: "artist-link", id: "player-artist-link", text: "—" })
         )
       )
     );
 
-    // --- Colonna centrale: controlli + progress ---
     const ctrlButton = (id, label, iconName) =>
       el("button", { className: "btn-ctrl", id, attrs: { type: "button", "aria-label": label } },
         icon(iconName)
@@ -331,7 +295,6 @@ class Player {
     const playerControls = el("div", { className: "player-controls" },
       ctrlButton("btn-shuffle", "Riproduzione casuale", "shuffle"),
       ctrlButton("btn-prev", "Brano precedente", "prev"),
-      // Il play resta testuale: setPlayingState() alterna ▶ e ⏸ con textContent
       el("button", { className: "btn-play", id: "btn-play", text: "▶", attrs: { type: "button", "aria-label": "Riproduci" } }),
       ctrlButton("btn-next", "Brano successivo", "next"),
       ctrlButton("btn-repeat", "Ripeti", "repeat")
@@ -350,7 +313,6 @@ class Player {
       playerProgress
     );
 
-    // --- Colonna destra: volume ---
     const playerRight = el("div", { className: "player-right" },
       el("span", { className: "volume-ico", attrs: { "aria-hidden": "true" } }, icon("volume")),
       el("div", { className: "volume-bar", id: "volume-bar" },
@@ -358,7 +320,6 @@ class Player {
       )
     );
 
-    // --- Icone a linea per i tasti nascondi / espandi ---
     const lineIcon = (d) => {
       const svg = document.createElementNS(SVG_NS, "svg");
       svg.setAttribute("class", "icon");
@@ -375,24 +336,20 @@ class Player {
       return svg;
     };
 
-    // Freccia giù (in alto a destra): nasconde il player
     const btnClose = el("button", {
       className: "btn-ctrl btn-close-player",
       id: "btn-close-player",
       attrs: { type: "button", "aria-label": "Nascondi il player" },
     }, lineIcon("M6 9l6 6 6-6"));
 
-    // Freccia su (linguetta al centro del bordo superiore): apre #expandPlayer
     const btnExpand = el("button", {
       className: "btn-expand-player",
       id: "btn-expand-player",
       attrs: { type: "button", "aria-label": "Espandi il player", "aria-haspopup": "dialog" },
     }, lineIcon("M6 15l6-6 6 6"));
 
-    // --- Montaggio finale ---
     footer.replaceChildren(playerTrack, playerCenter, playerRight, btnClose, btnExpand);
 
-    // --- Riferimenti agli elementi ---
     this.ui = {
       cover: coverImg,
       title: footer.querySelector("#player-title"),
@@ -405,15 +362,14 @@ class Player {
       timeTotal: footer.querySelector("#time-total"),
       volumeBar: footer.querySelector("#volume-bar"),
       volumeFill: footer.querySelector("#volume-fill"),
+      btnShuffle: footer.querySelector("#btn-shuffle"),
     };
 
-    // --- Eventi ---
     this.ui.btnToggle.addEventListener("click", () => this.togglePlay());
     footer.querySelector("#btn-prev").addEventListener("click", () => this.prev());
     footer.querySelector("#btn-next").addEventListener("click", () => this.next());
     footer.querySelector("#btn-shuffle").addEventListener("click", () => this.shuffle());
 
-    // Ripeti: interruttore acceso/spento
     const btnRepeat = this.ui.btnRepeat;
     btnRepeat?.addEventListener("click", () => {
       this.repeat = !this.repeat;
@@ -425,49 +381,39 @@ class Player {
     btnClose.addEventListener("click", () => this.close());
     btnExpand.addEventListener("click", () => this.expand());
 
-    // giradischi: si chiude con la freccia in alto a destra o con Esc
     const expandModal = $("#expandPlayer");
     $("#expand-close")?.addEventListener("click", () => expandModal.classList.remove("is-open"));
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") expandModal?.classList.remove("is-open");
     });
 
-
-    // Barra di avanzamento: mentre si trascina si sposta solo la barra (e il tempo),
-    // il brano salta al punto scelto quando si lascia il mouse
     this.makeDraggable(
       this.ui.progressBar,
-      (percent) => this.previewSeek(percent), // durante il trascinamento
-      (percent) => {                          // al rilascio
+      (percent) => this.previewSeek(percent),
+      (percent) => {
         this.seek(percent);
         this.isSeeking = false;
       },
-      () => { this.isSeeking = true; }        // all'inizio
+      () => { this.isSeeking = true; }
     );
 
-    // Barra del volume: il volume cambia subito mentre si trascina
     this.makeDraggable(this.ui.volumeBar, (percent) => this.setVolume(percent));
 
     this.setVolume(0.5);
     this.restoreState();
+    this.updateShuffleButton();
   }
 
-  /*
-    setTrackList(trackList)
-    - Imposta la lista su cui lavorano avanti/indietro (e il passaggio automatico a fine brano)
-    - La salva in localStorage, così cambiando pagina avanti/indietro continuano a funzionare
-  */
-  setTrackList(trackList) {
-    this.trackList = trackList;
-    setCurrentTrackList(trackList);
+  setTrackList(trackList, pinned = this.currentTrack) {
+    this.originalList = trackList;
+    this.trackList = this.isShuffled ? shuffleList(trackList, pinned) : trackList;
+    setCurrentTrackList(trackList); // in localStorage resta l'ordine originale
   }
 
-  // Vecchio nome di setTrackList: resta solo perché qualche pagina potrebbe ancora usarlo
   getTracklist(trackList) {
     this.setTrackList(trackList);
   }
 
-  // indice del brano corrente nella trackList (-1 se non c'è)
   currentIndex() {
     if (!this.currentTrack) return -1;
     return this.trackList.findIndex((t) => t.trackId === this.currentTrack.trackId);
@@ -475,73 +421,70 @@ class Player {
 
   next() {
     const i = this.currentIndex();
-    if (i === -1) return; // nessuna lista o brano fuori lista
+    if (i === -1) return;
     const track = this.trackList[i + 1] ?? (this.repeat ? this.trackList[0] : null);
-    if (!track) return; // ultimo brano e ripetizione spenta
+    if (!track) return;
     this.play(track);
   }
 
   prev() {
-    // se il brano è avanti più di 3 secondi, "indietro" lo fa ripartire dall'inizio
     if (this.audio.currentTime > 3) {
       this.audio.currentTime = 0;
       return;
     }
     const i = this.currentIndex();
     const track = this.trackList[i - 1];
-    if (i === -1 || !track) return; // nessuna lista, brano fuori lista o primo brano
+    if (i === -1 || !track) return;
     this.play(track);
   }
 
-  // Casuale: un brano a caso della lista corrente (diverso da quello in riproduzione, se possibile)
   shuffle() {
-    if (!this.trackList.length) return;
-    const others = this.trackList.filter((t) => t.trackId !== this.currentTrack?.trackId);
-    const pool = others.length ? others : this.trackList;
-    const random = pool[Math.floor(Math.random() * pool.length)];
-    this.play(random); // senza lista: avanti/indietro restano sulla stessa lista
+    this.isShuffled = !this.isShuffled;
+    this.trackList = this.isShuffled
+      ? shuffleList(this.originalList, this.currentTrack)
+      : [...this.originalList];
+
+    sessionStorage.setItem(STORAGE_KEY_SHUFFLE, this.isShuffled ? "1" : "0");
+    this.updateShuffleButton();
   }
 
-  /*
-    play(track, trackList)
-    - trackList (facoltativa): la lista da cui parte il brano (riga della home, album, preferiti...).
-      Se c'è, diventa la lista di avanti/indietro.
-  */
+  updateShuffleButton() {
+    const btn = this.ui?.btnShuffle;
+    if (!btn) return;
+    btn.classList.toggle("is-active", this.isShuffled);
+    btn.setAttribute("aria-pressed", String(this.isShuffled));
+  }
+
   play(track, trackList) {
-    if (trackList) this.setTrackList(trackList);
+    if (trackList) this.setTrackList(trackList, track);
     historyLog(historyDump(), track);
     this.currentTrack = track;
     this.audio.src = track.previewUrl;
     this.audio.play().catch((err) => {
-      // AbortError capita se cambi brano mentre il precedente sta ancora caricando
       if (err.name !== "AbortError") console.error("Errore di riproduzione:", err);
     });
 
-    // Aggiorna UI
     if (this.ui) {
       this.ui.cover.src = (track.artworkUrl100 || "").replace("100x100", "300x300");
       this.ui.title.textContent = track.trackName ?? "Titolo brano";
       this.ui.title.dataset.explicit = track.trackExplicitness === "explicit";
       this.showArtist(track);
-      this.ui.timeTotal.textContent = "0:00"; // si aggiorna su loadedmetadata
+      this.ui.timeTotal.textContent = "0:00";
       this.ui.progressFill.style.width = "0%";
-
-
+      this.showExpandCover(track);
     }
 
-    // Evidenzia la riga nella tracklist
     $(".track-row.is-playing")?.classList.remove("is-playing");
     $(`.track-row[data-track-id="${track.trackId}"]`)?.classList.add("is-playing");
   }
 
   togglePlay() {
-    if (!this.audio.src) return; // nessun brano selezionato
+    if (!this.audio.src) return;
     if (this.audio.paused) {
       this.audio.play().catch(console.error);
     } else {
       this.audio.pause();
     }
-    // l'icona viene aggiornata dagli eventi "play"/"pause" in setPlayingState()
   }
 
   setVolume(v) {
@@ -556,23 +499,15 @@ class Player {
     this.audio.currentTime = this.audio.duration * percent;
   }
 
-  // --- Metodi di supporto ---
-
   setPlayingState(playing) {
     this.isPlaying = playing;
     if (this.ui) {
       this.ui.btnToggle.textContent = playing ? "⏸" : "▶";
       this.ui.btnToggle.setAttribute("aria-label", playing ? "Pausa" : "Riproduci");
     }
+    $("#expandPlayer")?.classList.toggle("is-playing", playing);
   }
 
-  /*
-    makeDraggable(bar, onMove, onEnd, onStart)
-    - Rende una barra trascinabile con mouse e dito (eventi pointer)
-    - onMove(percent): alla pressione e a ogni movimento, con la posizione da 0 a 1
-    - onEnd(percent): quando si lascia (facoltativa)
-    - onStart(): quando si preme (facoltativa)
-  */
   makeDraggable(bar, onMove, onEnd, onStart) {
     let dragging = false;
 
@@ -603,7 +538,6 @@ class Player {
     window.addEventListener("pointercancel", stop);
   }
 
-  // Durante il trascinamento: sposta la barra e aggiorna il tempo, senza toccare l'audio
   previewSeek(percent) {
     if (!this.ui || !this.audio.duration) return;
     this.ui.progressFill.style.width = `${percent * 100}%`;
@@ -624,11 +558,6 @@ class Player {
     return `${m}:${s}`;
   }
 
-  /*
-    showArtist(track)
-    - Scrive il nome dell'artista nel player e lo collega alla sua pagina
-    - Se il brano non ha artistId (o track è null), il nome resta testo senza link
-  */
   showArtist(track) {
     if (!this.ui) return;
     const link = this.ui.artist;
@@ -640,10 +569,6 @@ class Player {
     }
   }
 
-  /*
-    expand()
-    - Apre il giradischi (#expandPlayer); se è già aperto lo chiude
-  */
   expand() {
     const modal = $("#expandPlayer");
     if (!modal) return;
@@ -658,7 +583,6 @@ class Player {
     modal.classList.add("is-open");
   }
 
-  // Copertina grande al centro del vinile
   showExpandCover(track) {
     const cover = $("#expand-cover");
     if (!cover) return;
@@ -669,11 +593,6 @@ class Player {
     }
   }
 
-  /*
-    close()
-    - Fa uscire il player con l'animazione (.is-closing), poi ferma la musica e lo svuota
-    - Cancella lo stato salvato, così cambiando pagina il player non ricompare
-  */
   close() {
     $("#expandPlayer")?.classList.remove("is-open");
     const footer = document.querySelector(".player");
@@ -779,9 +698,19 @@ export const renderSidebarFavs = () => {
 
   list.replaceChildren(
     ...ordered.slice(0, 5).map((track) => {
-      const item = el("li", { text: `${track.trackName} - ${track.artistName}`, style: { cursor: "pointer" } });
-      // la lista di avanti/indietro sono tutti i preferiti, nello stesso ordine della sidebar
-      item.addEventListener("click", () => window.player.play(track, ordered));
+      const item = el("li", {
+        text: `${track.trackName} - ${track.artistName}`,
+        style: { cursor: "pointer" },
+        attrs: { tabindex: "0", role: "button" },
+      });
+      const playFav = () => window.player.play(track, ordered);
+      item.addEventListener("click", playFav);
+      item.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          playFav();
+        }
+      });
       return item;
     })
   );
@@ -813,12 +742,6 @@ export const artistLink = (name, id) => {
 };
 
 /* ============================ 7. Inizializzazione ============================ */
-
-/*
-  initPage(activePage)
-  - Chiamata da home.js / search.js / album.js / artist.js
-  - Monta sidebar, monta player, restituisce il player per essere usato.
-*/
 
 function playListBuilder(tracks = [], title) {
   const id = self.crypto.randomUUID();
@@ -871,7 +794,7 @@ document.addEventListener(
   (e) => {
     const openToggles = document.querySelectorAll("#sidebar-playlists .dropdown-toggle.show");
     openToggles.forEach((toggle) => {
-      const playlistBox = toggle.closest(".dropdown"); // la riga della playlist: nome, menu e X
+      const playlistBox = toggle.closest(".dropdown");
       if (!playlistBox.contains(e.target)) {
         bootstrap.Dropdown.getInstance(toggle)?.hide();
       }
@@ -982,7 +905,34 @@ export const initPage = (activePage) => {
   renderSidebarFavs();
   initNavButtons();
   renderSidebarPlaylists();
+  initShareButton();
   window.player = player;
   initSettings();
   return player;
+};
+
+
+/* ============================ Condividi ============================ */
+//function per condividare il popover e add event listener per renderlo cliccabile e sua volta condividerlo al click
+
+async function share() {
+  const data = {
+    title: "EpiTunes",
+    text: "Scopri EpiTunes e ascolta la tua musica preferita!",
+    url: window.location.origin,
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(data);
+    } else {
+      await navigator.clipboard.writeText(data.url);
+    }
+  } catch (err) {
+    if (err.name !== "AbortError") console.error("Condivisione fallita", err);
+  }
+}
+
+const initShareButton = () => {
+  $("#btn-share")?.addEventListener("click", share);
 };

@@ -12,6 +12,8 @@
 </head>
 
 <body>
+  <!-- Primo link della pagina, si vede solo con Tab: porta dritto al contenuto saltando sidebar e topbar -->
+  <a class="skip-link" href="#contenuto">Vai al contenuto</a>
 
   <!-- Icone del tema vintage: sprite SVG, si usano con <svg class="icon"><use href="#ico-..."></use></svg> -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display: none" aria-hidden="true">
@@ -82,6 +84,14 @@
       <path d="M15.5 9a4 4 0 0 1 0 6" />
       <path d="M18 6.5a7.5 7.5 0 0 1 0 11" />
     </symbol>
+    <!-- Penna d'oca: rinomina la playlist -->
+    <symbol id="ico-edit" viewBox="0 0 24 24">
+      <path d="M20.5 3.5C13.5 4 8.5 8.5 7 16" />
+      <path d="M20.5 3.5c.3 6.5-4.5 11.5-12 12.5" />
+      <path d="M12.5 9.5l2.5-.5M10 12.5l3-.3" opacity="0.6" />
+      <path d="M8 16 4 20.5" />
+      <path d="M3.5 20.5h8" opacity="0.45" />
+    </symbol>
     <symbol id="ico-settings" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="3" />
       <path
@@ -93,7 +103,7 @@
   <div class="app">
     <!-- Sidebar statica. Sotto i 576px diventa un pannello che si apre dal pulsante ☰ della topbar:
          l'attributo popover lo fa aprire e chiudere dall'HTML, senza JavaScript -->
-    <aside class="sidebar" id="sidebar-drawer" popover>
+    <aside class="sidebar" id="sidebar-drawer" popover aria-label="Menu">
       <!-- × per chiudere il pannello (si vede solo su mobile) -->
       <button type="button" class="drawer-close" popovertarget="sidebar-drawer" popovertargetaction="hide"
         aria-label="Chiudi il menu">×</button>
@@ -139,13 +149,13 @@
       <h2 class="sidebar-section-title"><a href="library.html#row-library-favourites"><span class="ico" aria-hidden="true"><svg class="icon">
               <use href="#ico-heart"></use>
             </svg></span><span>I tuoi preferiti</span></a></h2>
-      <!-- Unica parte dinamica: la lista viene riempita via JS dai preferiti in localStorage -->
+      <!-- La lista viene riempita via JS (renderSidebarFavs in common.js) con gli ultimi 5 preferiti -->
       <ul class="sidebar-list" id="sidebar-favourites">
         <li class="fst-italic">Nessuno ancora</li>
       </ul>
     </aside>
 
-    <main class="main">
+    <main class="main" id="contenuto" tabindex="-1">
       <header class="topbar sticky-top d-flex align-items-center justify-content-between px-4 py-3">
         <div class="d-flex gap-2">
           <!-- ☰ Menu: apre la sidebar come pannello (si vede solo su mobile) -->
@@ -171,13 +181,13 @@
 
         <div class="user-action">
           <button type="button" class="btn-new-user rounded-pill fw-semibold" id="btn-new-user">New user</button>
-          <button type="button" class="user-pill rounded-pill fw-semibold" id="btn-user">Log in</button>
+          <!-- Qui la modale di login non c'è: il link porta alla home e #login la apre subito -->
+          <a href="index.html#login" class="user-pill rounded-pill fw-semibold" id="btn-user">Log in</a>
         </div>
       </header>
 
-      <!--
-
-      -->
+      <!-- Pagina playlist (playlist.html?id=...): hero e tracklist sono vuoti, li costruisce playlist.js
+           leggendo la playlist da localStorage -->
       <section class="playlist-page page">
         <div class="playlist-hero" id="playlist-hero"></div>
         <div class="tracklist" id="tracklist"></div>
@@ -186,7 +196,7 @@
     </main>
 
     <!-- Player: vuoto nell'HTML, lo costruisce Player.mount() in common.js -->
-    <footer class="player">
+    <footer class="player" aria-label="Player musicale">
 
     </footer>
     <audio id="audio-element"></audio>
@@ -234,12 +244,12 @@
               <label class="welcome-label" for="register-username">Nome utente</label>
               <input class="register-input" type="text" id="register-username" autocomplete="username" required
                 minlength="3">
-              <p class="register-error" id="register-username-error"></p>
+              <p class="register-error" aria-live="polite" id="register-username-error"></p>
             </div>
             <div class="register-field">
               <label class="welcome-label" for="register-email">E-mail</label>
               <input class="register-input" type="email" id="register-email" autocomplete="email" required>
-              <p class="register-error" id="register-email-error"></p>
+              <p class="register-error" aria-live="polite" id="register-email-error"></p>
             </div>
           </div>
 
@@ -248,26 +258,26 @@
               <label class="welcome-label" for="register-password">Password</label>
               <input class="register-input" type="password" id="register-password" autocomplete="new-password" required
                 minlength="8">
-              <p class="register-error" id="register-password-error"></p>
+              <p class="register-error" aria-live="polite" id="register-password-error"></p>
             </div>
             <div class="register-field">
               <label class="welcome-label" for="register-repeat">Ripeti password</label>
               <input class="register-input" type="password" id="register-repeat" autocomplete="new-password" required>
-              <p class="register-error" id="register-repeat-error"></p>
+              <p class="register-error" aria-live="polite" id="register-repeat-error"></p>
             </div>
           </div>
 
           <div class="register-field register-half">
             <label class="welcome-label" for="register-birth">Data di nascita</label>
             <input class="register-input" type="date" id="register-birth" required>
-            <p class="register-error" id="register-birth-error"></p>
+            <p class="register-error" aria-live="polite" id="register-birth-error"></p>
           </div>
 
           <div class="register-check">
             <input type="checkbox" id="register-consent" required>
             <label for="register-consent">Acconsento al trattamento dei miei dati personali</label>
           </div>
-          <p class="register-error" id="register-consent-error"></p>
+          <p class="register-error" aria-live="polite" id="register-consent-error"></p>
 
           <div class="welcome-footer">
             <p class="register-note">Tutti i campi sono obbligatori</p>
@@ -326,8 +336,9 @@
         <p class="welcome-kicker">Impostazioni</p>
         <h2 class="welcome-title" id="settings-title">Preferenze</h2>
 
-        <!-- Tema: tendina di Bootstrap (si apre da sola con data-bs-toggle, senza JS nostro).
-             Per ora c'è solo Vintage: Disco e Stagionale sono disattivati (disabled) -->
+        <!-- Tema: tendina di Bootstrap (si apre e si chiude con data-bs-toggle).
+             Le voci con data-theme si possono scegliere: il JS (initSettings in common.js) salva il tema
+             e lo mette su <html data-theme="...">. Disco non ha data-theme: è disattivato (Coming soon) -->
         <div class="settings-card">
           <div class="settings-row">
             <span id="theme-label">Tema</span>
@@ -335,11 +346,12 @@
               <button type="button" class="settings-select dropdown-toggle" id="theme-toggle"
                 data-bs-toggle="dropdown" aria-expanded="false" aria-labelledby="theme-label theme-toggle">Vintage</button>
               <ul class="dropdown-menu dropdown-menu-end settings-menu">
-                <li><button type="button" class="dropdown-item active" aria-current="true">Vintage</button></li>
+                <!-- data-theme: il tema che il JS salva e mette su <html data-theme="..."> -->
+                <li><button type="button" class="dropdown-item active" aria-current="true" data-theme="vintage">Vintage <span class="badge-default">Predefinito</span></button></li>
                 <li><span class="dropdown-item disabled" aria-disabled="true">Disco <span
                       class="badge-soon">Coming soon</span></span></li>
-                <li><span class="dropdown-item disabled" aria-disabled="true">Stagionale <span
-                      class="badge-soon">Coming soon</span></span></li>
+                <!-- Stagionale: per ora è il tema natalizio -->
+                <li><button type="button" class="dropdown-item" data-theme="stagionale">Stagionale</button></li>
               </ul>
             </div>
           </div>

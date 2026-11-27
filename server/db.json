@@ -5,6 +5,102 @@
       "password": "$2a$10$dl0MJiRR9XWvpj47AapNfuse.xttzA227f7lQ81hlZGyfVkneahRy",
       "userName": "lleshi.kledjan",
       "id": 1
+    },
+    {
+      "email": "matteo@gmail.com",
+      "password": "$2a$10$ps8kA9uQN4hNxHW4wRttwO8NR9UjEsaA0J78pUumafxPer07kruxK",
+      "userName": "matteo",
+      "id": 2
+    },
+    {
+      "email": "mattia@gmail.com",
+      "password": "$2a$10$/9grIy9WEpgaWuQ51ylsEOzDgT2qBEO08Ctqw69X6XC3x8uMR5Mdm",
+      "userName": "mattia",
+      "id": 3
+    },
+    {
+      "email": "llesh02@gmail.com",
+      "password": "$2a$10$OfF9oEZjjNIiDfeFtVbBF.B./Wm6jJBjzxXKxDmsUf45fxwsrfjRS",
+      "userName": "llesh",
+      "id": 4
+    },
+    {
+      "email": "lles02@gmail.com",
+      "password": "$2a$10$cHubR9ktlJ4rJVLelFPtAOQG39Tj9NxWU1bQpFTnwMFzv63jdGhMa",
+      "userName": "lles",
+      "id": 5
+    },
+    {
+      "email": "lleks02@gmail.com",
+      "password": "$2a$10$tzdR1AE8gt4Qw35i9OmQz.7erIH6ziQqTm5US61O38urZ.4K5TUqS",
+      "userName": "lleskkk",
+      "id": 6
+    },
+    {
+      "email": "llelks02@gmail.com",
+      "password": "$2a$10$dfvCPftQ3ao/ZekJN.YXSOYVoYUdblghvDyVi.GTLUIV2TXToU7Aq",
+      "userName": "lleskkk",
+      "id": 7
+    },
+    {
+      "email": "lpelks02@gmail.com",
+      "password": "$2a$10$GGRdugLJ/4NgkAHAACEpA.qONQvFZ1JZP2O12ZwUeJew4LOp.q1WW",
+      "userName": "lleskk",
+      "id": 8
+    },
+    {
+      "email": "lpelkps02@gmail.com",
+      "password": "$2a$10$W1bTPXtgnFWr74Hn.zdbPu5jALoMvPeRq71pg5yrsKDxzm840N1Qu",
+      "userName": "lleskkp",
+      "id": 9
+    },
+    {
+      "email": "lpelkpps02@gmail.com",
+      "password": "$2a$10$sf4PxSMX.skhK.8z3nhe1uxyD.d2350baBFVeBIyW/Nh0l4Ee3yyC",
+      "userName": "lleskkpp",
+      "id": 10
+    },
+    {
+      "email": "lpelkptpys02@gmail.com",
+      "password": "$2a$10$wIkMbDPTCFMwgkddiLJBYOp/3jjGs/Wav8Is2QEaSEgJOcMLOFcy2",
+      "userName": "lleskkptyy",
+      "id": 11
+    },
+    {
+      "email": "lpelkptpy7s02@gmail.com",
+      "password": "$2a$10$h3iD22OHoZfOMnAl0kG5Muwv642lXuizU3js/1s6zPfyBFMxE/uNu",
+      "userName": "lleskkptyy7",
+      "id": 12
+    },
+    {
+      "email": "lpelkptp8y7s02@gmail.com",
+      "password": "$2a$10$UgPH6DUIwfxlCBl2kwLEOu2UFDhxTaqedTS6Bl05tT3ZVsUHVZYoG",
+      "userName": "lleskkptyy78",
+      "id": 13
+    },
+    {
+      "email": "lpelk47s02@gmail.com",
+      "password": "$2a$10$Mxc8IqUqR8Cx8qc.HZ0Tj.YA.deWIQDwVLpfa1Y45vwfq1ikKK7S.",
+      "userName": "lleskk5",
+      "id": 14
+    },
+    {
+      "email": "lpelk497s02@gmail.com",
+      "password": "$2a$10$T/L2Nh/mwjO3Q54YM/7C0uKR7WDImysyejE1rlUh4WhSOz1wPzWlW",
+      "userName": "lleskk59",
+      "id": 15
+    },
+    {
+      "email": "lpelk4907s02@gmail.com",
+      "password": "$2a$10$6DLyhYZKz41Vg/WVhdG2wubueHAQBhX6/etxDi1oxhMzKR./1Kb2G",
+      "userName": "lleskk759",
+      "id": 16
+    },
+    {
+      "email": "lleshi.kledja02@gmail.com",
+      "password": "$2a$10$3kLOkdX/5ZaND0q1U6tJp.s6BiCOiEElMeuBXW/YhEAsbMQKL1M0m",
+      "userName": "lleshi.kledjan",
+      "id": 17
     }
   ]
 }

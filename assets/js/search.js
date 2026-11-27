@@ -1,26 +1,3 @@
-/* ============================================================
-   search.js — ricerca con debounce
-   ============================================================
-
-   COSA DEVI FARE
-   1) initPage("search")
-   2) Recupera l'ultima query da localStorage (STORAGE_KEY_LAST_SEARCH).
-      Se presente, popola l'input e lancia la ricerca.
-   3) Aggancia l'evento "input" all'input #search-input con debounce 400ms.
-   4) doSearch(term):
-      - se term è vuoto -> nascondi i 3 row e svuota i grid
-      - altrimenti fetch in PARALLELO (Promise.all):
-          - tracks   = search?term=...&entity=song&limit=12
-          - albums   = search?term=...&entity=album&limit=8
-          - artists  = search?term=...&entity=musicArtist&limit=8
-      - mostra ciascuna sezione solo se i risultati sono > 0
-      - salva l'ultima query in localStorage
-   5) Per ogni risultato crea una card:
-      - track  -> click = player.play(track)
-      - album  -> click = window.location.href = "album.html?id=" + albumId
-      - artist -> click = window.location.href = "artist.html?id=" + artistId
-*/
-
 import { initPage, renderSidebarFavs, renderSidebarPlaylists, artistLink } from "./common.js";
 import {
   API_BASE,
@@ -56,15 +33,12 @@ const gridArtists = document.querySelector("#grid-artists");
   - Al click il brano parte con quella lista: avanti/indietro scorrono i risultati della ricerca.
 */
 const renderCard = (track, _index, rowTracks) => {
-  // Cuore: .card-fav lo mette a destra di titolo e artista;
-  // .is-fav lo colora di rosso mattone e lo lascia sempre visibile
   const heartBtn = el("button", {
     className: isFavourite(track) ? "card-fav is-fav" : "card-fav",
     text: isFavourite(track) ? "♥" : "♡",
     attrs: { "aria-label": "Preferito", type: "button" },
   });
 
-  // Play: cerchio trasparente al centro della copertina, compare con l'hover
   const playBtn = el("button", {
     className: "card-play",
     text: "▶",
@@ -95,8 +69,6 @@ const renderCard = (track, _index, rowTracks) => {
     heartBtn,
 
   );
-
-
 
   // click sulla card (e sul play) -> riproduce
   card.addEventListener("click", () => {
@@ -251,7 +223,6 @@ const renderAlbumCard = (album) => {
 const renderArtistCard = (artist, pic) => {
   const frame = el("img", {
     attrs: {
-      // percorso senza "/" iniziale: con la "/" su GitHub Pages l'immagine non si trova
       src: pic || "assets/img/placeholderArtist.png",
       alt: artist.artistName ?? "Artista",
       loading: "lazy",
@@ -260,7 +231,7 @@ const renderArtistCard = (artist, pic) => {
 
   const card = el(
     "div",
-    { className: "card" },
+    { className: "card", attrs: { role: "button", tabindex: "0" } },
     el("div", { className: "card-image-wrap" }, frame),
     el("h3", {
       className: "card-title",
@@ -272,8 +243,16 @@ const renderArtistCard = (artist, pic) => {
     }),
   );
 
-  card.addEventListener("click", () => {
+  const openArtist = () => {
     window.location.href = "artist.html?id=" + artist.artistId;
+  };
+  card.addEventListener("click", openArtist);
+  // anche con la tastiera: Invio o spazio
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openArtist();
+    }
   });
 
   return card;
@@ -293,14 +272,14 @@ const buildArtistCards = async (artistsList) => {
 
   return withPics
     .filter(({ artist, pic }) => {
-      if (seenIds.has(artist.artistId)) return false; // stesso artista ripetuto
+      if (seenIds.has(artist.artistId)) return false; 
       seenIds.add(artist.artistId);
 
       if (pic) {
-        if (seenPics.has(pic)) return false; // stessa immagine di un altro
+        if (seenPics.has(pic)) return false; 
         seenPics.add(pic);
       }
-      return true; // i null (senza foto) non si confrontano tra loro
+      return true; 
     })
     .map(({ artist, pic }) => renderArtistCard(artist, pic));
 };
@@ -342,7 +321,6 @@ const doSearch = async (term) => {
 
   const artistCards = await buildArtistCards(artistsList);
 
-  // le foto degli artisti richiedono tempo: se intanto l'utente ha scritto altro, questi risultati sono vecchi
   if (term !== lastTerm) return;
 
   gridTracks.replaceChildren(...tracks.map(renderCard));

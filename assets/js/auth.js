@@ -42,7 +42,7 @@ async function logIn(email, password) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email, password: password }),
     });
-    const data = await response.json(); // legge risposta
+    const data = await response.json();
     if (!response.ok) throw new Error("Email o password non corrette");
     //salvo i dati in modo da restare collegato quando ricarico
     localStorage.setItem("accessToken", data.accessToken);

@@ -1,17 +1,15 @@
-
-
 import { el } from "./helper.js"
-import { signUp } from "./auth.js" // importo registrazione
+import { signUp } from "./auth.js" 
 
 /*------Dati--------*/
 
 const genres = [
     "Rock", "Pop", "Jazz", "Blues", "Soul", "Funk", "Cantautorato", "Classica", "Elettronica", "Hip Hop", "Folk", "Disco"
-]; // sono effettivamente presenti nell'API?
+]; 
 
 const artists = [
     "Kendrick Lamar", "Sombr", "Justin Bieber", "Travis Scott", "Drake", "50 Cent"
-]; //potrebbe essere generata in maniera dinamica
+]; 
 
 const MIN_CHOICES = 3;
 
@@ -92,9 +90,11 @@ const clearErrors = () => {
         p.textContent = ""; // svuoto il messaggio
     });
     registerForm.querySelectorAll(".register-input").forEach((input) => { // tutti i campi
-        input.setAttribute("aria-invalid", "false"); // tolgo il rosso 
+        input.setAttribute("aria-invalid", "false");
     });
 };
+
+
 
 /*Invio del Form*/
 registerForm.addEventListener("submit", async (event) => {
@@ -128,11 +128,15 @@ registerForm.addEventListener("submit", async (event) => {
         showError(emailError, `Registrazione non riuscita: ${error.message}`, emailInput);
     }
 
+
+
+
 });
-// listener per uscire dalla modale con esc
+// listener per uscire dalle modali con esc
 document.addEventListener("keydown", (e) => {
-    if(e.key === "Escape") {
+    if (e.key === "Escape") {
         closeRegister();
+        closeWelcome();
     }
 });
 
@@ -144,13 +148,14 @@ const toggleChoice = (selectedList, value, element) => {
 
     if (index === -1) {
         selectedList.push(value);
-        element.classList.add("is-selected"); //lisa lo colora con css
+        element.classList.add("is-selected");
     } else {
-        selectedList.splice(index, 1); // rimuove 1 elemento da quella posione
+        selectedList.splice(index, 1); // rimuove 1 elemento da quella posizione
         element.classList.remove("is-selected"); // il bottone diventa normale
     }
 
-    showCount(); // aggiortna contatore e bottone continua 
+
+    showCount(); // aggiorna contatore e bottone continua 
 };
 
 // creare i bottoni generi musicali
@@ -158,7 +163,7 @@ const renderGenres = () => {
     genreList.replaceChildren(); // svuoto il contenitore
 
     genres.forEach((genre) => { // per ogni genere musicale creo un bottone
-        const chip = el("button", { className: "genre-chip", text: genre, attrs: { type: "button" } }); // el sempre da helper.js 
+        const chip = el("button", { className: "genre-chip", text: genre, attrs: { type: "button" } });
         chip.addEventListener("click", () => toggleChoice(selectedGenres, genre, chip));
         genreList.append(chip);
     });
@@ -185,7 +190,7 @@ const showCount = () => {
     if (total === 1) {
         welcomeCount.textContent = "1 selezionato";
     } else {
-        welcomeCount.textContent = `${total} selezionati`; 
+        welcomeCount.textContent = `${total} selezionati`;
     }
     btnContinue.disabled = total < MIN_CHOICES; // meno di tre bottone spento
 };
@@ -209,10 +214,12 @@ btnClose.addEventListener("click", closeWelcome);
 btnSkip.addEventListener("click", closeWelcome);
 
 btnContinue.addEventListener("click", () => {
-    userTastes = { genres: selectedGenres, artists: selectedArtists};
-    closeWelcome(); // chiude la seconda modale
+    userTastes = { genres: selectedGenres, artists: selectedArtists };
+    localStorage.setItem("selected_genres", JSON.stringify(selectedGenres));
+    localStorage.setItem("selected_artists", JSON.stringify(selectedArtists));
+    closeWelcome();
+    document.dispatchEvent(new Event("tastes:changed")); 
 });
-
 // creo bottoni genere e artisti
 renderGenres();
 renderArtists();

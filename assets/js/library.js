@@ -28,12 +28,12 @@ const updateCount = () => {
     counterElement.textContent = `${n} ${n === 1 ? "brano salvato" : "brani salvati"}`;
 };
 
-const renderCard = (track) => {
+const renderCard = (track, _index, tracks) => {
     const heartBtn = el("button", {
         className: isFavourite(track) ? "card-fav is-fav" : "card-fav",
         text: isFavourite(track) ? "♥" : "♡",
         attrs: { "aria-label": "Preferito", type: "button" },
-       
+
     });
 
     const playBtn = el("button", {
@@ -60,7 +60,7 @@ const renderCard = (track) => {
         "div",
         {
             className: "card",
-             attrs: { "data-track-id": track.trackId, "data-explicit": track.trackExplicitness === "explicit" },
+            attrs: { "data-track-id": track.trackId, "data-explicit": track.trackExplicitness === "explicit" },
         },
         el("div", { className: "card-image-wrap" }, cover),
         el("h3", { className: "card-title", text: track.trackName ?? "Sconosciuto" }),
@@ -82,7 +82,7 @@ const renderCard = (track) => {
     });
 
     card.addEventListener("click", () => {
-        player.play(track);
+        player.play(track, tracks);
         renderHistory();
     });
 
@@ -136,7 +136,7 @@ const renderFavListItem = (track, _index, tracks) => {
         "li",
         {
             className: "list-group-item list-group-item-action d-flex align-items-center gap-3",
-            attrs: { "data-track-id": track.trackId, role: "button", "data-explicit": track.trackExplicitness === "explicit" },
+            attrs: { "data-track-id": track.trackId, role: "button", tabindex: "0", "data-explicit": track.trackExplicitness === "explicit" },
         },
         cover,
         info,
@@ -146,6 +146,15 @@ const renderFavListItem = (track, _index, tracks) => {
     row.addEventListener("click", () => {
         player.play(track, tracks);
         renderHistory();
+    });
+
+    row.addEventListener("keydown", (e) => {
+        if (e.target !== row) return;
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            player.play(track, tracks);
+            renderHistory();
+        }
     });
 
     heartBtn.addEventListener("click", (e) => {
@@ -338,6 +347,8 @@ const renderHistory = () => {
     const history = getHistory().reverse().slice(0, 12).filter((t) => t.previewUrl);
     renderSection("library-history", history, renderCard);
 };
+
+
 
 document.addEventListener("playlists:changed", renderPlaylists);
 document.addEventListener("playlist:track-removed", renderPlaylists);

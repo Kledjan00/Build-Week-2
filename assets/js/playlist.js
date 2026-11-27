@@ -23,21 +23,33 @@ const loadPlaylist = () => {
     const firstTrack = tracks[0];
     const totalMs = tracks.reduce((sum, t) => sum + (t.trackTimeMillis || 0), 0);
 
-    // Play grande: parte dal primo brano (disabilitato se la playlist è vuota)
     const playBtn = el("button", {
         className: "btn-play-big",
         text: "▶",
         attrs: { "aria-label": "Riproduci", type: "button" },
     });
     if (!firstTrack) playBtn.disabled = true;
+    playBtn.title = "Avvia la playlist"
     playBtn.addEventListener("click", () => player.play(firstTrack, tracks));
 
     const renameBtn = el("button", {
         className: "btn-play-big",
         id: "rename-btn",
-        text: "✍️",
         attrs: { "aria-label": "Rinomina", type: "button" },
     });
+    
+    renameBtn.title = "Rinomina la playlist";
+
+    // icona della penna d'oca, presa dallo sprite in playlist.html (#ico-edit).
+    // Gli SVG si creano con createElementNS: el() crea solo elementi HTML (e innerHTML non si usa)
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const editIcon = document.createElementNS(SVG_NS, "svg");
+    editIcon.setAttribute("class", "icon");
+    editIcon.setAttribute("aria-hidden", "true");
+    const editUse = document.createElementNS(SVG_NS, "use");
+    editUse.setAttribute("href", "#ico-edit");
+    editIcon.append(editUse);
+    renameBtn.append(editIcon);
 
     renameBtn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -65,7 +77,7 @@ const loadPlaylist = () => {
             const title = input.value.trim();
             if (!title) return cancel();
 
-            closed = true; // evita che il blur causato dal ridisegno richiami cancel()
+            closed = true; 
             renamePlaylist(playlist.id, title);
             document.dispatchEvent(new Event("playlists:changed"));
         });
@@ -79,6 +91,7 @@ const loadPlaylist = () => {
         attrs: { "aria-label": "Elimina", type: "button" },
     });
 
+    delBtn.title = "Elimina la playlist"
     delBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         killPLaylist(playlist.id);
@@ -131,7 +144,6 @@ const loadPlaylist = () => {
                 },
             });
 
-            // Riga a 4 colonne: numero | titolo | durata | azioni (cuore + X)
             const row = el("div", {
                 className: "track-row",
                 attrs: {
@@ -159,17 +171,16 @@ const loadPlaylist = () => {
             });
 
             removeBtn.addEventListener("click", (e) => {
-                e.stopPropagation(); // non deve far partire il brano
+                e.stopPropagation(); 
                 removeTrackFromPlaylist(playlist.id, track.trackId);
-                loadPlaylist();           // aggiorna hero (conteggio, durata) e righe
-                renderSidebarPlaylists(); // aggiorna il menu nella sidebar
+                loadPlaylist();           
+                renderSidebarPlaylists(); 
             });
 
             return row;
         })
     );
 
-    // Dopo il ridisegno, rimetti l'evidenziazione sul brano in riproduzione
     if (player.currentTrack) {
         tracklist
             .querySelector(`.track-row[data-track-id="${player.currentTrack.trackId}"]`)
@@ -179,6 +190,5 @@ const loadPlaylist = () => {
 
 loadPlaylist();
 
-// Se la playlist cambia altrove (es. dalla sidebar) ridisegna la pagina
 document.addEventListener("playlists:changed", loadPlaylist);
 document.addEventListener("playlist:track-removed", loadPlaylist);

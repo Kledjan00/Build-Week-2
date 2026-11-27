@@ -49,21 +49,18 @@ const loadAlbum = async () => {
 
       const allFavsInitial = tracks.length > 0 && tracks.every((t) => isFavourite(t));
 
-      // Cuore album: .is-fav lo colora di rosso mattone
       const heartBtn = el("button", {
          className: allFavsInitial ? "btn-fav-big is-fav" : "btn-fav-big",
          text: allFavsInitial ? "♥" : "♡",
          attrs: { "aria-label": "Album preferito", type: "button" },
       });
 
-      // Bottone +: aggiunge tutti i brani dell'album a una playlist
       const plusBtn = el("button", {
          className: "btn-plus-big",
          text: "+",
          attrs: { "aria-label": "Aggiungi album a una playlist", type: "button" },
       });
 
-      // Play grande in ottone
       const playBtn = el("button", {
          className: "btn-play-big",
          text: "▶",
@@ -104,7 +101,6 @@ const loadAlbum = async () => {
          }, tracks);
       });
 
-      // #album-hero ha già la classe album-hero nell'HTML: copertina a sinistra, testi a destra
       albumHero.replaceChildren(
          el("div", { className: "album-cover" },
             el("img", { attrs: { src: bigArt(album.artworkUrl100), alt: album.collectionName } })
